@@ -1,0 +1,94 @@
+// ============================================================================
+// قواعد أمان Firestore — المرحلة الأولى من بناء المنصة
+// ----------------------------------------------------------------------------
+// حالة هذا الملف: مكتوب للمراجعة فقط، ولم يُنشر على المشروع التجريبي من هنا
+// (نشر القواعد يحتاج Firebase CLI بتسجيل دخول، وهو غير متاح في بيئة البناء
+// هذه — خطوة النشر موثقة في firestore.rules.test.md).
+//
+// انحراف موثق عن دراسة §٥ (مقصود في هذه المرحلة):
+// دراسة §٥ تفترض أن الدور والعيادة يأتيان من claims مخصصة في ID token.
+// هذه المرحلة تستخدم مستند المستخدم `users/{uid}` كمصدر للدور (role +
+// clinicId) لأن منح الـ claims يتطلب Cloud Function لم تُبنَ بعد. القواعد
+// أدناه تمنع غير الأدمن من إنشاء/تعديل الدور أو العيادة، وتجعل الكتابة على
+// سجل التدقيق مستحيلة من العميل. الانتقال إلى claims هو خطوة تقوية لاحقة
+// ولا يغيّر سلوك القواعد من منظور العميل.
+// تنبيه التمهيد (bootstrap): أول أدمن لا يملك مستند مستخدم بعد، لذلك لا
+// يستطيع إنشاء أول حساب عبر القواعد؛ يُنشأ مستند الأدمن الأول من وحدة تحكم
+// المشروع (Console) حصرًا، ثم يعمل كل شيء عبر القواعد.
+// مبادئ: الرفض هو الافتراضي؛ لا وصول متقاطع بين العيادات؛ الطبيب لا يرى
+// إلا مرضى عيادته؛ الأدمن يدير عيادته فقط.
+// ============================================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    // مصدر الدور في هذه المرحلة: مستند المستخدم نفسه. إن لم يوجد المستند
+    // (أو لم يحمل دورًا صالحًا) فإن أي get() يعيد null وتُرفض القاعدة.
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function role() { return userData().role; }
+    function clinicId() { return userData().clinicId; }
+    function isPatient() { return signedIn() && role() == 'patient'; }
+    function isCoach() { return signedIn() && role() == 'coach'; }
+    function isAdmin() { return signedIn() && role() == 'admin'; }
+    function isStaff() { return isCoach() || isAdmin(); }
+
+    function patientClinicId(pid) {
+      return get(/databases/$(database)/documents/patients/$(pid)).data.clinicId;
+    }
+
+    // العيادة: القراءة لأعضائها، التعديل للأدمن فقط، لا إنشاء ولا حذف.
+    match /clinics/{cid} {
+      allow read: if signedIn() && clinicId() == cid;
+      allow update: if isAdmin() && clinicId() == cid;
+      allow create, delete: if false;
+    }
+
+    // سجل الحساب: صاحبه يقرأه، الطاقم يقرأ حسابات عيادته، الأدمن ينشئ
+    // حسابات عيادته فقط ولا يستطيع تغيير دور أو عيادة موجودة.
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid
+        || (isStaff() && resource.data.clinicId == clinicId()));
+      allow create: if isAdmin() && request.resource.data.clinicId == clinicId();
+      allow update: if isAdmin() && clinicId() == resource.data.clinicId
+                    && request.resource.data.clinicId == resource.data.clinicId
+                    && request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    // المريض وكل ما تحته: سقف واحد يغطي plan وdayLogs وكل المجموعات الفرعية.
+    match /patients/{pid}/{doc=**} {
+      allow read, write: if isPatient() && request.auth.uid == pid;
+      allow read: if isStaff() && patientClinicId(pid) == clinicId();
+      allow write: if isCoach() && patientClinicId(pid) == clinicId();
+      allow write: if isAdmin() && patientClinicId(pid) == clinicId();
+    }
+    // قاعدة صريحة: مستند المريض نفسه لا يسمح بتغيير clinicId.
+    match /patients/{pid} {
+      allow update: if isStaff() && clinicId() == resource.data.clinicId
+                    && request.resource.data.clinicId == resource.data.clinicId;
+    }
+
+    // الموافقات: المريض يمنح/يسحب موافقته، الطاقم يقرأ فقط.
+    match /patients/{pid}/consents/{type} {
+      allow read: if (isPatient() && request.auth.uid == pid)
+                  || (isStaff() && patientClinicId(pid) == clinicId());
+      allow write: if isPatient() && request.auth.uid == pid;
+    }
+
+    // سجل التدقيق: قراءة أدمن العيادة فقط، وكتابة خادم فقط (مرفوضة من العميل).
+    match /clinicAudit/{cid}/events/{eid} {
+      allow read: if isAdmin() && clinicId() == cid;
+      allow write: if false;
+    }
+
+    // كل ما عداه: مرفوض.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
