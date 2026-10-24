@@ -48,6 +48,7 @@ const InstallGuideModal = lazy(() => import('./components/InstallGuideModal').th
 const VisualReportCard = lazy(() => import('./components/VisualReportCard').then(m => ({ default: m.VisualReportCard })));
 const NotificationSettingsModal = lazy(() => import('./components/NotificationSettingsModal').then(m => ({ default: m.NotificationSettingsModal })));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
+const PrototypeApp = lazy(() => import('./prototype/PrototypeApp').then(m => ({ default: m.PrototypeApp })));
 
 const ModalFallback: React.FC = () => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs">
@@ -286,6 +287,16 @@ export default function App() {
     localStorage.setItem(StorageKeys.onboardingSeen(), 'true');
     setShowOnboarding(false);
   };
+
+  // النموذج الثابت للمنصة — مسار عرض منفصل ببيانات وهمية، لا يمس وضع
+  // العيادة الواحدة ولا يقرأ أي بيانات حقيقية.
+  if (currentPath.startsWith('/prototype')) {
+    return (
+      <Suspense fallback={<TabFallback />}>
+        <PrototypeApp />
+      </Suspense>
+    );
+  }
 
   if (currentPath.startsWith('/coach')) {
     return (
