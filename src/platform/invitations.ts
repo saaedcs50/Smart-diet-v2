@@ -13,6 +13,10 @@
 // - دخول Google عند إنشاء الحساب للطاقم فقط (قرار مسجل): دعوة بدور مريض
 //   لا تُقبل عبر Google، بل بالبريد وكلمة المرور فقط. الدور يأتي من
 //   الدعوة حصرًا، لا من زر الدخول.
+// - التسجيل بالدعوة ينشئ سجل المريض أيضًا (لدور المريض فقط): قائمة لوحة
+//   الطاقم تقرأ من مجموعة patients لا من users، فبدون سجل المريض لا
+//   يظهر المدعو في القائمة أبدًا. الترتيب: مستند المستخدم أولًا، ثم
+//   سجل المريض، ثم استهلاك الدعوة.
 // - لا توجد أي قيم حقيقية هنا: البريد والدور والعيادة تأتي من مدخلات
 //   الطاقم/المدعو وقت التشغيل فقط.
 // ============================================================================
@@ -32,7 +36,7 @@ import {
   type FieldValue,
 } from 'firebase/firestore';
 import { getFirebaseAuth, getFirestoreDb } from './firebase';
-import type { PlatformRole } from './firestore';
+import { ensurePatientDoc, type PlatformRole } from './firestore';
 
 export type InvitationStatus = 'pending' | 'consumed';
 
@@ -176,6 +180,17 @@ export async function registerWithInvitation(input: {
     input.displayName,
     email,
   );
+  // سجل المريض (لدور المريض فقط): بدونه لا يظهر المدعو في قائمة لوحة
+  // الطاقم أبدًا، لأن القائمة تقرأ من مجموعة patients لا من users.
+  // الترتيب مقصود: مستند المستخدم أولًا (حتى تتحقق isPatient() في
+  // القواعد عند كتابة مستند المريض)، ثم سجل المريض، ثم استهلاك الدعوة.
+  if (invitation.role === 'patient') {
+    await ensurePatientDoc(
+      credential.user.uid,
+      invitation.clinicId,
+      input.displayName,
+    );
+  }
   await consumeInvitation(email);
   return { uid: credential.user.uid, invitation };
 }
