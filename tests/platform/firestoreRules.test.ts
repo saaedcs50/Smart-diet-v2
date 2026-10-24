@@ -56,6 +56,33 @@ describe('firestore.rules content', () => {
     expect(rules).toContain('لم يُنشر');
     expect(rules).toContain('users/{uid}');
   });
+
+  it('الدعوات: معرّفها بريد المدعو، وإنشاء المستخدم عبرها مقيد بها', () => {
+    expect(rules).toContain('match /invitations/{invId}');
+    expect(rules).toContain('invitationAllows(uid)');
+    expect(rules).toContain("invitationData().status == 'pending'");
+    expect(rules).toContain("invitationData().role == request.resource.data.role");
+    expect(rules).toContain("invitationData().clinicId == request.resource.data.clinicId");
+  });
+
+  it('الدعوات: استهلاك بتغيير الحالة فقط، وإعادة دعوة من الطاقم فقط', () => {
+    expect(rules).toContain("request.resource.data.status == 'consumed'");
+    expect(rules).toContain("request.resource.data.status == 'pending'");
+    expect(rules).toContain("affectedKeys().hasOnly(['status'])");
+    expect(rules).toContain('allow delete: if false;');
+  });
+
+  it('دوال الدور محمية بوجود المستند حتى لا يخطئ تقييم مدعو بلا ملف', () => {
+    expect(rules).toContain('function userExists()');
+    expect(rules).toContain('userExists() ? userData().role : null');
+  });
+
+  it('وثيقة الحالات تغطي حالات الدعوات (9-18)', () => {
+    for (const n of [9, 10, 11, 12, 13, 14, 15, 16, 17, 18]) {
+      expect(rulesDoc).toContain(`${n}.`);
+    }
+    expect(rulesDoc).toContain('الدعوات');
+  });
 });
 
 describe('firestore.rules.test.md coverage', () => {

@@ -1,0 +1,61 @@
+// ============================================================================
+// قواعد أمان Cloud Storage — المرحلة الثانية من بناء المنصة
+// ----------------------------------------------------------------------------
+// حالة هذا الملف: مكتوب للمراجعة فقط، ولم يُنشر على المشروع التجريبي من هنا
+// (نشر القواعد يحتاج Firebase CLI بتسجيل دخول — خطوة النشر موثقة في
+// storage.rules.test.md).
+//
+// المسار: clinics/{clinicId}/patients/{uid}/photos/{photoId} — يطابق
+// photoStoragePath في src/platform/photos.ts، ومستند metadata المقابل في
+// Firestore هو patients/{uid}/photos/{photoId}.
+// مصدر الدور هنا أيضًا مستند المستخدم users/{uid} (كما في firestore.rules
+// — claims تقوية لاحقة)، ويُقرأ عبر firestore.get() المتاح في قواعد
+// التخزين. المريض نفسه يصل إلى صوره فقط عندما تنتمي عيادة المسار إلى
+// عيادته فعلًا (مستند المريض)، والطاقم يصل فقط داخل عيادته.
+// قيود المحتوى: صور فقط، وحجم أقل من 10MB (مطابق لـ validatePhotoFile).
+// كل ما عداه: مرفوض.
+// ============================================================================
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() { return request.auth != null; }
+
+    function userExists() {
+      return signedIn()
+        && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid));
+    }
+    function userData() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+    }
+    function role() { return userExists() ? userData().role : null; }
+    function userClinicId() { return userExists() ? userData().clinicId : null; }
+    function isStaff() { return role() == 'coach' || role() == 'admin'; }
+
+    function patientClinicId(pid) {
+      return firestore.get(/databases/(default)/documents/patients/$(pid)).data.clinicId;
+    }
+
+    // المالك نفسه (مع مطابقة العيادة) أو طاقم العيادة نفسها.
+    function canAccessPhoto(cid, pid) {
+      return signedIn() && (
+        (request.auth.uid == pid && patientClinicId(pid) == cid)
+        || (isStaff() && userClinicId() == cid)
+      );
+    }
+
+    match /clinics/{cid}/patients/{pid}/photos/{photoId} {
+      allow read: if canAccessPhoto(cid, pid);
+      allow write: if canAccessPhoto(cid, pid)
+                   && request.resource.contentType.matches('image/.*')
+                   && request.resource.size < 10 * 1024 * 1024;
+      allow delete: if canAccessPhoto(cid, pid);
+    }
+
+    // كل ما عداه: مرفوض.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

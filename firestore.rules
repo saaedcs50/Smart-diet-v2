@@ -1,11 +1,11 @@
 // ============================================================================
-// قواعد أمان Firestore — المرحلة الأولى من بناء المنصة
+// قواعد أمان Firestore — المرحلة الثانية من بناء المنصة
 // ----------------------------------------------------------------------------
 // حالة هذا الملف: مكتوب للمراجعة فقط، ولم يُنشر على المشروع التجريبي من هنا
 // (نشر القواعد يحتاج Firebase CLI بتسجيل دخول، وهو غير متاح في بيئة البناء
 // هذه — خطوة النشر موثقة في firestore.rules.test.md).
 //
-// انحراف موثق عن دراسة §٥ (مقصود في هذه المرحلة):
+// انحراف موثق عن دراسة §٥ (مقصود، كما في المرحلة الأولى):
 // دراسة §٥ تفترض أن الدور والعيادة يأتيان من claims مخصصة في ID token.
 // هذه المرحلة تستخدم مستند المستخدم `users/{uid}` كمصدر للدور (role +
 // clinicId) لأن منح الـ claims يتطلب Cloud Function لم تُبنَ بعد. القواعد
@@ -15,6 +15,18 @@
 // تنبيه التمهيد (bootstrap): أول أدمن لا يملك مستند مستخدم بعد، لذلك لا
 // يستطيع إنشاء أول حساب عبر القواعد؛ يُنشأ مستند الأدمن الأول من وحدة تحكم
 // المشروع (Console) حصرًا، ثم يعمل كل شيء عبر القواعد.
+//
+// ما أضافته المرحلة الثانية:
+// - دوال الدور محمية بوجود المستند (userExists): مستخدم بلا مستند مستخدم
+//   (مثل مدعو حديث التسجيل قبل إنشاء ملفه) لا يُسبب خطأ تقييم في القواعد،
+//   بل يُعامل كبلا دور ويُرفض — وهذا ما يجعل مسار الدعوة يعمل: إنشاء
+//   مستند المستخدم عبر الدعوة لا يعتمد على role() أصلًا.
+// - الدعوات: معرّف مستند الدعوة هو البريد المطبّع نفسه، لأن القواعد لا
+//   تستطيع الاستعلام عن مجموعة بالبريد بل تقرأ مسارًا معروفًا فقط.
+//   إنشاء مستند المستخدم مسموح للمدعو نفسه فقط عند مطابقة دعوة غير
+//   مستهلكة لنفس البريد والدور والعيادة، وتُستهلك الدعوة بانتقال حالتها
+//   pending → consumed. طاقم العيادة يستطيع إعادة دعوة مستهلكة إلى
+//   pending (إعادة دعوة)، ولا يستطيع أحد حذف دعوة من العميل.
 // مبادئ: الرفض هو الافتراضي؛ لا وصول متقاطع بين العيادات؛ الطبيب لا يرى
 // إلا مرضى عيادته؛ الأدمن يدير عيادته فقط.
 // ============================================================================
@@ -25,13 +37,19 @@ service cloud.firestore {
 
     function signedIn() { return request.auth != null; }
 
-    // مصدر الدور في هذه المرحلة: مستند المستخدم نفسه. إن لم يوجد المستند
-    // (أو لم يحمل دورًا صالحًا) فإن أي get() يعيد null وتُرفض القاعدة.
+    // مصدر الدور في هذه المرحلة: مستند المستخدم نفسه. الحماية بوجود
+    // المستند مهمة: get() على مستند غير موجود يُخطئ التقييم كله، لذلك
+    // تُستخدم exists() أولًا (والتقييم الكسول لـ ?: و&& يمنع استدعاء
+    // get() عند عدم الوجود). مستخدم بلا مستند = بلا دور = مرفوض.
+    function userExists() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
     function userData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
-    function role() { return userData().role; }
-    function clinicId() { return userData().clinicId; }
+    function role() { return userExists() ? userData().role : null; }
+    function clinicId() { return userExists() ? userData().clinicId : null; }
     function isPatient() { return signedIn() && role() == 'patient'; }
     function isCoach() { return signedIn() && role() == 'coach'; }
     function isAdmin() { return signedIn() && role() == 'admin'; }
@@ -39,6 +57,27 @@ service cloud.firestore {
 
     function patientClinicId(pid) {
       return get(/databases/$(database)/documents/patients/$(pid)).data.clinicId;
+    }
+
+    // --- الدعوات ------------------------------------------------------------
+    // معرّف المستند = بريد المدعو المطبّع (صغير الحروف). بريد الـ Auth
+    // token هو ما يُقارن به، لذلك يجب أن يسجّل المدعو بالبريد المطبّع
+    // نفسه (انظر invitations.ts).
+    function invitationExists() {
+      return signedIn() && request.auth.token.email != null
+        && exists(/databases/$(database)/documents/invitations/$(request.auth.token.email));
+    }
+    function invitationData() {
+      return get(/databases/$(database)/documents/invitations/$(request.auth.token.email)).data;
+    }
+    // إنشاء مستند المستخدم عبر الدعوة: لا يعتمد على role() (المدعو بلا
+    // مستند بعد)، بل على بريد الـ token ومطابقة الدعوة فقط.
+    function invitationAllows(uid) {
+      return signedIn() && request.auth.uid == uid && invitationExists()
+        && invitationData().email == request.auth.token.email
+        && invitationData().status == 'pending'
+        && invitationData().role == request.resource.data.role
+        && invitationData().clinicId == request.resource.data.clinicId;
     }
 
     // العيادة: القراءة لأعضائها، التعديل للأدمن فقط، لا إنشاء ولا حذف.
@@ -50,13 +89,37 @@ service cloud.firestore {
 
     // سجل الحساب: صاحبه يقرأه، الطاقم يقرأ حسابات عيادته، الأدمن ينشئ
     // حسابات عيادته فقط ولا يستطيع تغيير دور أو عيادة موجودة.
+    // جديد في المرحلة الثانية: المدعو نفسه ينشئ ملفه عند مطابقة دعوة.
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid
         || (isStaff() && resource.data.clinicId == clinicId()));
-      allow create: if isAdmin() && request.resource.data.clinicId == clinicId();
+      allow create: if (isAdmin() && request.resource.data.clinicId == clinicId())
+                    || invitationAllows(uid);
       allow update: if isAdmin() && clinicId() == resource.data.clinicId
                     && request.resource.data.clinicId == resource.data.clinicId
                     && request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    // الدعوات: قراءة لصاحبها أو طاقم عيادتها؛ إنشاء لطاقم عيادتها فقط
+    // (الطبيب يدعو مرضى فقط، الأدمن يدعو أي دور)؛ استهلاك من المدعو نفسه
+    // بتغيير الحالة فقط؛ إعادة دعوة من الطاقم؛ لا حذف أبدًا من العميل.
+    match /invitations/{invId} {
+      allow read: if signedIn() && (request.auth.token.email == resource.data.email
+        || (isStaff() && resource.data.clinicId == clinicId()));
+      allow create: if (isAdmin() && request.resource.data.clinicId == clinicId()
+                     && request.resource.data.status == 'pending')
+                    || (isCoach() && request.resource.data.clinicId == clinicId()
+                     && request.resource.data.role == 'patient'
+                     && request.resource.data.status == 'pending');
+      allow update: if signedIn() && resource.data.status == 'pending'
+                    && request.resource.data.status == 'consumed'
+                    && request.auth.token.email == resource.data.email
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+                    || isStaff() && resource.data.clinicId == clinicId()
+                    && resource.data.status == 'consumed'
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
       allow delete: if false;
     }
 

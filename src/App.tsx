@@ -37,6 +37,7 @@ import {
   reconcileSeasonalActivation,
 } from './utils/seasonalTemplate';
 import { FeatureHelpProvider } from './components/FeatureHelpModal';
+import { isPlatformEnabled } from './platform/platformMode';
 
 // High-impact Code-Splitting via React.lazy for heavy components & modals
 const ReportsTab = lazy(() => import('./components/ReportsTab').then(m => ({ default: m.ReportsTab })));
@@ -49,6 +50,7 @@ const VisualReportCard = lazy(() => import('./components/VisualReportCard').then
 const NotificationSettingsModal = lazy(() => import('./components/NotificationSettingsModal').then(m => ({ default: m.NotificationSettingsModal })));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
 const PrototypeApp = lazy(() => import('./prototype/PrototypeApp').then(m => ({ default: m.PrototypeApp })));
+const PlatformApp = lazy(() => import('./platform/PlatformApp'));
 
 const ModalFallback: React.FC = () => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs">
@@ -294,6 +296,17 @@ export default function App() {
     return (
       <Suspense fallback={<TabFallback />}>
         <PrototypeApp />
+      </Suspense>
+    );
+  }
+
+  // واجهة المنصة الحقيقية — تعمل فقط مع VITE_PLATFORM_ENABLED=true.
+  // بلا المتغير يسقط المسار إلى التطبيق العادي (لا وجود للمنصة أصلًا)،
+  // ووضع العيادة الواحدة بالـ PIN يبقى الافتراضي بلا أي تغيير.
+  if (currentPath.startsWith('/platform') && isPlatformEnabled()) {
+    return (
+      <Suspense fallback={<TabFallback />}>
+        <PlatformApp />
       </Suspense>
     );
   }
