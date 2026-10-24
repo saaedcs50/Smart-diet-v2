@@ -4,3 +4,12 @@
 # for the historical finding only — it does not protect the key.
 # Never add live secrets to this file.
 da94de20692e28c3f087f5d1af70bf43a1eb9e99:firebase-applet-config.json:gcp-api-key:4
+
+# 2026-10-24: Trial Firebase web client key finding (src/platform/firebase.ts, commit baa0bac, line 26).
+# This is a Firebase web app client identifier, not a server secret: by design it ships in the
+# client bundle, and real protection comes from Firestore rules (deny by default). The literal
+# value was moved to Vite environment variables in a later commit on this branch, so the current
+# tree contains no key at all. This entry silences CI for the historical commit only — it does
+# not protect the key. Restricting the trial key in the Cloud console is a separate step.
+# Never add live secrets to this file.
+baa0bacccf0fbd762b4dcf2b44a2842226c03844:src/platform/firebase.ts:gcp-api-key:26

@@ -32,7 +32,7 @@ import {
   type DocumentReference,
   type FieldValue,
 } from 'firebase/firestore';
-import { firestoreDb } from './firebase';
+import { getFirestoreDb } from './firebase';
 import type {
   ActiveFastingSession,
   DayLog,
@@ -132,88 +132,88 @@ export interface ClinicAuditEvent {
 export function clinicRef(
   clinicId: string,
 ): DocumentReference<DocumentData> {
-  return doc(firestoreDb, 'clinics', clinicId);
+  return doc(getFirestoreDb(), 'clinics', clinicId);
 }
 
 export function userRef(uid: string): DocumentReference<DocumentData> {
-  return doc(firestoreDb, 'users', uid);
+  return doc(getFirestoreDb(), 'users', uid);
 }
 
 export function patientRef(uid: string): DocumentReference<DocumentData> {
-  return doc(firestoreDb, 'patients', uid);
+  return doc(getFirestoreDb(), 'patients', uid);
 }
 
 export function dayLogRef(
   uid: string,
   date: string,
 ): DocumentReference<DocumentData> {
-  return doc(firestoreDb, 'patients', uid, 'dayLogs', date);
+  return doc(getFirestoreDb(), 'patients', uid, 'dayLogs', date);
 }
 
 export function dayLogsCollection(
   uid: string,
 ): CollectionReference<DocumentData> {
-  return collection(firestoreDb, 'patients', uid, 'dayLogs');
+  return collection(getFirestoreDb(), 'patients', uid, 'dayLogs');
 }
 
 export function planHistoryCollection(
   uid: string,
 ): CollectionReference<DocumentData> {
-  return collection(firestoreDb, 'patients', uid, 'planHistory');
+  return collection(getFirestoreDb(), 'patients', uid, 'planHistory');
 }
 
 export function shoppingListRef(
   uid: string,
   weekStartISO: string,
 ): DocumentReference<DocumentData> {
-  return doc(firestoreDb, 'patients', uid, 'shoppingLists', weekStartISO);
+  return doc(getFirestoreDb(), 'patients', uid, 'shoppingLists', weekStartISO);
 }
 
 export function milestonesRef(uid: string): DocumentReference<DocumentData> {
-  return doc(firestoreDb, 'patients', uid, 'milestones', 'state');
+  return doc(getFirestoreDb(), 'patients', uid, 'milestones', 'state');
 }
 
 export function seasonalRef(uid: string): DocumentReference<DocumentData> {
-  return doc(firestoreDb, 'patients', uid, 'seasonal', 'state');
+  return doc(getFirestoreDb(), 'patients', uid, 'seasonal', 'state');
 }
 
 export function intakeRef(
   uid: string,
   intakeId: string,
 ): DocumentReference<DocumentData> {
-  return doc(firestoreDb, 'patients', uid, 'intakes', intakeId);
+  return doc(getFirestoreDb(), 'patients', uid, 'intakes', intakeId);
 }
 
 export function consentRef(
   uid: string,
   type: string,
 ): DocumentReference<DocumentData> {
-  return doc(firestoreDb, 'patients', uid, 'consents', type);
+  return doc(getFirestoreDb(), 'patients', uid, 'consents', type);
 }
 
 export function activeFastingRef(
   uid: string,
 ): DocumentReference<DocumentData> {
-  return doc(firestoreDb, 'patients', uid, 'activeFasting', 'state');
+  return doc(getFirestoreDb(), 'patients', uid, 'activeFasting', 'state');
 }
 
 export function notificationSettingsRef(
   uid: string,
 ): DocumentReference<DocumentData> {
-  return doc(firestoreDb, 'patients', uid, 'notificationSettings', 'state');
+  return doc(getFirestoreDb(), 'patients', uid, 'notificationSettings', 'state');
 }
 
 export function photoRef(
   uid: string,
   photoId: string,
 ): DocumentReference<DocumentData> {
-  return doc(firestoreDb, 'patients', uid, 'photos', photoId);
+  return doc(getFirestoreDb(), 'patients', uid, 'photos', photoId);
 }
 
 export function clinicAuditCollection(
   clinicId: string,
 ): CollectionReference<DocumentData> {
-  return collection(firestoreDb, 'clinicAudit', clinicId, 'events');
+  return collection(getFirestoreDb(), 'clinicAudit', clinicId, 'events');
 }
 
 // ---------------------------------------------------------------------------
@@ -391,7 +391,7 @@ export async function listClinicPatients(
 ): Promise<PatientDoc[]> {
   const snap = await getDocs(
     query(
-      collection(firestoreDb, 'patients'),
+      collection(getFirestoreDb(), 'patients'),
       where('clinicId', '==', clinicId),
     ),
   );

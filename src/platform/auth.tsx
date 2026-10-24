@@ -38,7 +38,7 @@ import {
   type User,
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { firebaseAuth, firestoreDb } from './firebase';
+import { getFirebaseAuth, getFirestoreDb } from './firebase';
 import type { PlatformRole, PlatformUserProfile } from './firestore';
 
 export type { PlatformRole, PlatformUserProfile };
@@ -99,7 +99,7 @@ export function PlatformAuthProvider({
   const [profileMissing, setProfileMissing] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (nextUser) => {
+    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), (nextUser) => {
       setUser(nextUser);
       if (!nextUser) {
         setProfile(null);
@@ -107,7 +107,7 @@ export function PlatformAuthProvider({
         setLoading(false);
         return;
       }
-      void getDoc(doc(firestoreDb, 'users', nextUser.uid))
+      void getDoc(doc(getFirestoreDb(), 'users', nextUser.uid))
         .then((snap) => {
           const parsed = snap.exists()
             ? parseUserProfile(nextUser.uid, snap.data())
@@ -126,17 +126,17 @@ export function PlatformAuthProvider({
 
   const signInWithEmail = useCallback(
     async (email: string, password: string): Promise<void> => {
-      await signInWithEmailAndPassword(firebaseAuth, email, password);
+      await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
     },
     [],
   );
 
   const signInWithGoogle = useCallback(async (): Promise<void> => {
-    await signInWithPopup(firebaseAuth, new GoogleAuthProvider());
+    await signInWithPopup(getFirebaseAuth(), new GoogleAuthProvider());
   }, []);
 
   const signOutPlatform = useCallback(async (): Promise<void> => {
-    await signOut(firebaseAuth);
+    await signOut(getFirebaseAuth());
   }, []);
 
   const value = useMemo<PlatformAuthState>(
