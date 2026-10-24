@@ -219,7 +219,8 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
       }
 
       const clientCleanName = (plan.clientName || 'متدرب').replace(/\s+/g, '_');
-      const filename = `الخطة_العلاجية_${clientCleanName}_د_شيماء_${issueDate}.pdf`;
+      const doctorCleanName = (BRAND.doctorName || '').trim().replace(/\s+/g, '_');
+      const filename = `الخطة_العلاجية_${clientCleanName}${doctorCleanName ? `_${doctorCleanName}` : ''}_${issueDate}.pdf`;
       pdf.save(filename);
       onNotify('تم تنزيل ملف الـ PDF بنجاح ');
     } catch (err) {

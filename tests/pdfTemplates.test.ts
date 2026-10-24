@@ -33,20 +33,22 @@ describe('pdf templates — brand header & logo fallback (Batch 3.2)', () => {
     const h = resolveBrandHeader({
       clinicName: 'عيادة تجريبية',
       doctorName: 'د. تجريبية',
-      logoPath: '/brands/dr-shimaa.png',
+      logoPath: '/brands/clinic-logo.png',
       themeColor: '#5B2482',
       accentColor: '#E21B6D',
     });
     expect(h.showLogo).toBe(true);
-    expect(h.logoSrc).toBe('/brands/dr-shimaa.png');
+    expect(h.logoSrc).toBe('/brands/clinic-logo.png');
     expect(h.primary).toBe('#5B2482');
     expect(h.accent).toBe('#E21B6D');
   });
 
-  it('the live brand config resolves to a real logo (this white-label build)', () => {
+  it('the live brand config is the neutral white-label identity (generic icon → text header)', () => {
     const h = resolveBrandHeader(BRAND);
-    expect(h.showLogo).toBe(true);
-    expect(h.logoSrc).toBe(BRAND.logoPath);
+    expect(BRAND.logoPath).toBe('/icon.svg');
+    expect(h.showLogo).toBe(false);
+    expect(h.logoSrc).toBeNull();
+    expect(h.fallbackLabel).toBe(BRAND.clinicName);
     expect(h.primary).toBe(BRAND.themeColor);
   });
 
