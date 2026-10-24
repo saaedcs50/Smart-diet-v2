@@ -1,5 +1,5 @@
 // اختبارات خالصة لمساعدات الدعوات (بلا Firebase ولا شبكة).
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   invitationIdForEmail,
   parseInvitation,
@@ -84,5 +84,118 @@ describe('validateInvitationForUser', () => {
         clinicId: 'clinic-b',
       }),
     ).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// سلوك التسجيل بالدعوة بمحاكاة Firebase (بلا شبكة ولا محاكي).
+// يثبت أن registerWithInvitation ينشئ سجل المريض لدور المريض فقط،
+// وبالترتيب الموثّق: مستند المستخدم، ثم سجل المريض، ثم استهلاك الدعوة.
+// ملاحظة صريحة: هذه المحاكاة لا تقيّم قواعد Firestore نفسها — القواعد
+// تُختبر ثابتًا في firestoreRules.test.ts وبالتحقق الحي قبل أي نشر.
+// ---------------------------------------------------------------------------
+const mocks = vi.hoisted(() => ({
+  setDocCalls: [] as Array<{
+    path: string;
+    data: unknown;
+    options: unknown;
+  }>,
+  updateDocCalls: [] as Array<{ path: string; data: unknown }>,
+  invitation: null as unknown,
+}));
+
+vi.mock('firebase/auth', () => ({
+  GoogleAuthProvider: class {},
+  createUserWithEmailAndPassword: async () => ({ user: { uid: 'uid-1' } }),
+  signInWithPopup: async () => {
+    throw new Error('not used in these tests');
+  },
+}));
+
+vi.mock('firebase/firestore', () => ({
+  doc: (_db: unknown, ...path: string[]) => ({ __path: path.join('/') }),
+  getDoc: async () => ({
+    exists: () => true,
+    data: () => mocks.invitation,
+  }),
+  serverTimestamp: () => 'server-timestamp',
+  setDoc: async (
+    ref: { __path: string },
+    data: unknown,
+    options?: unknown,
+  ) => {
+    mocks.setDocCalls.push({ path: ref.__path, data, options });
+  },
+  updateDoc: async (ref: { __path: string }, data: unknown) => {
+    mocks.updateDocCalls.push({ path: ref.__path, data });
+  },
+  addDoc: async () => ({ id: 'new-doc' }),
+  collection: (...path: string[]) => ({ __path: path.join('/') }),
+  getDocs: async () => ({ docs: [] }),
+  query: (...args: unknown[]) => args,
+  where: (...args: unknown[]) => args,
+}));
+
+vi.mock('../../src/platform/firebase', () => ({
+  getFirebaseAuth: () => ({}),
+  getFirestoreDb: () => ({}),
+}));
+
+// يُستورد بعد المحاكاة: فيتست يرفع vi.mock فوق الاستيرادات تلقائيًا،
+// فيصل الاستيراد إلى الوحدات المحاكاة لا إلى SDK الحقيقي.
+import { registerWithInvitation } from '../../src/platform/invitations';
+
+describe('registerWithInvitation — patient document', () => {
+  beforeEach(() => {
+    mocks.setDocCalls.length = 0;
+    mocks.updateDocCalls.length = 0;
+  });
+
+  it('ينشئ سجل المريض لدور المريض قبل استهلاك الدعوة', async () => {
+    mocks.invitation = { ...base };
+    await registerWithInvitation({
+      email: '  Patient-X@Example.COM ',
+      password: 'test-password',
+      displayName: 'Test Patient',
+    });
+    const usersIndex = mocks.setDocCalls.findIndex(
+      (c) => c.path === 'users/uid-1',
+    );
+    const patientsIndex = mocks.setDocCalls.findIndex(
+      (c) => c.path === 'patients/uid-1',
+    );
+    expect(usersIndex).toBeGreaterThanOrEqual(0);
+    expect(patientsIndex).toBeGreaterThan(usersIndex);
+    expect(mocks.setDocCalls[patientsIndex]).toEqual({
+      path: 'patients/uid-1',
+      data: {
+        clinicId: 'clinic-a',
+        profile: { clientName: 'Test Patient' },
+      },
+      options: { merge: true },
+    });
+    expect(mocks.updateDocCalls).toContainEqual({
+      path: 'invitations/patient-x@example.com',
+      data: { status: 'consumed' },
+    });
+  });
+
+  it('لا ينشئ سجل مريض لغير دور المريض', async () => {
+    mocks.invitation = { ...base, role: 'coach' };
+    await registerWithInvitation({
+      email: 'patient-x@example.com',
+      password: 'test-password',
+      displayName: 'Test Coach',
+    });
+    expect(
+      mocks.setDocCalls.some((c) => c.path.startsWith('patients/')),
+    ).toBe(false);
+    expect(
+      mocks.setDocCalls.some((c) => c.path === 'users/uid-1'),
+    ).toBe(true);
+    expect(mocks.updateDocCalls).toContainEqual({
+      path: 'invitations/patient-x@example.com',
+      data: { status: 'consumed' },
+    });
   });
 });
