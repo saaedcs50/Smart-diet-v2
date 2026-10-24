@@ -1,9 +1,11 @@
 // ============================================================================
 // قواعد أمان Firestore — المرحلة الثانية من بناء المنصة
 // ----------------------------------------------------------------------------
-// حالة هذا الملف: مكتوب للمراجعة فقط، ولم يُنشر على المشروع التجريبي من هنا
-// (نشر القواعد يحتاج Firebase CLI بتسجيل دخول، وهو غير متاح في بيئة البناء
-// هذه — خطوة النشر موثقة في firestore.rules.test.md).
+// حالة النشر: قواعد Firestore نُشرت على المشروع التجريبي
+// smart-diet-platform-trial في 2026-10-24 (من وحدة التحكم/CLI، لا من بيئة
+// البناء هذه). قواعد Storage ما زالت غير منشورة — معلقة على قرار ترقية
+// Blaze للمشروع التجريبي. أي تعديل لاحق على هذا الملف يحتاج إعادة نشر
+// (انظر firestore.rules.test.md).
 //
 // انحراف موثق عن دراسة §٥ (مقصود، كما في المرحلة الأولى):
 // دراسة §٥ تفترض أن الدور والعيادة يأتيان من claims مخصصة في ID token.
@@ -130,8 +132,13 @@ service cloud.firestore {
       allow write: if isCoach() && patientClinicId(pid) == clinicId();
       allow write: if isAdmin() && patientClinicId(pid) == clinicId();
     }
-    // قاعدة صريحة: مستند المريض نفسه لا يسمح بتغيير clinicId.
+    // مستند المريض نفسه: قراءة بقاعدة resource.data (لا get()) حتى
+    // تُقبل استعلامات القائمة — قاعدة تعتمد على get() لا يمكن إثباتها
+    // من قيود الاستعلام، فكانت القائمة مرفوضة رغم فراغ العيادة.
+    // التعديل ما زال لا يسمح بتغيير clinicId.
     match /patients/{pid} {
+      allow read: if isPatient() && request.auth.uid == pid;
+      allow read: if isStaff() && resource.data.clinicId == clinicId();
       allow update: if isStaff() && clinicId() == resource.data.clinicId
                     && request.resource.data.clinicId == resource.data.clinicId;
     }

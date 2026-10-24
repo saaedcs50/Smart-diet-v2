@@ -1,7 +1,8 @@
 // اختبارات ثابتة (static) لملف القواعد ووثيقة حالاتها.
 // هذه ليست تقييمًا حيًا للقواعد: التقييم الحي يتم في Rules Playground أو
 // محاكي Firestore قبل أي نشر (انظر firestore.rules.test.md). ما يُثبت هنا
-// هو أن القواعد المطلوبة موجودة نصيًا وأن وثيقة الحالات تغطي الثماني.
+// هو أن القواعد المطلوبة موجودة نصيًا وأن وثيقة الحالات تغطي الثماني
+// وحالات الدعوات (9-18) وحالات قائمة المرضى (19-20).
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
@@ -52,8 +53,20 @@ describe('firestore.rules content', () => {
     expect(rules).toContain('allow write: if false;');
   });
 
-  it('يصرّح أن القواعد غير منشورة وأن الدور من المستند في هذه المرحلة', () => {
-    expect(rules).toContain('لم يُنشر');
+  it('مرضى: قائمة العيادة مقبولة عبر resource.data في مستند المريض نفسه', () => {
+    expect(rules).toContain('match /patients/{pid}');
+    expect(rules).toContain(
+      'allow read: if isPatient() && request.auth.uid == pid;',
+    );
+    expect(rules).toContain(
+      'allow read: if isStaff() && resource.data.clinicId == clinicId();',
+    );
+  });
+
+  it('يصرّح بحالة النشر الحقيقية: Firestore منشور على التجريبي، والدور من المستند', () => {
+    expect(rules).toContain('نُشرت');
+    expect(rules).toContain('smart-diet-platform-trial');
+    expect(rules).not.toContain('لم يُنشر');
     expect(rules).toContain('users/{uid}');
   });
 
@@ -83,6 +96,13 @@ describe('firestore.rules content', () => {
     }
     expect(rulesDoc).toContain('الدعوات');
   });
+
+  it('وثيقة الحالات تغطي حالات قائمة المرضى (19-20)', () => {
+    for (const n of [19, 20]) {
+      expect(rulesDoc).toContain(`${n}.`);
+    }
+    expect(rulesDoc).toContain('قائمة المرضى');
+  });
 });
 
 describe('firestore.rules.test.md coverage', () => {
@@ -102,8 +122,11 @@ describe('firestore.rules.test.md coverage', () => {
     }
   });
 
-  it('يذكر أن النشر خارج النطاق ويتطلب Firebase CLI', () => {
+  it('يوثق حالة النشر: Firestore منشور على التجريبي وStorage معلق على Blaze', () => {
     expect(rulesDoc).toContain('Firebase CLI');
-    expect(rulesDoc).toContain('لم يُنشر');
+    expect(rulesDoc).toContain('smart-diet-platform-trial');
+    expect(rulesDoc).toContain('نُشرت');
+    expect(rulesDoc).toContain('Blaze');
+    expect(rulesDoc).not.toContain('لم يُنشر');
   });
 });
