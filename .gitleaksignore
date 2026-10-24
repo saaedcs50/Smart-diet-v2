@@ -1,0 +1,6 @@
+# 2026-10-24: Historical Google API key finding (firebase-applet-config.json, commit da94de2, 2026-09-06).
+# The file was removed from the tree in f8c481e. Allowlisted by the repo owner's explicit decision
+# (2026-10-24) WITHOUT rotation, because the key is still in use elsewhere. This entry silences CI
+# for the historical finding only — it does not protect the key.
+# Never add live secrets to this file.
+da94de20692e28c3f087f5d1af70bf43a1eb9e99:firebase-applet-config.json:gcp-api-key:4
