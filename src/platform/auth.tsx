@@ -5,6 +5,10 @@
 // - الدور والعيادة يُقرآن من مستند `users/{uid}` في Firestore (role +
 //   clinicId). حساب بلا مستند مستخدم لا يحمل أي دور ولا يصل إلى أي بيانات
 //   منصة — قواعد Firestore (firestore.rules) ترفضه افتراضيًا.
+// - ملف الدور يُقرأ باستماع مستمر (onSnapshot) لا بقراءة واحدة: عند
+//   إنشاء الحساب يصل حدث الدخول قبل إنشاء المستند، فكانت القراءة
+//   الواحدة تثبّت «بلا ملف دور» حتى إعادة التحميل؛ المستمع يحدّث
+//   الملف لحظة إنشاء المستند، ويُلغى عند تبدّل المستخدم أو الخروج.
 // - ملاحظة تصميمية موثقة (تقوية لاحقة، ليست جزءًا من هذه المرحلة):
 //   دراسة §٥ تفترض أن الدور والعيادة يأتيان من claims مخصصة في ID token
 //   (تُمنح عبر Cloud Function)، لأن claims لا يستطيع العميل تعديلها بينما
@@ -37,7 +41,7 @@ import {
   signOut,
   type User,
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { getFirebaseAuth, getFirestoreDb } from './firebase';
 import type { PlatformRole, PlatformUserProfile } from './firestore';
 
@@ -99,7 +103,18 @@ export function PlatformAuthProvider({
   const [profileMissing, setProfileMissing] = useState(false);
 
   useEffect(() => {
+    // مستمع مستمر لمستند المستخدم بدل قراءة واحدة: عند إنشاء الحساب
+    // يطلق Firebase حدث تغيّر حالة الدخول فورًا قبل إنشاء مستند
+    // المستخدم (الذي يُنشأ لاحقًا داخل مسار التسجيل)، فكانت القراءة
+    // الواحدة تثبّت الملف على «مفقود» ولا شيء يعيد قراءته — فيظهر
+    // «حسابك بلا ملف دور» مع كل تسجيل جديد حتى إعادة التحميل. مع
+    // onSnapshot يظهر الملف لحظة إنشائه بلا إعادة تحميل.
+    let docUnsubscribe: (() => void) | null = null;
     const unsubscribe = onAuthStateChanged(getFirebaseAuth(), (nextUser) => {
+      // إلغاء مستمع المستند السابق عند تبدّل المستخدم أو الخروج، حتى
+      // لا تتسرب مستمعات ولا تصل تحديثات من مستخدم قديم.
+      docUnsubscribe?.();
+      docUnsubscribe = null;
       setUser(nextUser);
       if (!nextUser) {
         setProfile(null);
@@ -107,21 +122,28 @@ export function PlatformAuthProvider({
         setLoading(false);
         return;
       }
-      void getDoc(doc(getFirestoreDb(), 'users', nextUser.uid))
-        .then((snap) => {
+      setLoading(true);
+      docUnsubscribe = onSnapshot(
+        doc(getFirestoreDb(), 'users', nextUser.uid),
+        (snap) => {
           const parsed = snap.exists()
             ? parseUserProfile(nextUser.uid, snap.data())
             : null;
           setProfile(parsed);
           setProfileMissing(parsed === null);
-        })
-        .catch(() => {
+          setLoading(false);
+        },
+        () => {
           setProfile(null);
           setProfileMissing(true);
-        })
-        .finally(() => setLoading(false));
+          setLoading(false);
+        },
+      );
     });
-    return unsubscribe;
+    return () => {
+      docUnsubscribe?.();
+      unsubscribe();
+    };
   }, []);
 
   const signInWithEmail = useCallback(
