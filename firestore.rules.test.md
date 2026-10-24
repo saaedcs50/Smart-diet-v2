@@ -1,10 +1,12 @@
 # اختبار قواعد Firestore — المرحلة الأولى (غير منفذ هنا)
 
-> ملف `firestore.rules` مكتوب للمراجعة فقط ولم يُنشر من بيئة البناء هذه.
-> نشر القواعد يحتاج Firebase CLI بتسجيل دخول (`firebase deploy --only
-> firestore:rules` من مجلد المشروع بعد `firebase login` و`firebase use
-> smart-diet-platform-trial`) — وهذه الخطوة خارج نطاق هذه المرحلة.
-> الحالات الثمانية أدناه تُنفذ في Rules Playground أو محاكي Firestore
+> حالة النشر: قواعد Firestore نُشرت على المشروع التجريبي
+> `smart-diet-platform-trial` في 2026-10-24. قواعد Storage ما زالت غير
+> منشورة — معلقة على قرار ترقية Blaze للمشروع التجريبي.
+> أي تعديل لاحق على `firestore.rules` يحتاج إعادة نشر عبر Firebase CLI
+> بتسجيل دخول (`firebase deploy --only firestore:rules` من مجلد المشروع
+> بعد `firebase login` و`firebase use smart-diet-platform-trial`).
+> الحالات أدناه تُنفذ في Rules Playground أو محاكي Firestore
 > (Emulator Suite) قبل أي نشر، ببيانات تجريبية فقط وبلا أي مستخدم حقيقي.
 
 ## إعداد الاختبار (بيانات تجريبية)
@@ -80,3 +82,20 @@
 18. **مستخدم بلا مستند ينشئ ملفه بلا دعوة** — مستخدم Auth جديد بلا دعوة
     ينشئ `users/{uid}` → **مرفوض** (ولا يُسبب خطأ تقييم بفضل حماية
     `userExists()`).
+
+## حالات قائمة المرضى — إصلاح أكتوبر 2026
+
+سبب الإصلاح: استعلام قائمة مرضى العيادة (`where clinicId == clinicId`
+في `listClinicPatientEntries`) كان مرفوضًا رغم فراغ العيادة، لأن قاعدة
+القراءة الوحيدة كانت تعتمد على `get()` لمستند المريض نفسه، وFirestore
+لا يقبل استعلامًا لا تُثبت قيوده القاعدة. الإصلاح: قاعدتا قراءة في
+`match /patients/{pid}` تعتمدان على `resource.data` مباشرة؛ قواعد
+المجموعات الفرعية (`plan` و`dayLogs` وغيرها) بقيت على `get()` لأن
+مستنداتها الفرعية لا تحمل `clinicId` بنفسها.
+
+19. **طاقم يستعلم قائمة مرضى عيادته** — `coach-a` أو `admin-a` يستعلم
+    `patients` مع `where clinicId == 'clinic-a'` → **مقبول** (عبر قاعدة
+    `resource.data.clinicId == clinicId()` في `match /patients/{pid}`).
+20. **طاقم يستعلم قائمة مرضى عيادة أخرى** — `coach-a` يستعلم `patients`
+    مع `where clinicId == 'clinic-b'` → **مرفوض** (قاعدة القائمة لا تمنح
+    عيادة غير عيادته).
