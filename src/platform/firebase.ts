@@ -28,6 +28,7 @@ import {
   persistentMultipleTabManager,
   type Firestore,
 } from 'firebase/firestore';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 // قراءة متغير بيئة واحد: import.meta.env أولًا (Vite) ثم process.env
 // (vitest/Node)، بنفس نمط platformMode.ts.
@@ -92,6 +93,16 @@ function requireConfigured(): void {
 export function getFirebaseAuth(): Auth {
   requireConfigured();
   return getAuth(getFirebaseApp());
+}
+
+let cachedStorage: FirebaseStorage | null = null;
+
+// تهيئة كسولة للتخزين بنفس نمط Firestore: لا تُستدعى إلا في وضع المنصة
+// المُفعَّل، وتفشل برسالة واضحة بلا إعدادات.
+export function getFirebaseStorage(): FirebaseStorage {
+  requireConfigured();
+  if (!cachedStorage) cachedStorage = getStorage(getFirebaseApp());
+  return cachedStorage;
 }
 
 // الثبات بلا اتصال: ذاكرة محلية دائمة (IndexedDB) مع مدير تبويبات متعددة،

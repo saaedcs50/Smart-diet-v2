@@ -385,6 +385,22 @@ export async function listDayLogs(uid: string): Promise<DayLog[]> {
   return out;
 }
 
+// سجلات الأيام مع تواريخها (معرّف المستند = تاريخ اليوم) — تحتاجها
+// واجهة المنصة لعرض السجلات مرتبة، بينما listDayLogs الأصلية تُسقط
+// التواريخ.
+export async function listDayLogEntries(
+  uid: string,
+): Promise<Array<{ date: string; log: DayLog }>> {
+  const snap = await getDocs(dayLogsCollection(uid));
+  const out: Array<{ date: string; log: DayLog }> = [];
+  for (const d of snap.docs) {
+    const parsed = dayLogFromFirestore(d.data());
+    if (parsed) out.push({ date: d.id, log: parsed });
+  }
+  out.sort((a, b) => (a.date < b.date ? 1 : -1));
+  return out;
+}
+
 // للطاقم فقط (القواعد ترفض غير طاقم العيادة): مرضى عيادة واحدة.
 export async function listClinicPatients(
   clinicId: string,
@@ -396,6 +412,20 @@ export async function listClinicPatients(
     ),
   );
   return snap.docs.map((d) => d.data() as PatientDoc);
+}
+
+// مثل listClinicPatients لكن مع uid كل مريض (معرّف المستند) — تحتاجه
+// واجهة المنصة للتنقل إلى صفحة المريض.
+export async function listClinicPatientEntries(
+  clinicId: string,
+): Promise<Array<{ uid: string; doc: PatientDoc }>> {
+  const snap = await getDocs(
+    query(
+      collection(getFirestoreDb(), 'patients'),
+      where('clinicId', '==', clinicId),
+    ),
+  );
+  return snap.docs.map((d) => ({ uid: d.id, doc: d.data() as PatientDoc }));
 }
 
 export async function saveShoppingList(
