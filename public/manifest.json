@@ -1,24 +1,24 @@
 {
-  "name": "Smart Diet - د. شيماء",
-  "short_name": "Smart Diet",
-  "description": "تطبيق متابعة التغذية والنظام الصحي - إشراف د. شيماء",
+  "name": "منصة التغذية والصحة - أخصائي التغذية",
+  "short_name": "عيادة التغذية",
+  "description": "منصة متكاملة لمتابعة التغذية والنظام الصحي - النسخة القياسية للعيادات (White-Label)",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F8F7F9",
-  "theme_color": "#5B2482",
+  "background_color": "#f8fafc",
+  "theme_color": "#0d9488",
   "dir": "rtl",
   "lang": "ar",
   "icons": [
     {
-      "src": "/brands/dr-shimaa.png",
-      "sizes": "192x192",
-      "type": "image/png",
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/brands/dr-shimaa.png",
+      "src": "/icon.svg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "maskable"
     }
   ]

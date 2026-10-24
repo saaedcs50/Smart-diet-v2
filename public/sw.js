@@ -1,9 +1,9 @@
 // Service Worker — PWA notifications
 // BRAND_INJECT_START
-const CACHE_NAME = "nutrition-smart-diet-v4";
-const BRAND_APP_NAME = "Smart Diet";
-const BRAND_SHORT_NAME = "Smart Diet";
-const BRAND_LOGO_PATH = "/brands/dr-shimaa.png";
+const CACHE_NAME = "nutrition-عيادة-التغذية-v4";
+const BRAND_APP_NAME = "منصة التغذية والصحة";
+const BRAND_SHORT_NAME = "عيادة التغذية";
+const BRAND_LOGO_PATH = "/icon.svg";
 // BRAND_INJECT_END
 
 self.addEventListener('install', () => {

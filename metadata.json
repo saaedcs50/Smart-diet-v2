@@ -1,6 +1,6 @@
 {
-  "name": "Smart Diet - د. شيماء",
-  "description": "تطبيق متابعة التغذية والنظام الصحي - إشراف د. شيماء",
+  "name": "منصة التغذية والصحة",
+  "description": "منصة متكاملة لمتابعة التغذية والنظام الصحي - النسخة القياسية للعيادات (White-Label)",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
