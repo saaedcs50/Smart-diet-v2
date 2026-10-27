@@ -184,11 +184,14 @@ export async function registerWithInvitation(input: {
   // الطاقم أبدًا، لأن القائمة تقرأ من مجموعة patients لا من users.
   // الترتيب مقصود: مستند المستخدم أولًا (حتى تتحقق isPatient() في
   // القواعد عند كتابة مستند المريض)، ثم سجل المريض، ثم استهلاك الدعوة.
+  // invitedBy يُمرَّر كما هو من الدعوة (uid الداعي — طبيب أو أدمن)،
+  // فيربط المريض بطبيبه تلقائيًا في لوحة الطاقم المتقدمة.
   if (invitation.role === 'patient') {
     await ensurePatientDoc(
       credential.user.uid,
       invitation.clinicId,
       input.displayName,
+      invitation.createdBy,
     );
   }
   await consumeInvitation(email);

@@ -14,18 +14,27 @@
 //   Storage ولا عرض صور سحابية؛ الصور تبقى محلية للمستخدم في التطبيق
 //   الرئيسي، أو يرسلها المستخدم بنفسه واتساب لطبيب العيادة (سياسة فقط،
 //   بلا بناء مشاركة واتساب هنا).
+// - لوحة الطاقم المتقدمة: الأدمن يرى الدكاترة وعدد عملاء كل منهم ويعيّن
+//   المرضى للأطباء، والطبيب يرى عملاءه فقط (من دعاهم). الربط على مستوى
+//   الواجهة فقط عبر حقل invitedBy — قراءة العيادة للطاقم تبقى كما هي،
+//   وصفحة المريض نفسها (الخطة + سجلات الأيام) لم تُبنَ من جديد.
 // ============================================================================
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { PlatformAuthProvider, usePlatformAuth } from './auth';
 import { isFirebaseConfigured } from './firebase';
 import {
+  assignPatientCoach,
   getPatient,
   getPatientPlan,
   listClinicPatientEntries,
+  listClinicStaffEntries,
   listDayLogEntries,
+  listDoctorPatients,
   saveConsent,
+  summarizeDoctors,
   type PatientDoc,
+  type StaffEntry,
 } from './firestore';
 import {
   createInvitation,
@@ -552,17 +561,179 @@ function PatientDetail({
 }
 
 // ---------------------------------------------------------------------------
-// لوحة الطاقم
+// لوحة الطاقم: أدمن (إدارة الدكاترة) وطبيب (عملائي فقط)
 // ---------------------------------------------------------------------------
 
-function StaffDashboard({ clinicId, uid, isAdmin }: { clinicId: string; uid: string; isAdmin: boolean }) {
+type DoctorFilter = 'all' | 'unassigned' | { doctorUid: string };
+
+function filterLabel(filter: DoctorFilter, coaches: StaffEntry[]): string {
+  if (filter === 'all') return 'كل المرضى';
+  if (filter === 'unassigned') return 'عملاء بلا طبيب معيّن';
+  const coach = coaches.find((c) => c.uid === filter.doctorUid);
+  return coach
+    ? `عملاء ${coach.doc.displayName ?? coach.doc.email ?? 'طبيب بلا اسم'}`
+    : 'عملاء الطبيب';
+}
+
+function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
+  const [coaches, setCoaches] = useState<StaffEntry[]>([]);
+  const [patients, setPatients] = useState<Array<{ uid: string; doc: PatientDoc }>>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<DoctorFilter>('all');
+  const [assignError, setAssignError] = useState<string | null>(null);
+  const [assigningUid, setAssigningUid] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      listClinicStaffEntries(clinicId),
+      listClinicPatientEntries(clinicId),
+    ])
+      .then(([staff, entries]) => {
+        if (cancelled) return;
+        setCoaches(staff);
+        setPatients(entries);
+        setError(null);
+      })
+      .catch((caught: unknown) => {
+        if (!cancelled) setError(errorText(caught));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [clinicId, reloadKey]);
+
+  const summary = summarizeDoctors(
+    coaches.map((coach) => ({
+      uid: coach.uid,
+      displayName: coach.doc.displayName,
+      email: coach.doc.email,
+    })),
+    patients.map((patient) => ({ uid: patient.uid, invitedBy: patient.doc.invitedBy })),
+  );
+  const coachUids = new Set(coaches.map((coach) => coach.uid));
+  const visiblePatients = patients.filter((patient) => {
+    if (filter === 'all') return true;
+    if (filter === 'unassigned') {
+      return !patient.doc.invitedBy || !coachUids.has(patient.doc.invitedBy);
+    }
+    return patient.doc.invitedBy === filter.doctorUid;
+  });
+
+  const assign = async (patientUid: string, coachUid: string | null) => {
+    setAssignError(null);
+    setAssigningUid(patientUid);
+    try {
+      await assignPatientCoach(patientUid, coachUid);
+      setReloadKey((key) => key + 1);
+    } catch (caught: unknown) {
+      setAssignError(errorText(caught));
+    } finally {
+      setAssigningUid(null);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Card>
+        <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+          الدكاترة
+        </h2>
+        <p className="mt-1 text-xs text-slate-500">
+          أطباء عيادتك وعدد عملاء كل منهم — من Firestore مباشرة، لا بيانات
+          وهمية. اضغط على طبيب لعرض عملائه فقط.
+        </p>
+        {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل الدكاترة…</p>}
+        {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
+        {!loading && !error && coaches.length === 0 && (
+          <p className="mt-3 text-sm text-slate-500">لا يوجد أطباء بعد — ادعُ طبيبًا من نموذج الدعوة بالأسفل.</p>
+        )}
+        <ul className="mt-3 flex flex-col gap-2">
+          {summary.perDoctor.map((doctor) => (
+            <li key={doctor.uid}>
+              <button
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
+                onClick={() => setFilter({ doctorUid: doctor.uid })}
+              >
+                {doctor.displayName} — {doctor.count} {doctor.count === 1 ? 'عميل' : 'عملاء'}
+              </button>
+            </li>
+          ))}
+          <li>
+            <button
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
+              onClick={() => setFilter('unassigned')}
+            >
+              عملاء بلا طبيب معيّن — {summary.unassignedCount} {summary.unassignedCount === 1 ? 'عميل' : 'عملاء'}
+            </button>
+          </li>
+        </ul>
+        {filter !== 'all' && (
+          <button className={`${ghostButtonClass} mt-3`} onClick={() => setFilter('all')}>
+            عرض الكل
+          </button>
+        )}
+      </Card>
+
+      <Card>
+        <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+          مرضى العيادة — {filterLabel(filter, coaches)}
+        </h2>
+        <p className="mt-1 text-xs text-slate-500">
+          مرضى عيادتك فقط — من Firestore مباشرة، لا بيانات وهمية. عيّن
+          الطبيب من القائمة المنسدلة لكل مريض.
+        </p>
+        {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل المرضى…</p>}
+        {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
+        {assignError && <p className="mt-3 text-sm font-bold text-red-600">{assignError}</p>}
+        {!loading && !error && visiblePatients.length === 0 && (
+          <p className="mt-3 text-sm text-slate-500">لا يوجد مرضى في هذا العرض.</p>
+        )}
+        <ul className="mt-3 flex flex-col gap-2">
+          {visiblePatients.map(({ uid: patientUid, doc }) => (
+            <li key={patientUid} className="flex items-center gap-2">
+              <button
+                className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
+                onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
+              >
+                {doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}
+              </button>
+              <select
+                className={`${inputClass} w-auto`}
+                aria-label={`طبيب ${doc.profile.clientName}`}
+                value={doc.invitedBy && coachUids.has(doc.invitedBy) ? doc.invitedBy : ''}
+                disabled={assigningUid === patientUid}
+                onChange={(event) => void assign(patientUid, event.target.value === '' ? null : event.target.value)}
+              >
+                <option value="">بلا طبيب</option>
+                {coaches.map((coach) => (
+                  <option key={coach.uid} value={coach.uid}>
+                    {coach.doc.displayName ?? coach.doc.email ?? 'طبيب بلا اسم'}
+                  </option>
+                ))}
+              </select>
+            </li>
+          ))}
+        </ul>
+      </Card>
+      <InviteForm clinicId={clinicId} createdBy={uid} isAdmin />
+    </div>
+  );
+}
+
+function CoachDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   const [patients, setPatients] = useState<Array<{ uid: string; doc: PatientDoc }>>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    listClinicPatientEntries(clinicId)
+    listDoctorPatients(uid)
       .then((entries) => {
         if (!cancelled) setPatients(entries);
       })
@@ -575,21 +746,22 @@ function StaffDashboard({ clinicId, uid, isAdmin }: { clinicId: string; uid: str
     return () => {
       cancelled = true;
     };
-  }, [clinicId]);
+  }, [uid]);
 
   return (
     <div className="flex flex-col gap-4">
       <Card>
         <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
-          لوحة العيادة
+          عملائي ({patients.length})
         </h2>
         <p className="mt-1 text-xs text-slate-500">
-          مرضى عيادتك فقط — من Firestore مباشرة، لا بيانات وهمية.
+          المرضى الذين دعوتهم أنت فقط — من Firestore مباشرة، لا بيانات
+          وهمية. اضغط على مريض لعرض خطته وسجلات تقدمه.
         </p>
-        {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل المرضى…</p>}
+        {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل عملائي…</p>}
         {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
         {!loading && !error && patients.length === 0 && (
-          <p className="mt-3 text-sm text-slate-500">لا يوجد مرضى بعد — أنشئ دعوة لمريضك الأول بالأسفل.</p>
+          <p className="mt-3 text-sm text-slate-500">لا يوجد عملاء بعد — أنشئ دعوة لمريضك الأول بالأسفل، وسيظهر هنا تلقائيًا بعد تسجيله.</p>
         )}
         <ul className="mt-3 flex flex-col gap-2">
           {patients.map(({ uid: patientUid, doc }) => (
@@ -604,9 +776,14 @@ function StaffDashboard({ clinicId, uid, isAdmin }: { clinicId: string; uid: str
           ))}
         </ul>
       </Card>
-      <InviteForm clinicId={clinicId} createdBy={uid} isAdmin={isAdmin} />
+      <InviteForm clinicId={clinicId} createdBy={uid} isAdmin={false} />
     </div>
   );
+}
+
+function StaffDashboard({ clinicId, uid, isAdmin }: { clinicId: string; uid: string; isAdmin: boolean }) {
+  if (isAdmin) return <AdminDashboard clinicId={clinicId} uid={uid} />;
+  return <CoachDashboard clinicId={clinicId} uid={uid} />;
 }
 
 // ---------------------------------------------------------------------------

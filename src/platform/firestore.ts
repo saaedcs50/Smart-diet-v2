@@ -20,12 +20,14 @@
 import {
   addDoc,
   collection,
+  deleteField,
   doc,
   getDoc,
   getDocs,
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
   type CollectionReference,
   type DocumentData,
@@ -89,10 +91,15 @@ export interface ClinicDoc {
 }
 
 // مستند المريض patients/{uid}: الخطة حقل داخله، والسجلات مجموعات فرعية.
+// invitedBy هو uid من دعا المريض (طبيب أو أدمن) — يُخزَّن عند التسجيل
+// بالدعوة، ويُستخدم لربط المريض بطبيبه في لوحة الطاقم المتقدمة. غيابه
+// يعني أن المريض غير معيّن لطبيب بعد (مرضى تجريبيون قدامى أو مدعوون
+// من أدمن).
 export interface PatientDoc {
   clinicId: string;
   profile: { clientName: string };
   plan?: PlanConfig;
+  invitedBy?: string;
   updatedAt?: FieldValue;
   updatedBy?: string;
 }
@@ -315,14 +322,23 @@ export async function getPatientPlan(
 }
 
 // إنشاء/تأكيد مستند المريض (clinicId + الاسم المعروض) بلا خطة بعد.
+// invitedBy اختياري: يُمرَّر عند التسجيل بالدعوة (uid الداعي)، ويُحفظ
+// فقط عند توفره — Firestore يرفض undefined، فلا يُكتب الحقل أبدًا بقيمة
+// فارغة. ملاحظة: setDoc مع merge لا يمسح invitedBy موجودًا عند غياب
+// المعامل (لا يُمرَّر حقل أصلًا)، فتعيين الطبيب يتم عبر assignPatientCoach.
 export async function ensurePatientDoc(
   uid: string,
   clinicId: string,
   clientName: string,
+  invitedBy?: string,
 ): Promise<void> {
   await setDoc(
     patientRef(uid),
-    { clinicId, profile: { clientName } },
+    {
+      clinicId,
+      profile: { clientName },
+      ...(invitedBy ? { invitedBy } : {}),
+    },
     { merge: true },
   );
 }
@@ -426,6 +442,105 @@ export async function listClinicPatientEntries(
     ),
   );
   return snap.docs.map((d) => ({ uid: d.id, doc: d.data() as PatientDoc }));
+}
+
+// ---------------------------------------------------------------------------
+// لوحة الطاقم المتقدمة: أطباء العيادة وربط المرضى بهم (واجهة فقط)
+// ---------------------------------------------------------------------------
+// تنبيه نطاق صريح: الربط هنا على مستوى الواجهة فقط (حقل invitedBy في
+// مستند المريض). قراءة الطاقم على مستوى العيادة تبقى كما هي اليوم —
+// طبيب يستطيع فتح صفحة مريض لطبيب آخر برابط مباشر، تمامًا كما اليوم.
+// عزل صارم لكل طبيب على مستوى القواعد سيكسر استعلامات المجموعات
+// الفرعية، ولم يُنفَّذ عمدًا.
+
+// مدخل طاقم: uid الحساب + مستند المستخدم كما هو.
+export interface StaffEntry {
+  uid: string;
+  doc: UserDoc;
+}
+
+// أطباء العيادة فقط (role === 'coach') — الاستعلام على clinicId فقط بلا
+// فهرس مركّب، والترشيح للدور يتم هنا بعد القراءة. يعتمد على قاعدة
+// قراءة مستخدمي العيادة نفسها التي تعتمد عليها قائمة المرضى.
+export async function listClinicStaffEntries(
+  clinicId: string,
+): Promise<StaffEntry[]> {
+  const snap = await getDocs(
+    query(
+      collection(getFirestoreDb(), 'users'),
+      where('clinicId', '==', clinicId),
+    ),
+  );
+  const out: StaffEntry[] = [];
+  for (const d of snap.docs) {
+    const doc = d.data() as UserDoc;
+    if (doc.role === 'coach') out.push({ uid: d.id, doc });
+  }
+  return out;
+}
+
+// مرضى طبيب واحد: من دعاهم هو (invitedBy == uid الطبيب). المدعوون من
+// أدمن أو المرضى القدامى بلا invitedBy لا يظهرون هنا — بل في «بلا طبيب».
+export async function listDoctorPatients(
+  coachUid: string,
+): Promise<Array<{ uid: string; doc: PatientDoc }>> {
+  const snap = await getDocs(
+    query(
+      collection(getFirestoreDb(), 'patients'),
+      where('invitedBy', '==', coachUid),
+    ),
+  );
+  return snap.docs.map((d) => ({ uid: d.id, doc: d.data() as PatientDoc }));
+}
+
+// تعيين/إلغاء تعيين طبيب لمريض: كتابة invitedBy فقط — clinicId لا يُمس
+// أبدًا، فيبقى التحديث مقبولًا بقواعد الطاقم الحالية بلا أي تغيير فيها.
+// null تعني إلغاء التعيين (حذف الحقل بـ deleteField).
+export async function assignPatientCoach(
+  uid: string,
+  coachUid: string | null,
+): Promise<void> {
+  await updateDoc(
+    patientRef(uid),
+    coachUid === null
+      ? { invitedBy: deleteField() }
+      : { invitedBy: coachUid },
+  );
+}
+
+// ملخص أطباء العيادة — دالة خالصة بلا شبكة (قابلة للاختبار مباشرة).
+// المريض يُحسب لطبيب فقط عندما يكون invitedBy مساويًا تمامًا لـ uid
+// الطبيب؛ أي مريض آخر — بلا invitedBy، أو مدعو من أدمن/غير طبيب
+// بالعيادة — يُحسب «بلا طبيب معيّن». الاسم المعروض: displayName ثم
+// البريد ثم «طبيب بلا اسم».
+export interface DoctorSummary {
+  uid: string;
+  displayName: string;
+  email: string | null;
+  count: number;
+}
+
+export function summarizeDoctors(
+  coaches: Array<{ uid: string; displayName: string | null; email: string | null }>,
+  patients: Array<{ uid: string; invitedBy?: string }>,
+): { perDoctor: DoctorSummary[]; unassignedCount: number } {
+  const counts = new Map<string, number>();
+  for (const coach of coaches) counts.set(coach.uid, 0);
+  let unassignedCount = 0;
+  for (const patient of patients) {
+    if (patient.invitedBy && counts.has(patient.invitedBy)) {
+      counts.set(patient.invitedBy, (counts.get(patient.invitedBy) ?? 0) + 1);
+    } else {
+      unassignedCount += 1;
+    }
+  }
+  const perDoctor = coaches.map((coach) => ({
+    uid: coach.uid,
+    displayName: coach.displayName ?? coach.email ?? 'طبيب بلا اسم',
+    email: coach.email,
+    count: counts.get(coach.uid) ?? 0,
+  }));
+  return { perDoctor, unassignedCount };
 }
 
 export async function saveShoppingList(
