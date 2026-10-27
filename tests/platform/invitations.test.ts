@@ -171,6 +171,7 @@ describe('registerWithInvitation — patient document', () => {
       data: {
         clinicId: 'clinic-a',
         profile: { clientName: 'Test Patient' },
+        invitedBy: 'admin-a',
       },
       options: { merge: true },
     });
@@ -178,6 +179,22 @@ describe('registerWithInvitation — patient document', () => {
       path: 'invitations/patient-x@example.com',
       data: { status: 'consumed' },
     });
+  });
+
+  it('يمرّر createdBy الدعوة كـ invitedBy في سجل المريض', async () => {
+    mocks.invitation = { ...base, createdBy: 'coach-inviter' };
+    await registerWithInvitation({
+      email: 'patient-x@example.com',
+      password: 'test-password',
+      displayName: 'Test Patient',
+    });
+    const patientCall = mocks.setDocCalls.find(
+      (c) => c.path === 'patients/uid-1',
+    );
+    expect(patientCall).toBeDefined();
+    expect((patientCall?.data as Record<string, unknown>).invitedBy).toBe(
+      'coach-inviter',
+    );
   });
 
   it('لا ينشئ سجل مريض لغير دور المريض', async () => {
