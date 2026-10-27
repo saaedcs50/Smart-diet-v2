@@ -733,7 +733,7 @@ function CoachDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    listDoctorPatients(uid)
+    listDoctorPatients(clinicId, uid)
       .then((entries) => {
         if (!cancelled) setPatients(entries);
       })
@@ -746,7 +746,7 @@ function CoachDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     return () => {
       cancelled = true;
     };
-  }, [uid]);
+  }, [clinicId, uid]);
 
   return (
     <div className="flex flex-col gap-4">

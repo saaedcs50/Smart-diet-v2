@@ -481,12 +481,20 @@ export async function listClinicStaffEntries(
 
 // مرضى طبيب واحد: من دعاهم هو (invitedBy == uid الطبيب). المدعوون من
 // أدمن أو المرضى القدامى بلا invitedBy لا يظهرون هنا — بل في «بلا طبيب».
+// تحذير قواعد (درس PR #6 يتكرر هنا): استعلام القائمة يُرفض بقاعدة
+// resource.data.clinicId == عيادة القارئ ما لم يُقيَّد الاستعلام نفسه
+// على clinicId — استعلام بـ invitedBy وحده مرفوض بـ «Missing or
+// insufficient permissions» حتى لو كل النتائج من نفس العيادة، لأن
+// القواعد لا تستطيع إثبات ذلك من قيود الاستعلام. لذلك يُقيَّد
+// الاستعلام على الحقلين معًا (مساواة فقط، بلا فهرس مركّب).
 export async function listDoctorPatients(
+  clinicId: string,
   coachUid: string,
 ): Promise<Array<{ uid: string; doc: PatientDoc }>> {
   const snap = await getDocs(
     query(
       collection(getFirestoreDb(), 'patients'),
+      where('clinicId', '==', clinicId),
       where('invitedBy', '==', coachUid),
     ),
   );
