@@ -10,9 +10,10 @@
 //   الأولى)، لا بيانات وهمية — مسار /prototype التجريبي منفصل ولا يُمس.
 // - المزامنة opt-in صريح من واجهة المريض نفسه فقط، بعد موافقة صريحة
 //   تُحفظ في consents/sync قبل أي رفع (دراسة §٦).
-// - الصور: رفع صورة واحدة بملاحظة إلى Cloud Storage مع metadata في
-//   Firestore؛ لا يوجد رفع تلقائي لصور IndexedDB المحلية في هذه المرحلة
-//   (الربط المتبقي موثق في الـ PR).
+// - الصور السحابية ملغاة بقرار المالك (2026-10-27): لا رفع إلى Cloud
+//   Storage ولا عرض صور سحابية؛ الصور تبقى محلية للمستخدم في التطبيق
+//   الرئيسي، أو يرسلها المستخدم بنفسه واتساب لطبيب العيادة (سياسة فقط،
+//   بلا بناء مشاركة واتساب هنا).
 // ============================================================================
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
@@ -42,11 +43,6 @@ import {
   type SyncReport,
   type SyncStatus,
 } from './sync';
-import {
-  listPhotoMetas,
-  uploadPatientPhoto,
-  type UploadedPhotoMeta,
-} from './photos';
 import type { DayLog, PlanConfig } from '../types';
 
 type Route =
@@ -347,99 +343,6 @@ function InviteForm({ clinicId, createdBy, isAdmin }: { clinicId: string; create
 }
 
 // ---------------------------------------------------------------------------
-// رفع صورة (صفحة المريض)
-// ---------------------------------------------------------------------------
-
-function PhotoUpload({
-  clinicId,
-  patientUid,
-  editorUid,
-  onUploaded,
-}: {
-  clinicId: string;
-  patientUid: string;
-  editorUid: string;
-  onUploaded: () => void;
-}) {
-  const [file, setFile] = useState<File | null>(null);
-  const [note, setNote] = useState('');
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!file) return;
-    setError(null);
-    setMessage(null);
-    setBusy(true);
-    try {
-      await uploadPatientPhoto({
-        clinicId,
-        patientUid,
-        file,
-        fileName: file.name,
-        date,
-        note: note || undefined,
-        editorUid,
-      });
-      setMessage('تم رفع الصورة وحفظ بياناتها.');
-      setFile(null);
-      setNote('');
-      onUploaded();
-    } catch (caught) {
-      setError(errorText(caught));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Card>
-      <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
-        رفع صورة تقدم
-      </h3>
-      <p className="mt-1 text-xs text-slate-500">
-        رفع هذه الصورة يعني موافقتك على رفعها تحديدًا إلى حسابك السحابي.
-      </p>
-      <form onSubmit={submit} className="mt-3 flex flex-col gap-3">
-        <Field label="الصورة (أقل من 10MB)">
-          <input
-            className={inputClass}
-            type="file"
-            accept="image/*"
-            required
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-          />
-        </Field>
-        <Field label="التاريخ">
-          <input
-            className={inputClass}
-            type="date"
-            required
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
-          />
-        </Field>
-        <Field label="ملاحظة (اختياري)">
-          <input
-            className={inputClass}
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-          />
-        </Field>
-        {message && <p className="text-xs font-bold text-emerald-700">{message}</p>}
-        {error && <p className="text-xs font-bold text-red-600">{error}</p>}
-        <button className={buttonClass} type="submit" disabled={busy || !file}>
-          رفع الصورة
-        </button>
-      </form>
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // قسم المزامنة (واجهة المريض نفسه فقط)
 // ---------------------------------------------------------------------------
 
@@ -538,24 +441,21 @@ function SyncSection({ patientUid }: { patientUid: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// صفحة المريض (خطة + سجلات + صور)
+// صفحة المريض (خطة + سجلات)
 // ---------------------------------------------------------------------------
 
 function PatientDetail({
   patientUid,
-  viewerUid,
   viewerClinicId,
   isStaffView,
 }: {
   patientUid: string;
-  viewerUid: string;
   viewerClinicId: string;
   isStaffView: boolean;
 }) {
   const [doc, setDoc] = useState<PatientDoc | null>(null);
   const [plan, setPlan] = useState<PlanConfig | null>(null);
   const [entries, setEntries] = useState<Array<{ date: string; log: DayLog }>>([]);
-  const [metas, setMetas] = useState<UploadedPhotoMeta[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [shownUid, setShownUid] = useState(patientUid);
@@ -568,7 +468,6 @@ function PatientDetail({
     setDoc(null);
     setPlan(null);
     setEntries([]);
-    setMetas([]);
     setError(null);
     setLoading(true);
   }
@@ -579,14 +478,12 @@ function PatientDetail({
       getPatient(patientUid),
       getPatientPlan(patientUid),
       listDayLogEntries(patientUid),
-      listPhotoMetas(patientUid),
     ])
-      .then(([patientDoc, patientPlan, dayEntries, photoMetas]) => {
+      .then(([patientDoc, patientPlan, dayEntries]) => {
         if (cancelled) return;
         setDoc(patientDoc);
         setPlan(patientPlan);
         setEntries(dayEntries);
-        setMetas(photoMetas);
         setError(null);
       })
       .catch((caught: unknown) => {
@@ -613,7 +510,7 @@ function PatientDetail({
           {doc.profile.clientName}
         </h2>
         <p className="mt-1 text-xs text-slate-500">
-          {isStaffView ? 'عرض طاقم العيادة (قراءة + رفع صور)' : 'ملفي السحابي'}
+          {isStaffView ? 'عرض طاقم العيادة (قراءة فقط)' : 'ملفي السحابي'}
         </p>
         {plan ? (
           <div className="mt-3 text-sm text-slate-700 dark:text-slate-200">
@@ -644,29 +541,6 @@ function PatientDetail({
           </ul>
         )}
       </Card>
-      <Card>
-        <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
-          صور التقدم ({metas.length})
-        </h3>
-        {metas.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-500">لا توجد صور مرفوعة بعد.</p>
-        ) : (
-          <ul className="mt-2 flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200">
-            {metas.map((meta) => (
-              <li key={meta.photoId} className="flex justify-between gap-2">
-                <span>{meta.date}</span>
-                <span>{meta.note ?? 'بلا ملاحظة'}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-      <PhotoUpload
-        clinicId={doc.clinicId}
-        patientUid={patientUid}
-        editorUid={viewerUid}
-        onUploaded={load}
-      />
       {!isStaffView && <SyncSection patientUid={patientUid} />}
       {isStaffView && (
         <p className="text-xs text-slate-500">
@@ -807,7 +681,6 @@ function PlatformShell() {
           ) : (
             <PatientDetail
               patientUid={route.patientUid}
-              viewerUid={profile.uid}
               viewerClinicId={profile.clinicId}
               isStaffView={profile.role !== 'patient'}
             />
@@ -818,7 +691,6 @@ function PlatformShell() {
       {user && profile && !profile.disabled && route.view !== 'patient' && profile.role === 'patient' && (
         <PatientDetail
           patientUid={profile.uid}
-          viewerUid={profile.uid}
           viewerClinicId={profile.clinicId}
           isStaffView={false}
         />
