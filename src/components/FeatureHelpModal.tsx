@@ -396,7 +396,7 @@ export const HelpButton: React.FC<HelpButtonProps> = ({ featureId, className = '
  openHelp(featureId);
  }}
  title="كيف استخدم هذه الميزة؟ (دليل توضيحي)"
- className={`inline-flex items-center justify-center rounded-full text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 transition-all cursor-pointer ${
+ className={`inline-flex items-center justify-center rounded-full text-slate-400 hover:text-peacock-indigo dark:hover:text-peacock-teal hover:bg-peacock-mist dark:hover:bg-peacock-ink-deep/60 transition-all cursor-pointer ${
  size === 'sm'? 'w-6 h-6 p-0.5': 'w-7 h-7 p-1'
  } ${className}`}
  aria-label="مساعدة وتوضيح الميزة"
@@ -425,14 +425,14 @@ export const FeatureHelpModal: React.FC<FeatureHelpModalProps> = ({ isOpen, onCl
  className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl app-overlay-shadow overflow-hidden my-auto flex flex-col max-h-[90vh]"
  >
  {/* Header */}
- <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-emerald-50/80 dark:bg-emerald-950/30">
+ <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-peacock-mist/80 dark:bg-peacock-ink-deep/30">
  <div className="flex items-center gap-2.5">
- <div className="w-9 h-9 rounded-2xl text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+ <div className="w-9 h-9 rounded-2xl text-peacock-indigo dark:text-peacock-teal flex items-center justify-center shrink-0">
  <HelpCircle className="w-5 h-5" />
  </div>
  <div>
  {guide.badge && (
- <span className="text-[12px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+ <span className="text-[12px] font-extrabold px-2.5 py-0.5 rounded-full bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep">
  {guide.badge}
  </span>
  )}
@@ -470,7 +470,7 @@ export const FeatureHelpModal: React.FC<FeatureHelpModalProps> = ({ isOpen, onCl
  key={idx}
  className="flex items-start gap-2.5 p-3 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800"
  >
- <div className="w-5 h-5 rounded-full text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-[12px] shrink-0 mt-0.5">
+ <div className="w-5 h-5 rounded-full text-peacock-indigo dark:text-peacock-teal flex items-center justify-center font-black text-[12px] shrink-0 mt-0.5">
  {idx + 1}
  </div>
  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
@@ -494,8 +494,8 @@ export const FeatureHelpModal: React.FC<FeatureHelpModalProps> = ({ isOpen, onCl
 
  {/* Doctor Note */}
  {guide.doctorNote && (
- <div className="p-3.5 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-300/60 dark:border-emerald-700/50 flex items-start gap-2.5 text-xs text-emerald-900 dark:text-emerald-200">
- <Circle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+ <div className="p-3.5 rounded-2xl bg-peacock-blue/10 dark:bg-peacock-blue/15 border border-peacock-teal-light/60 dark:border-peacock-indigo-dark/50 flex items-start gap-2.5 text-xs text-peacock-ink dark:text-peacock-sage">
+ <Circle className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal shrink-0 mt-0.5" />
  <div>
  <strong className="font-bold">توجيه {BRAND.doctorName}: </strong>
  <span>{guide.doctorNote}</span>
@@ -508,7 +508,7 @@ export const FeatureHelpModal: React.FC<FeatureHelpModalProps> = ({ isOpen, onCl
  <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/80 flex items-center justify-end">
  <button
  onClick={onClose}
- className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm transition-all"
+ className="px-6 py-2.5 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-bold text-xs sm:text-sm transition-all"
  >
  فهمت، شكراً
  </button>

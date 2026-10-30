@@ -27,7 +27,7 @@ export const DayCompleteModal: React.FC<DayCompleteModalProps> = ({
   return (
     <BottomSheetModal isOpen={isOpen} onClose={onClose} title="يوم مكتمل! 🎉">
       <div dir="rtl" className="space-y-4 text-center">
-        <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto rounded-full bg-peacock-blue/10 dark:bg-peacock-blue/20 text-peacock-indigo dark:text-peacock-teal flex items-center justify-center">
           <PartyPopper className="w-8 h-8" />
         </div>
 
@@ -60,7 +60,7 @@ export const DayCompleteModal: React.FC<DayCompleteModalProps> = ({
               onShare();
               onClose();
             }}
-            className="w-full py-3 rounded-2xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-black text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
+            className="w-full py-3 rounded-2xl bg-gradient-to-r from-peacock-blue to-peacock-indigo hover:from-peacock-indigo hover:to-peacock-indigo text-white font-black text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
           >
             <Share2 className="w-4 h-4" />
             <span>شارك إنجازك</span>

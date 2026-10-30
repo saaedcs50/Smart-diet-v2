@@ -784,7 +784,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  {/* Header - Spacious Ergonomic Workstation */}
  <div className="px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-slate-50/80 dark:bg-slate-900/90 backdrop-blur-xs">
  <div className="flex items-center gap-3 min-w-0">
- <div className="w-11 h-11 rounded-2xl text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
+ <div className="w-11 h-11 rounded-2xl text-peacock-indigo dark:text-peacock-teal flex items-center justify-center font-bold shrink-0">
  <Settings className="w-5 h-5" />
  </div>
  <div className="min-w-0">
@@ -793,7 +793,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  {brandCopy.coachPanelNamed} 
  </h3>
  {draft.clientName && (
- <span className="text-[12px] sm:text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 truncate max-w-[160px]">
+ <span className="text-[12px] sm:text-xs font-black px-2.5 py-0.5 rounded-full bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep dark:text-peacock-teal-light border border-peacock-teal-light dark:border-peacock-indigo-deep truncate max-w-[160px]">
  المتدرب: {draft.clientName}
  </span>
  )}
@@ -801,7 +801,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <p className="text-[12px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
  تخصيص الخطة والسعرات والبدائل الإكلينيكية وإدارة الحالات الطبية
  </p>
- <p className="text-[12px] sm:text-xs text-teal-600 dark:text-teal-400 font-bold truncate">
+ <p className="text-[12px] sm:text-xs text-peacock-indigo dark:text-peacock-teal font-bold truncate">
  آخر نشاط للعميل: {lastActivityLabel ?? 'لا يوجد نشاط مسجل بعد'}
  </p>
  {intakeImported && (
@@ -817,7 +817,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={handleSave}
- className="min-h-[40px] px-3.5 sm:px-4 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer"
+ className="min-h-[40px] px-3.5 sm:px-4 py-2 rounded-2xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer"
  title="حفظ الخطة"
  >
  <Save className="w-4 h-4" />
@@ -827,10 +827,10 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={() => setShowPDFExportModal(true)}
- className="min-h-[40px] px-3 sm:px-4 py-2 rounded-2xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/30 text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer"
+ className="min-h-[40px] px-3 sm:px-4 py-2 rounded-2xl bg-peacock-blue/10 hover:bg-peacock-blue/20 text-peacock-indigo dark:text-peacock-teal-light border border-peacock-blue/30 text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer"
  title="تصدير الخطة كملف PDF رسمي (Medical Prescription)"
  >
- <FileDown className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+ <FileDown className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  <span>تصدير PDF</span>
  </button>
 
@@ -857,10 +857,10 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={() => setShowCoachOnboarding(true)}
- className="min-h-[40px] px-3 sm:px-4 py-2 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer"
+ className="min-h-[40px] px-3 sm:px-4 py-2 rounded-2xl bg-peacock-blue/10 hover:bg-peacock-blue/20 text-peacock-indigo-dark dark:text-peacock-teal-light border border-peacock-blue/30 text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer"
  title={brandCopy.coachGuide}
  >
- <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+ <BookOpen className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  <span className="hidden md:inline">دليل اللوحة </span>
  </button>
 
@@ -879,20 +879,20 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={() => setShowPDFExportModal(true)}
- className="min-h-[40px] px-3 sm:px-4 py-2 rounded-2xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/30 text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+ className="min-h-[40px] px-3 sm:px-4 py-2 rounded-2xl bg-peacock-blue/10 hover:bg-peacock-blue/20 text-peacock-indigo dark:text-peacock-teal-light border border-peacock-blue/30 text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
  title="تصدير الخطة كملف PDF رسمي (Medical Prescription)"
  >
- <FileDown className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+ <FileDown className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  <span>تصدير PDF</span>
  </button>
 
  <button
  type="button"
  onClick={() => setShowCoachOnboarding(true)}
- className="min-h-[40px] px-3 sm:px-4 py-2 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+ className="min-h-[40px] px-3 sm:px-4 py-2 rounded-2xl bg-peacock-blue/10 hover:bg-peacock-blue/20 text-peacock-indigo-dark dark:text-peacock-teal-light border border-peacock-blue/30 text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
  title={brandCopy.coachGuide}
  >
- <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+ <BookOpen className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  <span className="hidden sm:inline">دليل اللوحة </span>
  </button>
 
@@ -912,13 +912,13 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="bg-slate-100/60 dark:bg-slate-850/60 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 py-2.5 shrink-0">
  <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
  {[
- { id: 'presets', label: 'مكتبة القوالب ', icon: <FolderHeart className="w-4 h-4 text-emerald-500" /> },
+ { id: 'presets', label: 'مكتبة القوالب ', icon: <FolderHeart className="w-4 h-4 text-peacock-blue" /> },
  { id: 'profile', label: 'المتدرب والسعرات', icon: <User className="w-4 h-4 text-blue-500" /> },
  { id: 'calculators', label: 'الحاسبة ', icon: <Calculator className="w-4 h-4 text-cyan-500" /> },
  { 
  id: 'medical', 
  label: `التشخيصات ${draft.medicalConditions?.conditions?.length? ` (${draft.medicalConditions.conditions.length})`: ''}`, 
- icon: <Stethoscope className="w-4 h-4 text-teal-500" /> 
+ icon: <Stethoscope className="w-4 h-4 text-peacock-blue" /> 
  },
  { 
  id: 'medications', 
@@ -933,13 +933,13 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  { 
  id: 'labs', 
  label: `التحاليل ${draft.labTracking?.entries?.length? ` (${draft.labTracking.entries.length})`: ''}`, 
- icon: <Activity className="w-4 h-4 text-teal-500" /> 
+ icon: <Activity className="w-4 h-4 text-peacock-blue" /> 
  },
- { id: 'meals', label: 'الوجبات والبدائل', icon: <Utensils className="w-4 h-4 text-emerald-500" /> },
- { id: 'habits', label: 'العادات والمكملات', icon: <CheckSquare className="w-4 h-4 text-purple-500" /> },
+ { id: 'meals', label: 'الوجبات والبدائل', icon: <Utensils className="w-4 h-4 text-peacock-blue" /> },
+ { id: 'habits', label: 'العادات والمكملات', icon: <CheckSquare className="w-4 h-4 text-peacock-blue" /> },
  { id: 'sections', label: 'تخصيص اللوحات ', icon: <LayoutGrid className="w-4 h-4 text-amber-500" /> },
  { id: 'weights', label: 'أوزان التقييم %', icon: <Sliders className="w-4 h-4 text-slate-500" /> },
- { id: 'backup', label: 'النسخ والمشاركة ', icon: <Copy className="w-4 h-4 text-emerald-500" /> },
+ { id: 'backup', label: 'النسخ والمشاركة ', icon: <Copy className="w-4 h-4 text-peacock-blue" /> },
  ].map((tab) => {
  const isSelected = activeSubTab === tab.id;
  return (
@@ -948,7 +948,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  onClick={() => setActiveSubTab(tab.id as any)}
  className={`min-h-[42px] px-3.5 sm:px-4 py-2 rounded-2xl text-xs sm:text-[13px] font-black whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
  isSelected
-? 'bg-emerald-600 text-white ring-2 ring-emerald-500/30'
+? 'bg-peacock-indigo text-white ring-2 ring-peacock-blue/30'
 : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 border border-slate-200/80 dark:border-slate-700/70 hover:border-slate-300'
  }`}
  >
@@ -967,16 +967,16 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  {activeSubTab === 'presets' && (
  <div className="space-y-5">
  {/* Presets top info & Save Custom Button */}
- <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+ <div className="p-4 sm:p-5 rounded-2xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border border-peacock-sage dark:border-peacock-ink/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
  <div>
  <div className="flex items-center gap-2">
- <h4 className="text-xs sm:text-sm font-black text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
- <FolderHeart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+ <h4 className="text-xs sm:text-sm font-black text-peacock-ink dark:text-peacock-sage flex items-center gap-1.5">
+ <FolderHeart className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  مكتبة القوالب العلاجية والغذائية الجاهزة 
  </h4>
  <HelpButton featureId="coachPresets" size="sm" />
  </div>
- <p className="text-[12px] sm:text-xs text-emerald-700/90 dark:text-emerald-300 mt-1">
+ <p className="text-[12px] sm:text-xs text-peacock-indigo-dark/90 dark:text-peacock-teal-light mt-1">
  اختاري قالب متكامل لحالة المتدرب ليتم ملء الوجبات والبدائل والمكملات والسعرات بضغطة واحدة
  </p>
  </div>
@@ -984,7 +984,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
  <button
  onClick={() => setShowSavePresetPrompt(true)}
- className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+ className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
  >
  <BookmarkPlus className="w-4 h-4" />
  <span>حفظ خطتي الحالية كقالب </span>
@@ -1032,7 +1032,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  return (
  <div
  key={preset.id}
- className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 sm:p-4.5 hover:border-emerald-500/60 transition-all flex flex-col justify-between space-y-3 hover:"
+ className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 sm:p-4.5 hover:border-peacock-blue/60 transition-all flex flex-col justify-between space-y-3 hover:"
  >
  {/* Header */}
  <div>
@@ -1070,7 +1070,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200">
  {preset.targetCalories} كالوري
  </span>
- <span className="px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300">
+ <span className="px-2 py-0.5 rounded-lg bg-peacock-mist dark:bg-peacock-ink-deep/50 text-peacock-indigo-dark dark:text-peacock-teal-light">
  {preset.targetProtein}g بروتين
  </span>
  <span className="px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300">
@@ -1102,7 +1102,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={() => handleApplyPreset(preset)}
- className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center gap-1 cursor-pointer"
+ className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-peacock-indigo hover:bg-peacock-indigo-dark text-white transition-all flex items-center gap-1 cursor-pointer"
  >
  <Zap className="w-3.5 h-3.5" />
  <span>تطبيق القالب </span>
@@ -1114,7 +1114,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  </div>
 
  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 text-[12px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2.5 border border-slate-200/70 dark:border-slate-700/60">
- <Circle className="w-4 h-4 text-emerald-500 shrink-0" />
+ <Circle className="w-4 h-4 text-peacock-blue shrink-0" />
  <span>
  ملاحظة: تطبيق القالب يقوم بملء الوجبات والبدائل والعادات والمكملات والسعرات مع الحفاظ التلقائي على اسم المتدرب ووزنه وطوله الحالي.
  </span>
@@ -1127,14 +1127,14 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="space-y-5">
  {/* Presets & BMR Quick Shortcuts Banner */}
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 flex items-center justify-between gap-3">
+ <div className="p-4 sm:p-5 rounded-2xl bg-peacock-mist dark:bg-peacock-ink-deep/40 border border-peacock-sage dark:border-peacock-indigo-deep/70 flex items-center justify-between gap-3">
  <div className="flex items-center gap-3 min-w-0">
- <FolderHeart className="w-6 h-6 text-emerald-600 shrink-0" />
+ <FolderHeart className="w-6 h-6 text-peacock-indigo shrink-0" />
  <div className="min-w-0">
- <span className="text-xs sm:text-sm font-black text-emerald-900 dark:text-emerald-200 block truncate">
+ <span className="text-xs sm:text-sm font-black text-peacock-ink dark:text-peacock-sage block truncate">
  قوالب الخطط الطبية
  </span>
- <span className="text-[12px] sm:text-xs text-emerald-700/80 dark:text-emerald-300/80 block truncate">
+ <span className="text-[12px] sm:text-xs text-peacock-indigo-dark/80 dark:text-peacock-teal-light/80 block truncate">
  بدء الخطة من قالب إكلينيكي جاهز
  </span>
  </div>
@@ -1142,15 +1142,15 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={() => setActiveSubTab('presets')}
- className="min-h-[40px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-colors cursor-pointer shrink-0"
+ className="min-h-[40px] px-4 py-2 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white text-xs font-black transition-colors cursor-pointer shrink-0"
  >
  القوالب 
  </button>
  </div>
 
- <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-between gap-3">
+ <div className="p-4 sm:p-5 rounded-2xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border border-peacock-sage dark:border-peacock-ink/60 flex items-center justify-between gap-3">
  <div className="flex items-center gap-3 min-w-0">
- <Calculator className="w-6 h-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
+ <Calculator className="w-6 h-6 text-peacock-indigo dark:text-peacock-teal shrink-0" />
  <div className="min-w-0">
  <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 block truncate">
  حاسبة السعرات (معادلة سمر / معادلة خلود) 
@@ -1162,7 +1162,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  </div>
  <button
  onClick={() => setShowBMRCalc(true)}
- className="min-h-[40px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs transition-colors shrink-0 cursor-pointer"
+ className="min-h-[40px] px-4 py-2 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-black text-xs transition-colors shrink-0 cursor-pointer"
  >
  حاسبة السعرات 
  </button>
@@ -1171,9 +1171,9 @@ export const CoachModal: React.FC<CoachModalProps> = ({
 
  {/* Batch 2.5 + 2.4: مسودة الاستبيان وهدف الأسبوع */}
  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
- <div className="p-4 sm:p-5 rounded-2xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800/60 space-y-3">
+ <div className="p-4 sm:p-5 rounded-2xl bg-peacock-mist/70 dark:bg-peacock-ink-deep/30 border border-peacock-sage dark:border-peacock-indigo-deep/60 space-y-3">
  <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
- <FileText className="w-4 h-4 text-teal-600" />
+ <FileText className="w-4 h-4 text-peacock-indigo" />
  مسودة استبيان العميل الجديد
  </h4>
  {intakeImported && (
@@ -1191,14 +1191,14 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  type="button"
  onClick={handleImportIntakeDraft}
  disabled={!intakeDraftRecord}
- className="min-h-[40px] px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white text-xs font-black transition-colors cursor-pointer"
+ className="min-h-[40px] px-4 py-2 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo disabled:opacity-40 text-white text-xs font-black transition-colors cursor-pointer"
  >
  استيراد مسودة الاستبيان
  </button>
  <button
  type="button"
  onClick={() => setShowIntakeWizard(true)}
- className="min-h-[40px] px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 text-xs font-black transition-colors cursor-pointer"
+ className="min-h-[40px] px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-peacock-teal-light dark:border-peacock-indigo text-peacock-indigo dark:text-peacock-teal-light text-xs font-black transition-colors cursor-pointer"
  >
  فتح الاستبيان مع العميل
  </button>
@@ -1214,9 +1214,9 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  </div>
  </div>
 
- <div className="p-4 sm:p-5 rounded-2xl bg-violet-50/70 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800/60 space-y-3">
+ <div className="p-4 sm:p-5 rounded-2xl bg-peacock-mist/70 dark:bg-peacock-ink-deep/30 border border-peacock-sage dark:border-peacock-indigo-deep/60 space-y-3">
  <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
- <Zap className="w-4 h-4 text-violet-600" />
+ <Zap className="w-4 h-4 text-peacock-indigo" />
  هدف الأسبوع الواحد (Weekly Focus)
  </h4>
  <label className="flex items-center gap-2 text-xs font-black text-slate-700 dark:text-slate-300 cursor-pointer">
@@ -1235,7 +1235,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  setDraft(next);
  }
  }}
- className="w-4 h-4 accent-violet-600"
+ className="w-4 h-4 accent-peacock-indigo"
  />
  تفعيل هدف أسبوعي للعميل
  </label>
@@ -1402,7 +1402,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700 space-y-4">
  <div className="flex items-center justify-between border-b border-slate-200/70 dark:border-slate-700/60 pb-2.5">
  <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
- <User className="w-4 h-4 text-emerald-600" />
+ <User className="w-4 h-4 text-peacock-indigo" />
  بيانات المتدرب والقياسات الأساسية
  </h4>
  <HelpButton featureId="coachProfile" size="sm" />
@@ -1415,7 +1415,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  value={draft.clientName || ''}
  onChange={(e) => setDraft({...draft, clientName: e.target.value })}
  placeholder="مثال: سارة أحمد"
- className="w-full text-xs sm:text-sm font-bold min-h-[44px] p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/20"
+ className="w-full text-xs sm:text-sm font-bold min-h-[44px] p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue/20"
  />
  </div>
 
@@ -1510,17 +1510,17 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={() => setShowBMRCalc(true)}
- className="text-[12px] font-black text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 px-2.5 py-1 rounded-xl border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1 cursor-pointer"
+ className="text-[12px] font-black text-peacock-indigo-dark dark:text-peacock-teal-light bg-peacock-mist dark:bg-peacock-ink-deep/60 hover:bg-peacock-pale dark:hover:bg-peacock-ink/50 px-2.5 py-1 rounded-xl border border-peacock-sage dark:border-peacock-indigo-deep transition-colors flex items-center gap-1 cursor-pointer"
  >
  <Calculator className="w-3.5 h-3.5" />
  <span>معادلة سمر / خلود </span>
  </button>
- <label className="flex items-center gap-2 text-xs font-black text-emerald-600 dark:text-emerald-400 cursor-pointer min-h-[36px] px-2.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40">
+ <label className="flex items-center gap-2 text-xs font-black text-peacock-indigo dark:text-peacock-teal cursor-pointer min-h-[36px] px-2.5 rounded-lg hover:bg-peacock-mist dark:hover:bg-peacock-ink-deep/40">
  <input
  type="checkbox"
  checked={draft.enableMacrosTracker ?? true}
  onChange={(e) => setDraft({...draft, enableMacrosTracker: e.target.checked })}
- className="w-4 h-4 rounded text-emerald-600 accent-emerald-600 cursor-pointer"
+ className="w-4 h-4 rounded text-peacock-indigo accent-peacock-indigo cursor-pointer"
  />
  تفعيل التتبع
  </label>
@@ -1539,7 +1539,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  />
  </div>
  <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80">
- <label className="block text-[12px] font-black text-emerald-600 mb-1"> بروتين (جم)</label>
+ <label className="block text-[12px] font-black text-peacock-indigo mb-1"> بروتين (جم)</label>
  <input
  type="number"
  value={draft.targetProtein || ''}
@@ -1559,7 +1559,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  />
  </div>
  <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80">
- <label className="block text-[12px] font-black text-purple-600 mb-1"> دهون (جم)</label>
+ <label className="block text-[12px] font-black text-peacock-indigo mb-1"> دهون (جم)</label>
  <input
  type="number"
  value={draft.targetFats || ''}
@@ -1575,15 +1575,15 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700 space-y-4">
  <div className="flex items-center justify-between border-b border-slate-200/70 dark:border-slate-700/60 pb-2.5">
  <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
- <Timer className="w-4 h-4 text-violet-500" />
+ <Timer className="w-4 h-4 text-peacock-blue" />
  مؤقت الصيام المتقطع
  </span>
- <label className="flex items-center gap-2 text-xs font-black text-violet-600 dark:text-violet-400 cursor-pointer min-h-[36px] px-2.5 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-950/40">
+ <label className="flex items-center gap-2 text-xs font-black text-peacock-indigo dark:text-peacock-teal cursor-pointer min-h-[36px] px-2.5 rounded-lg hover:bg-peacock-mist dark:hover:bg-peacock-ink-deep/40">
  <input
  type="checkbox"
  checked={draft.enableFastingTimer ?? true}
  onChange={(e) => setDraft({...draft, enableFastingTimer: e.target.checked })}
- className="w-4 h-4 rounded text-violet-600 accent-violet-600 cursor-pointer"
+ className="w-4 h-4 rounded text-peacock-indigo accent-peacock-indigo cursor-pointer"
  />
  تفعيل المؤقت
  </label>
@@ -1613,14 +1613,14 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  {activeSubTab === 'calculators' && (
  <div className="space-y-4">
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
- <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 flex flex-col justify-between gap-3">
+ <div className="p-4 rounded-2xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border border-peacock-sage dark:border-peacock-ink/60 flex flex-col justify-between gap-3">
  <div>
  <div className="flex items-center gap-2">
  <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
- <Calculator className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+ <Calculator className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  حاسبة السعرات (معادلة سمر + معادلة خلود) 
  </h4>
- <span className="text-[12px] font-black bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded-md">
+ <span className="text-[12px] font-black bg-peacock-pale dark:bg-peacock-ink/60 text-peacock-indigo-deep dark:text-peacock-teal-light px-1.5 py-0.5 rounded-md">
  معتمدة للعيادة
  </span>
  </div>
@@ -1632,7 +1632,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={() => setShowBMRCalc(true)}
- className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+ className="w-full py-2.5 px-4 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-black text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
  >
  <Calculator className="w-4 h-4" />
  <span>فتح حاسبة السعرات (سمر / خلود) </span>
@@ -1668,7 +1668,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700/80 space-y-2">
  <div className="flex items-center justify-between">
  <span className="text-xs font-bold text-slate-700 dark:text-slate-200">الوزن الحالي للمتدرب:</span>
- <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">{draft.startWeight || 0} كجم</span>
+ <span className="text-xs font-black text-peacock-indigo dark:text-peacock-teal">{draft.startWeight || 0} كجم</span>
  </div>
  <div className="flex items-center justify-between">
  <span className="text-xs font-bold text-slate-700 dark:text-slate-200">الطول الحالي:</span>
@@ -1691,7 +1691,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  </div>
  <div className="flex items-center justify-between">
  <span className="text-xs font-bold text-slate-700 dark:text-slate-200">دهون صحية:</span>
- <span className="text-xs font-black text-purple-600 dark:text-purple-400">{draft.targetFats || 50} جم</span>
+ <span className="text-xs font-black text-peacock-indigo dark:text-peacock-teal">{draft.targetFats || 50} جم</span>
  </div>
  </div>
  </div>
@@ -1703,7 +1703,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="space-y-3">
  <div className="flex items-center justify-between px-1">
  <div className="flex items-center gap-2">
- <Stethoscope className="w-4 h-4 text-teal-600" />
+ <Stethoscope className="w-4 h-4 text-peacock-indigo" />
  <span className="text-xs font-black text-slate-800 dark:text-slate-100">سجل الحالات المرضية والتنبيهات الإكلينيكية</span>
  <HelpButton featureId="coachMedical" size="sm" />
  </div>
@@ -1757,7 +1757,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="space-y-3">
  <div className="flex items-center justify-between px-1">
  <div className="flex items-center gap-2">
- <Activity className="w-4 h-4 text-teal-600" />
+ <Activity className="w-4 h-4 text-peacock-indigo" />
  <span className="text-xs font-black text-slate-800 dark:text-slate-100">سجل التحاليل الطبية والنطاقات الحيوية</span>
  <HelpButton featureId="coachLabs" size="sm" />
  </div>
@@ -1782,7 +1782,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  onClick={() => setMealEditMode('exchanges')}
  className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
  mealEditMode === 'exchanges'
-? 'bg-emerald-600 text-white'
+? 'bg-peacock-indigo text-white'
 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
  }`}
  >
@@ -1810,7 +1810,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  </span>
  <button
  onClick={handleAddMeal}
- className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 flex items-center gap-1 cursor-pointer"
+ className="px-3 py-1.5 rounded-xl bg-peacock-indigo text-white font-bold text-xs hover:bg-peacock-indigo-dark flex items-center gap-1 cursor-pointer"
  >
  <Plus className="w-3.5 h-3.5" />
  إضافة وجبة
@@ -1819,14 +1819,14 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  </div>
 
  {/* Fasting Meal Designer & Smart Converter Bar */}
- <div className="p-4 rounded-2xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-900/60 space-y-3">
+ <div className="p-4 rounded-2xl bg-peacock-mist/70 dark:bg-peacock-ink-deep/30 border border-peacock-sage/80 dark:border-peacock-ink/60 space-y-3">
  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
  <div className="flex items-center gap-2">
- <Zap className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+ <Zap className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  <span className="text-xs font-black text-slate-800 dark:text-slate-100">
  مصمم وأدوات وجبات الصيام الذكية:
  </span>
- <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-200 border border-teal-300 dark:border-teal-800">
+ <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-peacock-pale dark:bg-peacock-ink/60 text-peacock-indigo-deep dark:text-peacock-sage border border-peacock-teal-light dark:border-peacock-indigo-deep">
  {draft.fastingPlan?.type === 'islamic' 
  ? `🌙 صيام إسلامي (${draft.fastingPlan.islamic?.pattern === 'ramadan' ? 'رمضان' : draft.fastingPlan.islamic?.pattern === 'mon_thu' ? 'إثنين وخميس' : draft.fastingPlan.islamic?.pattern === 'white_days' ? 'الأيام البيض' : 'مخصص'})`
  : draft.fastingPlan?.type === 'christian'
@@ -1840,31 +1840,31 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={() => setShowFastingSubBankModal(true)}
- className="text-xs font-bold text-teal-700 dark:text-teal-300 hover:text-teal-900 underline flex items-center gap-1 cursor-pointer"
+ className="text-xs font-bold text-peacock-indigo dark:text-peacock-teal-light hover:text-peacock-ink underline flex items-center gap-1 cursor-pointer"
  >
  <BookOpen className="w-3.5 h-3.5" />
  <span>استعراض بنك البدائل الذكي الكامل</span>
  </button>
  </div>
 
- <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-teal-200/50 dark:border-teal-900/40">
+ <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-peacock-sage/50 dark:border-peacock-ink/40">
  <button
  type="button"
  onClick={handleIslamicMealRemap}
- className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+ className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-peacock-mist dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
  title="إعادة تسمية الوجبات إلى إفطار وسحور وتراويح"
  >
- <Moon className="w-3.5 h-3.5 text-emerald-600" />
+ <Moon className="w-3.5 h-3.5 text-peacock-indigo" />
  <span>تحويل لمسميات سحور وإفطار</span>
  </button>
 
  <button
  type="button"
  onClick={() => handleFastingAutoConvert(false)}
- className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+ className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-peacock-mist dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
  title="تحويل البروتينات الحيوانية لبدائل نباتية خالية من الزيوت"
  >
- <Leaf className="w-3.5 h-3.5 text-emerald-600" />
+ <Leaf className="w-3.5 h-3.5 text-peacock-indigo" />
  <span>تحويل تلقائي لبدائل نباتية صيامية</span>
  </button>
 
@@ -1881,7 +1881,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={() => handleAutoPopulateFastingAlternatives(draft.fastingPlan?.christian?.allowFish ?? false)}
- className="px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+ className="px-3 py-1.5 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
  title="توليد البدائل المعتمدة تلقائياً لكل وجبة"
  >
  <Sparkles className="w-3.5 h-3.5" />
@@ -1897,7 +1897,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  {/* Header */}
  <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
  <div className="flex items-center gap-2.5">
- <div className="w-9 h-9 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold">
+ <div className="w-9 h-9 rounded-2xl bg-peacock-blue/10 text-peacock-indigo dark:text-peacock-teal flex items-center justify-center font-bold">
  <Sparkles className="w-5 h-5" />
  </div>
  <div>
@@ -1927,7 +1927,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  placeholder="ابحث في الوجبات، المكونات الأصلية، البدائل، أو النصائح (مثلاً: دجاج، سلمون، سحور، ترمس)..."
  value={fastingSubSearch}
  onChange={(e) => setFastingSubSearch(e.target.value)}
- className="w-full pr-9 pl-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-100 placeholder-slate-400 outline-none focus:ring-2 focus:ring-teal-500"
+ className="w-full pr-9 pl-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-100 placeholder-slate-400 outline-none focus:ring-2 focus:ring-peacock-blue"
  />
  {fastingSubSearch && (
  <button
@@ -1959,7 +1959,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  onClick={() => setFastingSubCategory(cat.id)}
  className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
  fastingSubCategory === cat.id
- ? 'bg-teal-600 text-white shadow-xs'
+ ? 'bg-peacock-indigo text-white shadow-xs'
  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
  }`}
  >
@@ -1998,7 +1998,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  return filtered.map((item) => (
  <div 
  key={item.id}
- className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-2.5 hover:border-teal-300 dark:hover:border-teal-700 transition-colors"
+ className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-2.5 hover:border-peacock-teal-light dark:hover:border-peacock-indigo transition-colors"
  >
  <div className="flex items-center justify-between gap-2">
  <div className="flex items-center gap-2">
@@ -2007,7 +2007,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  </span>
  </div>
  <div className="flex items-center gap-1.5 shrink-0">
- <span className="text-[11px] font-black px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+ <span className="text-[11px] font-black px-2 py-0.5 rounded-lg bg-peacock-mist dark:bg-peacock-ink-deep/60 text-peacock-indigo dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep">
  ~{item.proteinGrams}g بروتين صافي
  </span>
  {item.caloriesApprox && (
@@ -2020,11 +2020,11 @@ export const CoachModal: React.FC<CoachModalProps> = ({
 
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
  {/* Plant Alt */}
- <div className="p-2.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 space-y-1 flex flex-col justify-between">
+ <div className="p-2.5 rounded-xl bg-peacock-mist/70 dark:bg-peacock-ink-deep/30 border border-peacock-pale dark:border-peacock-ink/50 space-y-1 flex flex-col justify-between">
  <div>
  <div className="flex items-center justify-between">
- <span className="text-[10px] font-black text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
- <Leaf className="w-3 h-3 text-emerald-600" /> بديل نباتي صيامي خالص:
+ <span className="text-[10px] font-black text-peacock-indigo-deep dark:text-peacock-teal-light flex items-center gap-1">
+ <Leaf className="w-3 h-3 text-peacock-indigo" /> بديل نباتي صيامي خالص:
  </span>
  <button
  type="button"
@@ -2032,7 +2032,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  navigator.clipboard.writeText(item.plantAlternative);
  onNotify(`تم نسخ البديل النباتي لـ (${item.original})`);
  }}
- className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900 dark:text-emerald-400 flex items-center gap-0.5 cursor-pointer"
+ className="text-[10px] font-bold text-peacock-indigo-dark hover:text-peacock-ink dark:text-peacock-teal flex items-center gap-0.5 cursor-pointer"
  title="نسخ البديل"
  >
  <Copy className="w-2.5 h-2.5" /> نسخ
@@ -2095,7 +2095,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={() => setShowFastingSubBankModal(false)}
- className="px-4 py-2 rounded-xl bg-teal-600 text-white font-bold hover:bg-teal-700 transition-colors cursor-pointer"
+ className="px-4 py-2 rounded-xl bg-peacock-indigo text-white font-bold hover:bg-peacock-indigo transition-colors cursor-pointer"
  >
  إغلاق المكتبة
  </button>
@@ -2201,7 +2201,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  </div>
  <button
  onClick={handleAddCheck}
- className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
+ className="px-3 py-1.5 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
  >
  <Plus className="w-3.5 h-3.5" />
  إضافة
@@ -2237,8 +2237,8 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700 space-y-3.5">
  <div className="flex items-center justify-between border-b border-slate-200/70 dark:border-slate-700/60 pb-2.5">
  <div className="flex items-center gap-1.5 min-w-0">
- <Pill className="w-4 h-4 text-purple-600 shrink-0" />
- <span className="text-xs sm:text-sm font-black text-purple-800 dark:text-purple-300 truncate">
+ <Pill className="w-4 h-4 text-peacock-indigo shrink-0" />
+ <span className="text-xs sm:text-sm font-black text-peacock-indigo-deep dark:text-peacock-teal-light truncate">
  الأدوية والمكملات ({draft.supplements?.length || 0})
  </span>
  </div>
@@ -2246,7 +2246,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={() => setShowMedicationCatalog(true)}
- className="px-2.5 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 dark:bg-purple-950/60 dark:hover:bg-purple-900/80 text-purple-700 dark:text-purple-300 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors border border-purple-200/80 dark:border-purple-800/60"
+ className="px-2.5 py-1.5 rounded-xl bg-peacock-pale hover:bg-peacock-sage dark:bg-peacock-ink-deep/60 dark:hover:bg-peacock-ink/80 text-peacock-indigo-dark dark:text-peacock-teal-light font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors border border-peacock-sage/80 dark:border-peacock-indigo-deep/60"
  title="تصفح دليل الأدوية والمكملات المصرية الشامل"
  >
  <Search className="w-3.5 h-3.5" />
@@ -2255,7 +2255,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={handleAddSupp}
- className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0 transition-colors"
+ className="px-3 py-1.5 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0 transition-colors"
  >
  <Plus className="w-3.5 h-3.5" />
  <span>إضافة</span>
@@ -2291,14 +2291,14 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700 space-y-3.5">
  <div className="flex items-center justify-between border-b border-slate-200/70 dark:border-slate-700/60 pb-2.5">
  <div className="flex items-center gap-1.5 min-w-0">
- <Lightbulb className="w-4 h-4 text-emerald-600 shrink-0" />
- <span className="text-xs sm:text-sm font-black text-emerald-800 dark:text-emerald-300 truncate">
+ <Lightbulb className="w-4 h-4 text-peacock-indigo shrink-0" />
+ <span className="text-xs sm:text-sm font-black text-peacock-indigo-deep dark:text-peacock-teal-light truncate">
  {brandCopy.tipsFrom} ({draft.tips?.length || 0})
  </span>
  </div>
  <button
  onClick={handleAddTip}
- className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
+ className="px-3 py-1.5 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
  >
  <Plus className="w-3.5 h-3.5" />
  إضافة
@@ -2338,11 +2338,11 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  {activeSubTab === 'sections' && (
  <div className="space-y-5">
  {/* Header & Quick Presets */}
- <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 space-y-3">
+ <div className="p-4 sm:p-5 rounded-2xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border border-peacock-sage dark:border-peacock-ink/60 space-y-3">
  <div className="flex items-center justify-between">
  <div>
  <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
- <LayoutGrid className="w-4 h-4 text-emerald-600" />
+ <LayoutGrid className="w-4 h-4 text-peacock-indigo" />
  تخصيص لوحات وأقسام صفحة المتدرب
  </h4>
  <p className="text-[12px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -2356,7 +2356,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="flex flex-wrap gap-2 pt-1">
  <button
  onClick={() => handleSetAllSections(true)}
- className="px-3.5 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+ className="px-3.5 py-1.5 rounded-xl bg-peacock-indigo text-white font-bold text-xs hover:bg-peacock-indigo-dark transition-colors flex items-center gap-1.5 cursor-pointer"
  >
  <Eye className="w-3.5 h-3.5" />
  إظهار كافة اللوحات
@@ -2381,7 +2381,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  key: 'scoreCard' as const,
  label: 'بطاقة معدل الالتزام وسلسلة الأيام',
  desc: 'نسبة الالتزام الإجمالية، الستريك، ويوم الفري وأزرار التقرير',
- icon: <Circle className="w-4 h-4 text-emerald-500" />,
+ icon: <Circle className="w-4 h-4 text-peacock-blue" />,
  },
  {
  key: 'tipsBanner' as const,
@@ -2393,7 +2393,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  key: 'quickReportBtn' as const,
  label: 'زر الإرسال السريع لتقرير الواتساب',
  desc: 'الزر الأخضر الكبير في أسفل الصفحة لتصدير ومشاركة التقرير اليومي',
- icon: <Share2 className="w-4 h-4 text-emerald-600" />,
+ icon: <Share2 className="w-4 h-4 text-peacock-indigo" />,
  },
  ],
  },
@@ -2404,7 +2404,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  key: 'mealsList' as const,
  label: 'قائمة الوجبات والبدائل المقررة',
  desc: 'بطاقات وجبات اليوم مع زر البدائل وخيارات التقييم',
- icon: <Utensils className="w-4 h-4 text-emerald-600" />,
+ icon: <Utensils className="w-4 h-4 text-peacock-indigo" />,
  },
  {
  key: 'macrosTracker' as const,
@@ -2416,7 +2416,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  key: 'fastingTimer' as const,
  label: 'مؤقت ساعات الصيام المتقطع',
  desc: 'عداد الصيام التفاعلي مع حساب ساعات الصيام والبدء والإيقاف',
- icon: <Timer className="w-4 h-4 text-purple-500" />,
+ icon: <Timer className="w-4 h-4 text-peacock-blue" />,
  },
  ],
  },
@@ -2456,13 +2456,13 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  key: 'checklistTracker' as const,
  label: 'قائمة العادات والمهام اليومية',
  desc: 'قائمة المهام المحددة للمتدرب (مشى، أكل خضار، التزام...)',
- icon: <CheckSquare className="w-4 h-4 text-teal-500" />,
+ icon: <CheckSquare className="w-4 h-4 text-peacock-blue" />,
  },
  {
  key: 'supplementsTracker' as const,
  label: 'الفيتامينات والمكملات الغذائية',
  desc: 'مواعيد وجرعات المكملات والفيتامينات المقررة',
- icon: <Pill className="w-4 h-4 text-purple-500" />,
+ icon: <Pill className="w-4 h-4 text-peacock-blue" />,
  },
  {
  key: 'medicationsTracker' as const,
@@ -2486,7 +2486,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  key: 'doctorNotes' as const,
  label: `ملاحظات واستفسارات لـ ${BRAND.doctorName}`,
  desc: brandCopy.traineeNotes,
- icon: <MessageSquare className="w-4 h-4 text-emerald-500" />,
+ icon: <MessageSquare className="w-4 h-4 text-peacock-blue" />,
  },
  ],
  },
@@ -2503,13 +2503,13 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  key: 'labTracker' as const,
  label: 'قسم التحاليل المعملية ورسوم التتبع ',
  desc: 'إظهار كروت التحاليل ورسم الاتجاه في تاب الجسم',
- icon: <Activity className="w-4 h-4 text-teal-500" />,
+ icon: <Activity className="w-4 h-4 text-peacock-blue" />,
  },
  {
  key: 'reportsTab' as const,
  label: 'تبويب التقارير الأسبوعية والأرشيف',
  desc: 'إتاحة تبويب سجلات الأيام وتصدير تقارير المتابعة الشاملة',
- icon: <BarChart3 className="w-4 h-4 text-emerald-500" />,
+ icon: <BarChart3 className="w-4 h-4 text-peacock-blue" />,
  },
  ],
  },
@@ -2528,7 +2528,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  onClick={() => handleToggleSection(item.key)}
  className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
  isVisible
-? 'bg-white dark:bg-slate-850 border-slate-200/90 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-600'
+? 'bg-white dark:bg-slate-850 border-slate-200/90 dark:border-slate-700 hover:border-peacock-teal dark:hover:border-peacock-indigo'
 : 'bg-slate-100/50 dark:bg-slate-900/40 border-dashed border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-90'
  }`}
  >
@@ -2549,7 +2549,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  {item.label}
  </span>
  {isVisible? (
- <span className="text-[12px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+ <span className="text-[12px] font-black px-2 py-0.5 rounded-full bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep dark:text-peacock-teal-light">
  ظاهرة
  </span>
  ): (
@@ -2568,7 +2568,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="shrink-0 flex items-center">
  <div
  className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-200 ease-in-out ${
- isVisible? 'bg-emerald-600': 'bg-slate-300 dark:bg-slate-700'
+ isVisible? 'bg-peacock-indigo': 'bg-slate-300 dark:bg-slate-700'
  }`}
  >
  <div
@@ -2676,7 +2676,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  </div>
  </div>
 
- <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm font-black text-center border border-emerald-200 dark:border-emerald-800/60">
+ <div className="p-3.5 rounded-2xl bg-peacock-mist dark:bg-peacock-ink-deep/40 text-peacock-indigo-deep dark:text-peacock-teal-light text-xs sm:text-sm font-black text-center border border-peacock-sage dark:border-peacock-indigo-deep/60">
  إجمالي الأوزان الحالية: {(draft.scoreWeights.checklist || 0) + (draft.scoreWeights.water || 0) + (draft.scoreWeights.sleep || 0) + (draft.scoreWeights.meals || 0)}%
  </div>
  </div>
@@ -2686,9 +2686,9 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  {activeSubTab === 'backup' && (
  <div className="space-y-5">
   {/* Official Medical PDF Export Feature Card */}
-  <div className="p-5 sm:p-6 rounded-3xl bg-linear-to-r from-teal-50 via-emerald-50 to-teal-50 dark:from-teal-950/40 dark:via-emerald-950/40 dark:to-teal-950/40 border-2 border-teal-500/40 dark:border-teal-700/60 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+  <div className="p-5 sm:p-6 rounded-3xl bg-linear-to-r from-peacock-mist via-peacock-mist to-peacock-mist dark:from-peacock-ink-deep/40 dark:via-peacock-ink-deep/40 dark:to-peacock-ink-deep/40 border-2 border-peacock-blue/40 dark:border-peacock-indigo/60 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
    <div className="flex items-start sm:items-center gap-3.5">
-    <div className="w-12 h-12 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-bold shadow-md shrink-0">
+    <div className="w-12 h-12 rounded-2xl bg-peacock-indigo text-white flex items-center justify-center font-bold shadow-md shrink-0">
      <FileDown className="w-6 h-6" />
     </div>
     <div>
@@ -2696,7 +2696,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
       <h4 className="font-black text-slate-900 dark:text-slate-100 text-sm sm:text-base">
        تصدير الخطة كملف PDF رسمي (Medical Dietary Prescription)
       </h4>
-      <span className="text-[12px] font-black px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200 border border-teal-300 dark:border-teal-700">
+      <span className="text-[12px] font-black px-2.5 py-0.5 rounded-full bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink dark:text-peacock-sage border border-peacock-teal-light dark:border-peacock-indigo">
        A4 عالي الدقة
       </span>
      </div>
@@ -2710,7 +2710,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
     <button
      type="button"
      onClick={() => setShowPDFExportModal(true)}
-     className="px-5 py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-black text-xs sm:text-sm flex items-center gap-2 shadow-md transition-all cursor-pointer"
+     className="px-5 py-3 rounded-2xl bg-peacock-indigo hover:bg-peacock-indigo text-white font-black text-xs sm:text-sm flex items-center gap-2 shadow-md transition-all cursor-pointer"
     >
      <FileDown className="w-4 h-4" />
      <span>معاينة وتصدير PDF الآن</span>
@@ -2723,34 +2723,34 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  {/* Column 1: WhatsApp Export Options & Sync Code */}
  <div className="space-y-4">
  {/* Option 1: Detailed Readable Plan (No Code) */}
- <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 space-y-3">
- <div className="flex items-center justify-between border-b border-emerald-200/80 dark:border-emerald-800/80 pb-2.5">
+ <div className="p-4 sm:p-5 rounded-2xl bg-peacock-mist/90 dark:bg-peacock-ink-deep/40 border border-peacock-sage dark:border-peacock-indigo-deep/80 space-y-3">
+ <div className="flex items-center justify-between border-b border-peacock-sage/80 dark:border-peacock-indigo-deep/80 pb-2.5">
  <div className="flex items-center gap-2">
- <div className="w-8 h-8 rounded-xl dark: text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold">
+ <div className="w-8 h-8 rounded-xl dark: text-peacock-indigo-dark dark:text-peacock-teal-light flex items-center justify-center font-bold">
  <FileText className="w-4 h-4" />
  </div>
  <div>
- <h4 className="font-black text-emerald-950 dark:text-emerald-200 text-xs sm:text-sm">
+ <h4 className="font-black text-peacock-ink-deep dark:text-peacock-sage text-xs sm:text-sm">
  1. إرسال الخطة الشاملة المكتوبة (بدون كود)
  </h4>
- <span className="text-[12px] text-emerald-700 dark:text-emerald-400">
+ <span className="text-[12px] text-peacock-indigo-dark dark:text-peacock-teal">
  مفصلة بالعربي • سهلة القراءة • للموبايلات القديمة
  </span>
  </div>
  </div>
- <span className="text-[12px] font-black px-2 py-0.5 rounded-full bg-emerald-200/70 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-300">
+ <span className="text-[12px] font-black px-2 py-0.5 rounded-full bg-peacock-sage/70 dark:bg-peacock-ink text-peacock-indigo-deep dark:text-peacock-teal-light">
  نص عربي فقط
  </span>
  </div>
 
- <p className="text-[12px] text-emerald-800/90 dark:text-emerald-300 leading-relaxed">
+ <p className="text-[12px] text-peacock-indigo-deep/90 dark:text-peacock-teal-light leading-relaxed">
  نص الخطة المكتوبة بالتفصيل (الوجبات والبدائل، السعرات، الماكروز، هدف الماء، المكملات، والعادات) <strong>بدون كود المزامنة المشفر</strong>. مثالي للقراءة المباشرة على الواتساب وللأجهزة ذات الحافظة (Clipboard) المحدودة.
  </p>
 
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
  <button
  onClick={handleShareReadablePlanWhatsApp}
- className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 text-white font-black text-xs sm:text-sm hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+ className="w-full py-2.5 px-3 rounded-xl bg-peacock-indigo text-white font-black text-xs sm:text-sm hover:bg-peacock-indigo-dark transition-all flex items-center justify-center gap-1.5 cursor-pointer"
  >
  <Share2 className="w-4 h-4" />
  إرسال الخطة بالواتساب 
@@ -2758,7 +2758,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
 
  <button
  onClick={handleCopyReadablePlan}
- className="w-full py-2.5 px-3 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-bold text-xs sm:text-sm hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+ className="w-full py-2.5 px-3 rounded-xl bg-peacock-pale dark:bg-peacock-ink/60 text-peacock-indigo-deep dark:text-peacock-sage font-bold text-xs sm:text-sm hover:bg-peacock-sage dark:hover:bg-peacock-indigo-deep transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
  >
  <Copy className="w-4 h-4" />
  نسخ الخطة المكتوبة 
@@ -2820,7 +2820,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="flex flex-wrap items-center gap-2">
  <button
  onClick={handleShareFullPlanWhatsApp}
- className="flex-1 py-2 px-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-black text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer"
+ className="flex-1 py-2 px-2.5 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-deep text-white font-black text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer"
  >
  <Send className="w-3.5 h-3.5" />
  <span>إرسال مدمجة</span>
@@ -2848,17 +2848,17 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  {/* Column 2: Weekly Follow-up Draft & Backup/Restore */}
  <div className="space-y-4">
  {/* Weekly Message Draft Card */}
- <div className="p-5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-teal-200 dark:border-teal-800/80 space-y-3.5">
- <div className="flex items-center justify-between border-b border-teal-200/80 dark:border-teal-800/80 pb-2.5">
- <h4 className="font-black text-teal-950 dark:text-teal-200 text-xs sm:text-sm flex items-center gap-1.5">
- <Wand2 className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+ <div className="p-5 rounded-2xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border border-peacock-sage dark:border-peacock-indigo-deep/80 space-y-3.5">
+ <div className="flex items-center justify-between border-b border-peacock-sage/80 dark:border-peacock-indigo-deep/80 pb-2.5">
+ <h4 className="font-black text-peacock-ink-deep dark:text-peacock-sage text-xs sm:text-sm flex items-center gap-1.5">
+ <Wand2 className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  صياغة رسالة المتابعة الأسبوعية ({BRAND.doctorName}) 
  </h4>
- <span className="text-[12px] font-black px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+ <span className="text-[12px] font-black px-2 py-0.5 rounded-full bg-peacock-pale dark:bg-peacock-ink-deep text-peacock-indigo-deep dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep">
  تحليل 7 أيام
  </span>
  </div>
- <p className="text-[12px] sm:text-xs text-teal-900/80 dark:text-teal-300 leading-relaxed">
+ <p className="text-[12px] sm:text-xs text-peacock-ink/80 dark:text-peacock-teal-light leading-relaxed">
  توليد رسالة تشجيعية وتوجيه عملي مباشر للواتساب بالاعتماد على التزام المتدرب، تغير وزنه، شربه للماء، وتمارينه خلال آخر أسبوع.
  </p>
 
@@ -2866,21 +2866,21 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={handleGenerateCoachWeeklyDraft}
- className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
+ className="w-full py-3 px-4 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
  >
  <Wand2 className="w-4 h-4 text-amber-200" />
  <span>صياغة مسودة المتابعة للأسبوع </span>
  </button>
  ): (
  <div className="space-y-2.5 pt-1">
- <label className="block text-[12px] sm:text-xs font-black text-teal-900 dark:text-teal-300">
+ <label className="block text-[12px] sm:text-xs font-black text-peacock-ink dark:text-peacock-teal-light">
  مراجعة وتعديل نص الرسالة المقترح:
  </label>
  <textarea
  rows={6}
  value={coachWeeklyDraftText}
  onChange={(e) => setCoachWeeklyDraftText(e.target.value)}
- className="w-full text-xs sm:text-sm p-3 rounded-xl border border-teal-200 dark:border-teal-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 resize-none font-medium leading-relaxed"
+ className="w-full text-xs sm:text-sm p-3 rounded-xl border border-peacock-sage dark:border-peacock-indigo-deep bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 resize-none font-medium leading-relaxed"
  placeholder="مسودة الرسالة..."
  />
 
@@ -2914,7 +2914,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={handleGenerateCoachWeeklyDraft}
- className="py-2.5 px-3 rounded-xl bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 hover:bg-teal-200 dark:hover:bg-teal-900 font-black text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+ className="py-2.5 px-3 rounded-xl bg-peacock-pale dark:bg-peacock-ink-deep text-peacock-indigo-deep dark:text-peacock-teal-light hover:bg-peacock-sage dark:hover:bg-peacock-ink font-black text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
  >
  <RotateCcw className="w-3.5 h-3.5" />
  <span>إعادة التوليد</span>
@@ -2997,27 +2997,27 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <button
  type="button"
  onClick={() => setShowPDFExportModal(true)}
- className="min-h-[44px] h-12 px-3 sm:px-4 rounded-2xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/30 font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+ className="min-h-[44px] h-12 px-3 sm:px-4 rounded-2xl bg-peacock-blue/10 hover:bg-peacock-blue/20 text-peacock-indigo dark:text-peacock-teal-light border border-peacock-blue/30 font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
  title="تصدير الخطة كملف PDF رسمي (Medical Prescription)"
  >
- <FileDown className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+ <FileDown className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  <span className="hidden xs:inline">تصدير PDF</span>
  </button>
 
  <button
  type="button"
  onClick={() => setShowShareOptionsModal(true)}
- className="min-h-[44px] h-12 px-3 sm:px-4 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+ className="min-h-[44px] h-12 px-3 sm:px-4 rounded-2xl bg-peacock-blue/10 hover:bg-peacock-blue/20 text-peacock-indigo-dark dark:text-peacock-teal-light border border-peacock-blue/30 font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
  title="خيارات إرسال الخطة عبر واتساب"
  >
- <Share2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+ <Share2 className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  <span className="hidden xs:inline">إرسال واتساب</span>
  </button>
 
  <button
  type="button"
  onClick={handleSave}
- className="min-h-[44px] h-12 flex-1 sm:flex-none sm:px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+ className="min-h-[44px] h-12 flex-1 sm:flex-none sm:px-6 rounded-2xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
  >
  <Save className="w-4 h-4" />
  <span>حفظ وتطبيق الخطة</span>
@@ -3056,8 +3056,8 @@ export const CoachModal: React.FC<CoachModalProps> = ({
 
  {/* Preview Content */}
  <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs">
- <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 space-y-1">
- <span className="font-black text-emerald-800 dark:text-emerald-300 block"> الهدف والوصف الطبي:</span>
+ <div className="p-3 rounded-2xl bg-peacock-mist dark:bg-peacock-ink-deep/40 border border-peacock-sage dark:border-peacock-indigo-deep/60 space-y-1">
+ <span className="font-black text-peacock-indigo-deep dark:text-peacock-teal-light block"> الهدف والوصف الطبي:</span>
  <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
  {previewPreset.description}
  </p>
@@ -3066,7 +3066,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  {/* Meals list */}
  <div className="space-y-2.5">
  <h5 className="font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
- <Utensils className="w-4 h-4 text-emerald-600" />
+ <Utensils className="w-4 h-4 text-peacock-indigo" />
  <span>الوجبات والبدائل المقررة ({previewPreset.planData.meals.length}):</span>
  </h5>
  <div className="space-y-2">
@@ -3074,14 +3074,14 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div key={m.id} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-1.5">
  <div className="flex items-center justify-between font-black text-slate-800 dark:text-slate-100">
  <span>{idx + 1}. {m.name}</span>
- <span className="text-[12px] text-emerald-600 dark:text-emerald-400">{m.calories} كالوري | {m.proteinGrams}g بروتين</span>
+ <span className="text-[12px] text-peacock-indigo dark:text-peacock-teal">{m.calories} كالوري | {m.proteinGrams}g بروتين</span>
  </div>
  <p className="text-slate-600 dark:text-slate-300 font-medium">
  <strong className="text-slate-700 dark:text-slate-200">المحتوى الأساسي:</strong> {m.items}
  </p>
  {m.alternatives && m.alternatives.length > 0 && (
  <div className="pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-[12px] text-slate-500 dark:text-slate-400 space-y-0.5">
- <strong className="text-emerald-700 dark:text-emerald-400 block"> البدائل المعتمدة:</strong>
+ <strong className="text-peacock-indigo-dark dark:text-peacock-teal block"> البدائل المعتمدة:</strong>
  {m.alternatives.map((alt, aidx) => (
  <div key={aidx}>• {alt}</div>
  ))}
@@ -3120,7 +3120,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="space-y-1">
  {previewPreset.planData.checklist.map((c) => (
  <div key={c.id} className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 font-medium flex items-center gap-2">
- <span className="text-emerald-600 font-black"></span>
+ <span className="text-peacock-indigo font-black"></span>
  <span>{c.label}</span>
  </div>
  ))}
@@ -3158,7 +3158,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  handleApplyPreset(previewPreset);
  setPreviewPreset(null);
  }}
- className="px-5 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white transition-all cursor-pointer flex items-center gap-1.5"
+ className="px-5 py-2 rounded-xl text-xs font-black bg-peacock-indigo hover:bg-peacock-indigo-dark text-white transition-all cursor-pointer flex items-center gap-1.5"
  >
  <Zap className="w-3.5 h-3.5" />
  <span>تطبيق هذا القالب على المسودة </span>
@@ -3174,7 +3174,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 app-overlay-shadow p-5 space-y-4">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2">
- <div className="w-8 h-8 rounded-xl dark: text-emerald-600 flex items-center justify-center font-bold">
+ <div className="w-8 h-8 rounded-xl dark: text-peacock-indigo flex items-center justify-center font-bold">
  <BookmarkPlus className="w-4 h-4" />
  </div>
  <h4 className="font-black text-slate-800 dark:text-slate-100 text-sm">
@@ -3197,7 +3197,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  placeholder="مثلاً: خطة نباتية خاصة / تنشيف سريع 1400 كالوري..."
  value={newPresetName}
  onChange={(e) => setNewPresetName(e.target.value)}
- className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-bold outline-none focus:ring-2 focus:ring-emerald-500"
+ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-bold outline-none focus:ring-2 focus:ring-peacock-blue"
  />
  </div>
 
@@ -3228,7 +3228,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  placeholder="وصف مختصر لمميزات هذا القالب وحالات استخدامه..."
  value={newPresetSummary}
  onChange={(e) => setNewPresetSummary(e.target.value)}
- className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium outline-none focus:ring-2 focus:ring-emerald-500"
+ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium outline-none focus:ring-2 focus:ring-peacock-blue"
  />
  </div>
 
@@ -3249,7 +3249,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  </button>
  <button
  type="submit"
- className="flex-1 py-2.5 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+ className="flex-1 py-2.5 rounded-xl font-black bg-peacock-indigo hover:bg-peacock-indigo-dark text-white cursor-pointer"
  >
  حفظ في مكتبتي 
  </button>
@@ -3331,7 +3331,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="fixed inset-0 z-60 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in zoom-in-95 duration-150">
  <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl border border-slate-200 dark:border-slate-800 app-overlay-shadow overflow-hidden flex flex-col max-h-[92vh]">
  {/* Header */}
- <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-emerald-50/70 dark:bg-emerald-950/40">
+ <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-peacock-mist/70 dark:bg-peacock-ink-deep/40">
  <div className="flex items-center gap-2.5">
  <div className="w-10 h-10 rounded-2xl text-white flex items-center justify-center font-bold">
  <Share2 className="w-5 h-5" />
@@ -3340,7 +3340,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <h3 className="font-black text-slate-800 dark:text-slate-100 text-sm sm:text-base">
  خيارات إرسال الخطة للمتدرب 
  </h3>
- <p className="text-[12px] text-emerald-800/80 dark:text-emerald-300 font-medium">
+ <p className="text-[12px] text-peacock-indigo-deep/80 dark:text-peacock-teal-light font-medium">
  اختر الصيغة المناسبة لتفادي مشاكل الحافظة في الموبايلات القديمة
  </p>
  </div>
@@ -3358,22 +3358,22 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  <div className="p-4 sm:p-5 overflow-y-auto space-y-4 text-xs">
  
  {/* Option 1: Readable Plan Without Code */}
- <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 space-y-2.5">
+ <div className="p-4 rounded-2xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border border-peacock-sage dark:border-peacock-indigo-deep/60 space-y-2.5">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2">
- <div className="w-7 h-7 rounded-xl dark: text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold">
+ <div className="w-7 h-7 rounded-xl dark: text-peacock-indigo-dark dark:text-peacock-teal-light flex items-center justify-center font-bold">
  <FileText className="w-4 h-4" />
  </div>
- <span className="font-black text-emerald-950 dark:text-emerald-200 text-xs sm:text-sm">
+ <span className="font-black text-peacock-ink-deep dark:text-peacock-sage text-xs sm:text-sm">
  1. إرسال الخطة الشاملة المكتوبة (بدون كود)
  </span>
  </div>
- <span className="text-[12px] font-black px-2 py-0.5 rounded-full bg-emerald-200/70 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-300">
+ <span className="text-[12px] font-black px-2 py-0.5 rounded-full bg-peacock-sage/70 dark:bg-peacock-ink text-peacock-indigo-deep dark:text-peacock-teal-light">
  نص عربي فقط
  </span>
  </div>
 
- <p className="text-[12px] text-emerald-800/90 dark:text-emerald-300 leading-relaxed">
+ <p className="text-[12px] text-peacock-indigo-deep/90 dark:text-peacock-teal-light leading-relaxed">
  نص الخطة بالعربي بالتفصيل (الوجبات، البدائل، السعرات، الماكروز، هدف الماء، المكملات، والأدوية) <strong>بدون كود المزامنة المشفر</strong>. يسهل قراءته على الواتساب ولا يثقل حافظة الموبايلات القديمة.
  </p>
 
@@ -3383,7 +3383,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  handleShareReadablePlanWhatsApp();
  setShowShareOptionsModal(false);
  }}
- className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 text-white font-black text-xs hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+ className="w-full py-2.5 px-3 rounded-xl bg-peacock-indigo text-white font-black text-xs hover:bg-peacock-indigo-dark transition-all flex items-center justify-center gap-1.5 cursor-pointer"
  >
  <Send className="w-3.5 h-3.5" />
  إرسال الخطة بالواتساب 
@@ -3391,7 +3391,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
 
  <button
  onClick={handleCopyReadablePlan}
- className="w-full py-2.5 px-3 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-bold text-xs hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+ className="w-full py-2.5 px-3 rounded-xl bg-peacock-pale dark:bg-peacock-ink/60 text-peacock-indigo-deep dark:text-peacock-sage font-bold text-xs hover:bg-peacock-sage dark:hover:bg-peacock-indigo-deep transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
  >
  <Copy className="w-3.5 h-3.5" />
  نسخ الخطة المكتوبة 
@@ -3458,7 +3458,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  handleShareFullPlanWhatsApp();
  setShowShareOptionsModal(false);
  }}
- className="flex-1 py-2 px-3 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+ className="flex-1 py-2 px-3 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-deep text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
  >
  <Send className="w-3.5 h-3.5" />
  إرسال مدمجة
@@ -3475,16 +3475,16 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  </div>
 
  {/* Option 4: Official Medical PDF Plan & Prescription */}
- <div className="p-3.5 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/70 space-y-2">
- <div className="flex items-center justify-between text-teal-900 dark:text-teal-200 font-black">
+ <div className="p-3.5 rounded-2xl bg-peacock-mist dark:bg-peacock-ink-deep/40 border border-peacock-sage dark:border-peacock-indigo-deep/70 space-y-2">
+ <div className="flex items-center justify-between text-peacock-ink dark:text-peacock-sage font-black">
  <div className="flex items-center gap-1.5">
- <FileDown className="w-4 h-4 text-teal-600" />
+ <FileDown className="w-4 h-4 text-peacock-indigo" />
  <span>4. تصدير روشتة ونظام غذائي PDF رسمي:</span>
  </div>
- <span className="text-[12px] font-bold text-teal-600 dark:text-teal-400">A4 للطباعة</span>
+ <span className="text-[12px] font-bold text-peacock-indigo dark:text-peacock-teal">A4 للطباعة</span>
  </div>
 
- <p className="text-[12px] text-teal-800/80 dark:text-teal-300 leading-relaxed">
+ <p className="text-[12px] text-peacock-indigo-deep/80 dark:text-peacock-teal-light leading-relaxed">
  توليد ملف PDF جاهز بمقاس A4 رسمي مع الختم وتوزيع الوجبات والماكروز لإرساله كملف أو طباعته ورقياً.
  </p>
 
@@ -3494,7 +3494,7 @@ export const CoachModal: React.FC<CoachModalProps> = ({
  setShowShareOptionsModal(false);
  setShowPDFExportModal(true);
  }}
- className="w-full py-2.5 px-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+ className="w-full py-2.5 px-3 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo text-white font-black text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
  >
  <FileDown className="w-4 h-4" />
  <span>معاينة وتصدير الـ PDF الآن</span>

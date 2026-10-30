@@ -277,7 +277,7 @@ export const CycleTrackingManager: React.FC<CycleTrackingManagerProps> = ({
  {/* Client Visibility Toggle */}
  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
  <div className="flex items-center gap-2">
- <Eye className="w-4 h-4 text-purple-500" />
+ <Eye className="w-4 h-4 text-peacock-blue" />
  <div>
  <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
  إظهار شارة الطور وإرشاداته للعميلة في تبويب اليوم
@@ -296,7 +296,7 @@ export const CycleTrackingManager: React.FC<CycleTrackingManagerProps> = ({
  }))
  }
  className={`w-10 h-5 flex items-center rounded-full p-0.5 transition-colors ${
- cycleConfig.showPhaseToClient!== false? 'bg-purple-600': 'bg-slate-300 dark:bg-slate-700'
+ cycleConfig.showPhaseToClient!== false? 'bg-peacock-indigo': 'bg-slate-300 dark:bg-slate-700'
  }`}
  >
  <div
@@ -312,7 +312,7 @@ export const CycleTrackingManager: React.FC<CycleTrackingManagerProps> = ({
  <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
  <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
  <h4 className="font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
- <Activity className="w-4 h-4 text-teal-500" />
+ <Activity className="w-4 h-4 text-peacock-blue" />
  <span>العلامات والسياقات السريرية (Clinical Flags)</span>
  </h4>
  <span className="text-[12px] text-slate-400">سياق مسجل وليس تشخيصاً تلقائياً</span>

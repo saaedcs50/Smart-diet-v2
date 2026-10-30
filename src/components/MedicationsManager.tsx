@@ -344,7 +344,7 @@ export const MedicationsManager: React.FC<MedicationsManagerProps> = ({
           <button
             type="button"
             onClick={() => setShowCatalogModal(true)}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-100 dark:bg-purple-950/70 hover:bg-purple-200 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-peacock-pale dark:bg-peacock-ink-deep/70 hover:bg-peacock-sage text-peacock-indigo-dark dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>دليل الأدوية المصري</span>
@@ -410,7 +410,7 @@ export const MedicationsManager: React.FC<MedicationsManagerProps> = ({
               <button
                 type="button"
                 onClick={() => setShowCatalogModal(true)}
-                className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex items-center gap-1 cursor-pointer"
+                className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-peacock-mist dark:bg-peacock-ink-deep/60 text-peacock-indigo-dark dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep flex items-center gap-1 cursor-pointer"
               >
                 <Search className="w-3 h-3" />
                 <span>اختر من دليل الأدوية 🇪🇬</span>
@@ -660,7 +660,7 @@ export const MedicationsManager: React.FC<MedicationsManagerProps> = ({
           <button
             type="button"
             onClick={() => setShowCatalogModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white hover:bg-purple-700 cursor-pointer transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-peacock-indigo text-white hover:bg-peacock-indigo-dark cursor-pointer transition-colors shadow-xs"
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>تصفح دليل الأدوية المصري الشامل</span>
@@ -722,7 +722,7 @@ export const MedicationsManager: React.FC<MedicationsManagerProps> = ({
                         </span>
                       )}
                       {appetiteInfo && med.appetiteEffect !== 'unknown' && med.appetiteEffect !== 'none' && (
-                        <span className="px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 font-medium">
+                        <span className="px-2 py-0.5 rounded-md bg-peacock-mist dark:bg-peacock-ink-deep/50 text-peacock-indigo dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep font-medium">
                           {appetiteInfo.label}
                         </span>
                       )}
@@ -730,7 +730,7 @@ export const MedicationsManager: React.FC<MedicationsManagerProps> = ({
                         <span
                           className={`px-2 py-0.5 rounded-md border font-medium ${
                             med.weightEffect === 'loss'
-                              ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                              ? 'bg-peacock-mist dark:bg-peacock-ink-deep/50 text-peacock-indigo-dark dark:text-peacock-teal-light border-peacock-sage dark:border-peacock-indigo-deep'
                               : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800'
                           }`}
                         >
@@ -765,7 +765,7 @@ export const MedicationsManager: React.FC<MedicationsManagerProps> = ({
                       className={`p-1.5 rounded-lg border text-xs cursor-pointer transition-colors ${
                         med.active !== false
                           ? 'text-slate-400 hover:text-slate-600 border-slate-200 dark:border-slate-700'
-                          : 'text-emerald-600 border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950'
+                          : 'text-peacock-indigo border-peacock-teal-light dark:border-peacock-indigo-dark bg-peacock-mist dark:bg-peacock-ink-deep'
                       }`}
                       title={med.active !== false ? 'إيقاف مؤقت' : 'إعادة تفعيل'}
                     >

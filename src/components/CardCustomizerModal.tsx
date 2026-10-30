@@ -45,7 +45,7 @@ const CARDS_CONFIG: CardMeta[] = [
     key: 'mealsList',
     label: 'قائمة الوجبات والبدائل',
     desc: 'الوجبات الأساسية والخفيفة مع البدائل الغذائية المحسوبة',
-    icon: <Utensils className="w-4 h-4 text-emerald-500" />,
+    icon: <Utensils className="w-4 h-4 text-peacock-blue" />,
     category: 'core',
   },
   {
@@ -73,14 +73,14 @@ const CARDS_CONFIG: CardMeta[] = [
     key: 'macrosTracker',
     label: 'حاسبة الماكروز والسعرات',
     desc: 'متابعة حصص البروتين، الكارب، والدهون المستهدفة',
-    icon: <PieChart className="w-4 h-4 text-purple-500" />,
+    icon: <PieChart className="w-4 h-4 text-peacock-blue" />,
     category: 'nutrition',
   },
   {
     key: 'medicationsTracker',
     label: 'جدول الأدوية والمواعيد',
     desc: 'مواعيد الجرعات وعلاقتها بالوجبات والتنبيهات',
-    icon: <Pill className="w-4 h-4 text-rose-500" />,
+    icon: <Pill className="w-4 h-4 text-peacock-teal" />,
     category: 'health',
   },
   {
@@ -94,7 +94,7 @@ const CARDS_CONFIG: CardMeta[] = [
     key: 'symptomsTracker',
     label: 'متابع الأعراض والملاحظات الصحية',
     desc: 'تسجيل الجهاز الهضمي والأعراض المرتبطة بالطعام',
-    icon: <Stethoscope className="w-4 h-4 text-teal-500" />,
+    icon: <Stethoscope className="w-4 h-4 text-peacock-blue" />,
     category: 'health',
   },
   {
@@ -115,7 +115,7 @@ const CARDS_CONFIG: CardMeta[] = [
     key: 'sleepTracker',
     label: 'متابع النوم والراحة',
     desc: 'تسجيل ساعات النوم وجودة الاستيقاظ',
-    icon: <Moon className="w-4 h-4 text-violet-500" />,
+    icon: <Moon className="w-4 h-4 text-peacock-blue" />,
     category: 'lifestyle',
   },
   {
@@ -136,7 +136,7 @@ const CARDS_CONFIG: CardMeta[] = [
     key: 'cycleTracker',
     label: 'متابع الدورة الشهرية والتأثير الهرموني',
     desc: 'تتبع مراحل الدورة وتأثيرها على الوزن والشهية',
-    icon: <HeartPulse className="w-4 h-4 text-pink-500" />,
+    icon: <HeartPulse className="w-4 h-4 text-peacock-blue" />,
     category: 'health',
   },
 ];
@@ -318,7 +318,7 @@ export const CardCustomizerModal: React.FC<CardCustomizerModalProps> = ({
               className="p-2.5 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-muted)] hover:bg-[var(--app-border)]/40 transition-all text-right flex flex-col gap-1 cursor-pointer group"
             >
               <div className="flex items-center gap-1.5 text-xs font-extrabold text-[var(--app-text-primary)]">
-                <Utensils className="w-3.5 h-3.5 text-emerald-500" />
+                <Utensils className="w-3.5 h-3.5 text-peacock-blue" />
                 <span>تركيز غذائي</span>
               </div>
               <span className="text-[11px] text-[var(--app-text-secondary)] leading-tight">
@@ -346,7 +346,7 @@ export const CardCustomizerModal: React.FC<CardCustomizerModalProps> = ({
               className="p-2.5 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-muted)] hover:bg-[var(--app-border)]/40 transition-all text-right flex flex-col gap-1 cursor-pointer group"
             >
               <div className="flex items-center gap-1.5 text-xs font-extrabold text-[var(--app-text-primary)]">
-                <Stethoscope className="w-3.5 h-3.5 text-rose-500" />
+                <Stethoscope className="w-3.5 h-3.5 text-peacock-teal" />
                 <span>متابعة علاجية</span>
               </div>
               <span className="text-[11px] text-[var(--app-text-secondary)] leading-tight">

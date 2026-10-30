@@ -76,7 +76,7 @@ function WeightChart({ detail }: { detail: DemoPatientDetail }) {
   const y = (v: number) => pad + (1 - (v - min) / (max - min)) * (h - pad * 2);
   const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i)},${y(p.weight)}`).join(' ');
   return (
-    <div className="bg-[var(--app-card)] border border-purple-100 dark:border-purple-900/40 rounded-3xl p-4 space-y-2">
+    <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-4 space-y-2">
       <div className="flex items-center gap-2 font-bold text-sm">
         <TrendingDown className="w-4 h-4 text-brand-hero" />
         <span>الوزن المتوقع مقابل الفعلي (عرض تجريبي)</span>
@@ -108,26 +108,26 @@ function PatientPage({ detail, onBack }: { detail: DemoPatientDetail; onBack: ()
       >
         <ArrowRight className="w-4 h-4" /> عودة لقائمة المرضى
       </button>
-      <div className="bg-white/90 dark:bg-slate-900/90 border border-violet-200/80 dark:border-violet-800/60 rounded-3xl p-4 space-y-1">
+      <div className="bg-white/90 dark:bg-slate-900/90 border border-peacock-sage/80 dark:border-peacock-indigo-deep/60 rounded-3xl p-4 space-y-1">
         <h2 className="text-lg font-black">{detail.summary.alias}</h2>
         <p className="text-xs text-slate-500">هدف الخطة: {detail.summary.goalLabel} — آخر نشاط: {detail.summary.lastActivityLabel}</p>
         <p className="text-xs text-slate-500">الوزن الحالي (تجريبي): {detail.summary.weightKg} كجم</p>
       </div>
 
-      <div className="bg-white/90 dark:bg-slate-900/90 border border-violet-200/80 dark:border-violet-800/60 rounded-3xl p-4 space-y-2">
+      <div className="bg-white/90 dark:bg-slate-900/90 border border-peacock-sage/80 dark:border-peacock-indigo-deep/60 rounded-3xl p-4 space-y-2">
         <div className="flex items-center gap-2 font-bold text-sm">
-          <Target className="w-4 h-4 text-violet-600" /> هدف الأسبوع (تجريبي)
+          <Target className="w-4 h-4 text-peacock-indigo" /> هدف الأسبوع (تجريبي)
         </div>
         <p className="text-sm">{detail.focusLabel}</p>
         <div className="h-3 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-          <div className="h-full bg-violet-500 rounded-full" style={{ width: `${detail.focusProgressPct}%` }} />
+          <div className="h-full bg-peacock-blue rounded-full" style={{ width: `${detail.focusProgressPct}%` }} />
         </div>
         <p className="text-xs text-slate-500">{detail.focusProgressPct}% مكتمل هذا الأسبوع</p>
       </div>
 
       <WeightChart detail={detail} />
 
-      <div className="bg-[var(--app-card)] border border-purple-100 dark:border-purple-900/40 rounded-3xl p-4 space-y-2.5">
+      <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-4 space-y-2.5">
         <div className="flex items-center gap-2 font-bold text-sm">
           <Award className="w-4 h-4 text-amber-500" /> إنجازاتي (تجريبية)
         </div>
@@ -197,7 +197,7 @@ export const PrototypeApp: React.FC = () => {
                   key={p.id}
                   type="button"
                   onClick={() => setSelectedId(p.id)}
-                  className="w-full text-right bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-700/60 rounded-3xl p-4 space-y-1.5 cursor-pointer hover:border-violet-300 transition-colors"
+                  className="w-full text-right bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-700/60 rounded-3xl p-4 space-y-1.5 cursor-pointer hover:border-peacock-teal-light transition-colors"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-black text-sm">{p.alias}</span>

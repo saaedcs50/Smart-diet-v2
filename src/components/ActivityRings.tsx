@@ -83,7 +83,7 @@ export const ActivityRings: React.FC<ActivityRingsProps> = ({
             </div>
           ) : (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs">
-              <Trophy className="w-3.5 h-3.5 text-teal-600" />
+              <Trophy className="w-3.5 h-3.5 text-peacock-indigo" />
               <span>سلسلة الالتزام</span>
             </div>
           )}
@@ -118,7 +118,7 @@ export const ActivityRings: React.FC<ActivityRingsProps> = ({
               stroke="currentColor"
               strokeWidth="11"
               fill="none"
-              className="text-rose-100 dark:text-rose-950/40"
+              className="text-peacock-blue-light dark:text-peacock-ink-deep/40"
             />
             <circle
               cx="90"
@@ -136,7 +136,7 @@ export const ActivityRings: React.FC<ActivityRingsProps> = ({
               stroke="currentColor"
               strokeWidth="11"
               fill="none"
-              className="text-emerald-100 dark:text-emerald-950/40"
+              className="text-peacock-pale dark:text-peacock-ink-deep/40"
             />
 
             {/* Active Concentric Rings with Rounded Caps */}
@@ -207,9 +207,9 @@ export const ActivityRings: React.FC<ActivityRingsProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
             {/* Meals Metric */}
-            <div className="p-2.5 rounded-2xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 flex items-center sm:flex-col sm:items-start gap-2.5 sm:gap-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-rose-700 dark:text-rose-300">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
+            <div className="p-2.5 rounded-2xl bg-peacock-pale/60 dark:bg-peacock-ink-deep/30 border border-peacock-sage dark:border-peacock-ink/50 flex items-center sm:flex-col sm:items-start gap-2.5 sm:gap-1">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-peacock-indigo-dark dark:text-peacock-blue-light">
+                <span className="w-2.5 h-2.5 rounded-full bg-peacock-teal shrink-0" />
                 <Utensils className="w-3.5 h-3.5" />
                 <span>الوجبات</span>
               </div>
@@ -231,9 +231,9 @@ export const ActivityRings: React.FC<ActivityRingsProps> = ({
             </div>
 
             {/* Habits Metric */}
-            <div className="p-2.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 flex items-center sm:flex-col sm:items-start gap-2.5 sm:gap-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+            <div className="p-2.5 rounded-2xl bg-peacock-mist/60 dark:bg-peacock-ink-deep/30 border border-peacock-pale dark:border-peacock-ink/50 flex items-center sm:flex-col sm:items-start gap-2.5 sm:gap-1">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-peacock-indigo-dark dark:text-peacock-teal-light">
+                <span className="w-2.5 h-2.5 rounded-full bg-peacock-blue shrink-0" />
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>العادات</span>
               </div>
@@ -250,16 +250,16 @@ export const ActivityRings: React.FC<ActivityRingsProps> = ({
         <button
           type="button"
           onClick={onOpenStoryCard}
-          className="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 font-bold transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-peacock-indigo dark:hover:text-peacock-teal font-bold transition-colors cursor-pointer"
         >
-          <Share2 className="w-3.5 h-3.5 text-teal-500" />
+          <Share2 className="w-3.5 h-3.5 text-peacock-blue" />
           <span>مشاركة كرت الإنجاز كصورة 📸</span>
         </button>
 
         <button
           type="button"
           onClick={onOpenReportModal}
-          className="inline-flex items-center gap-1.5 text-teal-600 dark:text-teal-400 hover:text-teal-700 font-bold transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-peacock-indigo dark:text-peacock-teal hover:text-peacock-indigo font-bold transition-colors cursor-pointer"
         >
           <span>إرسال تقرير اليوم للأخصائي ↗</span>
         </button>

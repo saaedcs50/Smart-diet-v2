@@ -82,14 +82,14 @@ export const MacrosTracker: React.FC<MacrosTrackerProps> = ({ plan, day, onUpdat
  <div className="grid grid-cols-3 gap-2.5 pt-1">
  {/* Protein */}
  <div className="bg-[var(--app-card-muted)] p-2.5 rounded-2xl border border-[var(--app-border)]/50 text-center">
- <span className="text-[12px] font-bold text-[#0D9488] dark:text-[#2DD4BF] block">
+ <span className="text-[12px] font-bold text-[#4D52B4] dark:text-[#70D6C5] block">
  بروتين
  </span>
  <span className="text-xs font-extrabold text-[var(--app-text-primary)] block my-0.5">
  {currentProt} / {targetProt} جم
  </span>
  <div className="w-full bg-[var(--app-card-muted)] h-1.5 rounded-full overflow-hidden mt-1">
- <div className="bg-[#0D9488] h-full rounded-full" style={{ width: `${protPercent}%` }} />
+ <div className="bg-[#4D52B4] h-full rounded-full" style={{ width: `${protPercent}%` }} />
  </div>
  </div>
 

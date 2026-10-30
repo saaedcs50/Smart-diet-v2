@@ -100,7 +100,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
       bmiColorClass = 'text-amber-600';
     } else if (bmiNum < 25) {
       bmiCategory = 'وزن طبيعي مثالي';
-      bmiColorClass = 'text-emerald-600';
+      bmiColorClass = 'text-peacock-indigo';
     } else if (bmiNum < 30) {
       bmiCategory = 'زيادة وزن';
       bmiColorClass = 'text-amber-700';
@@ -123,7 +123,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
       border: '#a7f3d0',
       badgeBg: '#d1fae5',
       badgeText: '#065f46',
-      titleGrad: 'from-emerald-800 to-teal-900',
+      titleGrad: 'from-peacock-indigo-deep to-peacock-ink',
     },
     sapphire: {
       primary: '#0284c7',
@@ -143,7 +143,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
       border: '#e9d5ff',
       badgeBg: '#f3e8ff',
       badgeText: '#581c87',
-      titleGrad: 'from-purple-900 to-indigo-950',
+      titleGrad: 'from-peacock-ink to-indigo-950',
     },
     monochrome: {
       primary: '#1e293b',
@@ -325,7 +325,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
         {/* Top Header Bar */}
         <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xs">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-peacock-blue/10 text-peacock-indigo dark:text-peacock-teal flex items-center justify-center font-bold shrink-0">
               <FileDown className="w-5 h-5" />
             </div>
             <div>
@@ -333,7 +333,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
                 <h3 className="font-black text-slate-800 dark:text-slate-100 text-sm sm:text-base">
                   تصدير الخطة كملف PDF رسمي (Medical Prescription)
                 </h3>
-                <span className="text-[12px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                <span className="text-[12px] font-black px-2 py-0.5 rounded-full bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep dark:text-peacock-teal-light border border-peacock-teal-light dark:border-peacock-indigo-deep">
                   {BRAND.doctorName}
                 </span>
               </div>
@@ -358,7 +358,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
               onClick={handleDownloadDirectPDF}
               disabled={isGenerating}
               type="button"
-              className="min-h-[40px] px-4 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white transition-all text-xs font-black flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="min-h-[40px] px-4 py-2 rounded-2xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white transition-all text-xs font-black flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isGenerating ? (
                 <>
@@ -406,7 +406,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
                       onClick={() => setPdfTemplate(t.id)}
                       className={`w-full p-2.5 rounded-xl border flex items-center gap-3 cursor-pointer transition-all text-right ${
                         selected
-                          ? 'border-emerald-600 bg-white dark:bg-slate-800 shadow-xs'
+                          ? 'border-peacock-indigo bg-white dark:bg-slate-800 shadow-xs'
                           : 'border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 hover:bg-white'
                       }`}
                     >
@@ -457,7 +457,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
                     onClick={() => setTheme(th.id as PDFTheme)}
                     className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
                       theme === th.id
-                        ? 'border-emerald-600 bg-white dark:bg-slate-800 font-black shadow-xs'
+                        ? 'border-peacock-indigo bg-white dark:bg-slate-800 font-black shadow-xs'
                         : 'border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-white'
                     }`}
                   >
@@ -472,7 +472,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
             {/* Customization Checkboxes */}
             <div className="space-y-2.5">
               <label className="font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5 text-emerald-600" />
+                <Sliders className="w-3.5 h-3.5 text-peacock-indigo" />
                 <span>عناصر محتوى الـ PDF:</span>
               </label>
 
@@ -493,7 +493,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
                       type="checkbox"
                       checked={item.state}
                       onChange={(e) => item.set(e.target.checked)}
-                      className="w-4 h-4 accent-emerald-600 rounded cursor-pointer"
+                      className="w-4 h-4 accent-peacock-indigo rounded cursor-pointer"
                     />
                   </label>
                 ))}
@@ -526,7 +526,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
                   placeholder="مثال: يرجى التركيز على شرب الماء الدافئ صباحاً وموافاة العيادة بوزن يوم الإثنين..."
                   value={doctorCustomNote}
                   onChange={(e) => setDoctorCustomNote(e.target.value)}
-                  className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-medium resize-none outline-none focus:ring-1 focus:ring-emerald-500"
+                  className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-medium resize-none outline-none focus:ring-1 focus:ring-peacock-blue"
                 />
               </div>
             </div>
@@ -536,7 +536,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
               <button
                 type="button"
                 onClick={handleShareWhatsApp}
-                className="w-full py-2.5 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-black text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full py-2.5 px-3 rounded-xl bg-peacock-blue/10 hover:bg-peacock-blue/20 text-peacock-indigo-dark dark:text-peacock-teal-light border border-peacock-blue/30 font-black text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 <span>إرسال إشعار للمتدرب عبر واتساب</span>
@@ -556,7 +556,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
               >
                 -
               </button>
-              <span className="font-black text-emerald-600 min-w-[45px] text-center">{zoomLevel}%</span>
+              <span className="font-black text-peacock-indigo min-w-[45px] text-center">{zoomLevel}%</span>
               <button
                 onClick={() => setZoomLevel((z) => Math.min(130, z + 10))}
                 className="px-2 py-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 font-bold"
@@ -725,9 +725,9 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
                     </div>
 
                     <div className="grid grid-cols-3 gap-2.5 text-xs text-center">
-                      <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200">
-                        <span className="text-[12px] font-bold text-emerald-800 block">البروتين المستهدف</span>
-                        <strong className="text-sm font-black text-emerald-950">
+                      <div className="p-2.5 rounded-xl bg-peacock-mist/80 border border-peacock-sage">
+                        <span className="text-[12px] font-bold text-peacock-indigo-deep block">البروتين المستهدف</span>
+                        <strong className="text-sm font-black text-peacock-ink-deep">
                           {plan.targetProtein || 110} جرام
                         </strong>
                       </div>
@@ -820,7 +820,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
 
                         {/* Approved Alternatives */}
                         {includeAlternatives && !isCompact && meal.alternatives && meal.alternatives.length > 0 && (
-                          <div className="p-2 rounded-xl bg-emerald-50/60 border border-emerald-200/80 text-[12px] text-emerald-900 space-y-1">
+                          <div className="p-2 rounded-xl bg-peacock-mist/60 border border-peacock-sage/80 text-[12px] text-peacock-ink space-y-1">
                             <div className="font-black flex items-center gap-1">
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                               <span>البدائل الإكلينيكية المسموحة في حال عدم التوفر:</span>
@@ -871,7 +871,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
                             <strong className="text-slate-900 font-bold block">{supp.name}</strong>
                             <span className="text-[12px] text-slate-500">{supp.time || 'مع الطعام'}</span>
                           </div>
-                          <span className="text-[12px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-bold">
+                          <span className="text-[12px] text-peacock-indigo-dark bg-peacock-mist px-1.5 py-0.5 rounded font-bold">
                             مكمل
                           </span>
                         </div>
@@ -884,14 +884,14 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
                 {includeHabits && !isCompact && plan.checklist && plan.checklist.length > 0 && (
                   <div className="mb-6 space-y-2 page-break-inside-avoid text-xs">
                     <h4 className="font-black text-slate-900 flex items-center gap-1.5">
-                      <Activity className="w-4 h-4 text-emerald-600" />
+                      <Activity className="w-4 h-4 text-peacock-indigo" />
                       <span>العادات والالتزامات اليومية الإلزامية:</span>
                     </h4>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {plan.checklist.map((chk) => (
                         <div key={chk.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-bold flex items-center gap-2">
-                          <div className="w-3.5 h-3.5 rounded border border-emerald-600 bg-emerald-50 shrink-0" />
+                          <div className="w-3.5 h-3.5 rounded border border-peacock-indigo bg-peacock-mist shrink-0" />
                           <span>{chk.label}</span>
                         </div>
                       ))}
@@ -937,7 +937,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
                         <span className="text-[12px] text-slate-500 block">
                           أخصائية التغذية العلاجية وإدارة السمنة
                         </span>
-                        <span className="text-[12px] text-emerald-700 font-bold block mt-0.5">
+                        <span className="text-[12px] text-peacock-indigo-dark font-bold block mt-0.5">
                           تاريخ الاعتماد: {issueDate}
                         </span>
                       </div>
@@ -948,13 +948,13 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
                   {includeSyncCode && !isCompact && (
                     <div className="text-left bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-[12px] max-w-[260px]">
                       <div className="flex items-center gap-1 text-slate-700 font-black mb-0.5">
-                        <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+                        <QrCode className="w-3.5 h-3.5 text-peacock-indigo" />
                         <span>كود تفعيل الخطة بالتطبيق:</span>
                       </div>
                       <p className="text-[10px] text-slate-500 leading-tight mb-1">
                         يمكن للمتدرب نسخ كود الخطة لتطبيق Smart Diet لتسجيل الوجبات تلقائياً
                       </p>
-                      <code className="block bg-white p-1 rounded border text-[9px] text-emerald-800 font-mono select-all truncate">
+                      <code className="block bg-white p-1 rounded border text-[9px] text-peacock-indigo-deep font-mono select-all truncate">
                         {generatePlanSyncCode(plan).slice(0, 38)}...
                       </code>
                     </div>
@@ -997,7 +997,7 @@ export const PlanPDFExportModal: React.FC<PlanPDFExportModalProps> = ({
               onClick={handleDownloadDirectPDF}
               disabled={isGenerating}
               type="button"
-              className="py-2.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center gap-2 transition-colors cursor-pointer shadow-md disabled:opacity-50"
+              className="py-2.5 px-5 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-black text-xs flex items-center gap-2 transition-colors cursor-pointer shadow-md disabled:opacity-50"
             >
               {isGenerating ? (
                 <>

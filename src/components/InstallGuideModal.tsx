@@ -13,7 +13,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({ onClose })
  <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-5 border border-slate-200 dark:border-slate-800 app-overlay-shadow animate-in zoom-in-95 duration-150 flex flex-col">
  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-3 shrink-0">
  <div className="flex items-center gap-2">
- <div className="w-8 h-8 rounded-xl dark: text-emerald-600 flex items-center justify-center font-bold">
+ <div className="w-8 h-8 rounded-xl dark: text-peacock-indigo flex items-center justify-center font-bold">
  <Download className="w-4 h-4" />
  </div>
  <div>
@@ -47,7 +47,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({ onClose })
  onClick={() => setPlatform('android')}
  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
  platform === 'android'
-? 'bg-emerald-600 text-white'
+? 'bg-peacock-indigo text-white'
 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
  }`}
  >
@@ -60,7 +60,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({ onClose })
  {platform === 'ios'? (
  <div className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
  <div className="flex items-start gap-2.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
- <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+ <span className="w-5 h-5 rounded-full bg-peacock-blue text-white flex items-center justify-center font-bold text-xs shrink-0">
  1
  </span>
  <div>
@@ -70,7 +70,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({ onClose })
  </div>
 
  <div className="flex items-start gap-2.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
- <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+ <span className="w-5 h-5 rounded-full bg-peacock-blue text-white flex items-center justify-center font-bold text-xs shrink-0">
  2
  </span>
  <div>
@@ -81,12 +81,12 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({ onClose })
  </div>
 
  <div className="flex items-start gap-2.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
- <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+ <span className="w-5 h-5 rounded-full bg-peacock-blue text-white flex items-center justify-center font-bold text-xs shrink-0">
  3
  </span>
  <div>
  <p className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1">
- مرر للأسفل واضغط على <PlusSquare className="w-3.5 h-3.5 text-emerald-600" /> "إضافة للشاشة الرئيسية"
+ مرر للأسفل واضغط على <PlusSquare className="w-3.5 h-3.5 text-peacock-indigo" /> "إضافة للشاشة الرئيسية"
  </p>
  <p className="text-[12px] text-slate-400">(Add to Home Screen) ثم اضغط "إضافة"</p>
  </div>
@@ -95,7 +95,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({ onClose })
  ): (
  <div className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
  <div className="flex items-start gap-2.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
- <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+ <span className="w-5 h-5 rounded-full bg-peacock-blue text-white flex items-center justify-center font-bold text-xs shrink-0">
  1
  </span>
  <div>
@@ -104,7 +104,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({ onClose })
  </div>
 
  <div className="flex items-start gap-2.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
- <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+ <span className="w-5 h-5 rounded-full bg-peacock-blue text-white flex items-center justify-center font-bold text-xs shrink-0">
  2
  </span>
  <div>
@@ -115,7 +115,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({ onClose })
  </div>
 
  <div className="flex items-start gap-2.5 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
- <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+ <span className="w-5 h-5 rounded-full bg-peacock-blue text-white flex items-center justify-center font-bold text-xs shrink-0">
  3
  </span>
  <div>
@@ -130,7 +130,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({ onClose })
 
  <button
  onClick={onClose}
- className="w-full mt-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shrink-0"
+ className="w-full mt-4 py-2.5 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-bold text-xs transition-colors shrink-0"
  >
  فهمت ذلك، تم
  </button>

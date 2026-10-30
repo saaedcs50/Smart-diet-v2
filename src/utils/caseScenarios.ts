@@ -264,7 +264,7 @@ export const SCENARIO_PCOS: PlanPreset = {
   badge: 'سيناريو حالة 🩺',
   icon: '🩺',
   tagColor:
-    'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border-purple-300 dark:border-purple-700',
+    'bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep/80 dark:text-peacock-teal-light border-peacock-teal-light dark:border-peacock-indigo-dark',
   summary: 'نشويات منخفضة المؤشر الجلايسيمي + بروتين في كل وجبة + نوم وحركة منتظمة',
   description:
     'قالب بداية استرشادي لتكيّس المبايض: نشويات معقدة معتدلة، بروتين مشبع في كل وجبة، وتركيز على النوم المنتظم والحركة اليومية ومتابعة الدورة الشهرية.',
@@ -370,7 +370,7 @@ export const SCENARIO_IBS: PlanPreset = {
   badge: 'سيناريو حالة 🩺',
   icon: '🩺',
   tagColor:
-    'bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 border-teal-300 dark:border-teal-700',
+    'bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep/80 dark:text-peacock-teal-light border-peacock-teal-light dark:border-peacock-indigo',
   summary: 'وجبات صغيرة منتظمة + ألياف متدرجة + سجل أطعمة وأعراض لاكتشاف المحفزات الشخصية',
   description:
     'قالب بداية استرشادي للقولون العصبي: وجبات صغيرة منتظمة وأطعمة مطهوة جيدًا وألياف تُزاد تدريجيًا، مع تسجيل الأطعمة والأعراض لبناء قائمة محفزات فردية لكل عميل.',
@@ -577,7 +577,7 @@ export const SCENARIO_ATHLETES: PlanPreset = {
   badge: 'سيناريو أداء 🏃',
   icon: '🏃',
   tagColor:
-    'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700',
+    'bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep/80 dark:text-peacock-teal-light border-peacock-teal-light dark:border-peacock-indigo-dark',
   summary: 'وقود قبل التمرين + استشفاء بعده + بروتين موزع على اليوم + ترطيب ونوم للاستشفاء',
   description:
     'قالب بداية استرشادي لتغذية الرياضيين: نشويات كافية لوقود التدريب، بروتين موزع على وجبات اليوم، وجبة استشفاء بعد التمرين، وترطيب ونوم كجزء من خطة الأداء. يُضبط بالكامل حسب نوع الرياضة وجدول التدريب.',
@@ -797,7 +797,7 @@ export const RAMADAN_SCENARIO: PlanPreset = {
   badge: 'قالب موسمي 🌙',
   icon: '🌙',
   tagColor:
-    'bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 border-teal-300 dark:border-teal-700',
+    'bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep/80 dark:text-peacock-teal-light border-peacock-teal-light dark:border-peacock-indigo',
   summary: 'إفطار عند المغرب + سناك ليلي + سحور قبل الفجر، مع ترطيب ليلي موزع وقسم صيام مفعّل',
   description:
     'قالب موسمي لشهر رمضان: وجبات معاد جدولتها (إفطار، سناك ليلي، سحور) بساعات افتراضية قابلة لضبط الأخصائية، وقسم صيام مفعّل ينتهي عند أذان المغرب، وتنبيهات ماء ليلية أثناء فترة التفعيل فقط.',

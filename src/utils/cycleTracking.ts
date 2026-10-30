@@ -29,7 +29,7 @@ export const CLINICAL_FLAGS_META: Record<ClinicalCycleFlag, { label: string; not
  pcos: {
  label: 'متلازمة تكيس المبايض (PCOS)',
  note: 'سياق سريري مسجل للمتابعة الغذائية وضبط حساسية الإنسولين',
- badgeColor: 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950 dark:text-teal-300',
+ badgeColor: 'bg-peacock-pale text-peacock-indigo-deep border-peacock-teal-light dark:bg-peacock-ink-deep dark:text-peacock-teal-light',
  },
  endometriosis: {
  label: 'بطانة الرحم المهاجرة (Endometriosis)',
@@ -44,7 +44,7 @@ export const CLINICAL_FLAGS_META: Record<ClinicalCycleFlag, { label: string; not
  other: {
  label: 'حالة / علامة سريرية أخرى',
  note: 'ملاحظات خاصة من الأخصائية',
- badgeColor: 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950 dark:text-purple-300',
+ badgeColor: 'bg-peacock-pale text-peacock-indigo-deep border-peacock-teal-light dark:bg-peacock-ink-deep dark:text-peacock-teal-light',
  },
 };
 
@@ -206,10 +206,10 @@ export function getCycleInfo(
  phaseBadge: `اليوم ${rawDayOfCycle} • إباضة تقريبية`,
  icon: '',
  colorClass: {
- badge: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
- border: 'border-emerald-200 dark:border-emerald-900/50',
- bg: 'bg-emerald-50/60 dark:bg-emerald-950/20',
- text: 'text-emerald-800 dark:text-emerald-200',
+ badge: 'bg-peacock-pale dark:bg-peacock-ink-deep text-peacock-indigo-deep dark:text-peacock-teal-light border-peacock-teal-light dark:border-peacock-indigo-deep',
+ border: 'border-peacock-sage dark:border-peacock-ink/50',
+ bg: 'bg-peacock-mist/60 dark:bg-peacock-ink-deep/20',
+ text: 'text-peacock-indigo-deep dark:text-peacock-sage',
  },
  description: 'ذروة هرمون الإستروجين وارتفاع الـ LH. قد تشعرين بنشاط عالٍ أو وخز خفيف جهة المبيض.',
  nutritionTip: 'تناولي مضادات الأكسدة والخضراوات الورقية والألياف لدعم التخلص الطبيعي من مستقلبات الإستروجين الزائدة.',
@@ -225,10 +225,10 @@ export function getCycleInfo(
  phaseBadge: `اليوم ${rawDayOfCycle} • طور لوتيل`,
  icon: '',
  colorClass: {
- badge: 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800',
- border: 'border-purple-200 dark:border-purple-900/50',
- bg: 'bg-purple-50/60 dark:bg-purple-950/20',
- text: 'text-purple-800 dark:text-purple-200',
+ badge: 'bg-peacock-pale dark:bg-peacock-ink-deep text-peacock-indigo-deep dark:text-peacock-teal-light border-peacock-teal-light dark:border-peacock-indigo-deep',
+ border: 'border-peacock-sage dark:border-peacock-ink/50',
+ bg: 'bg-peacock-mist/60 dark:bg-peacock-ink-deep/20',
+ text: 'text-peacock-indigo-deep dark:text-peacock-sage',
  },
  description: 'سيادة هرمون البروجسترون. قد ترتفع الشهية ويحدث احتباس ماء طفيف مع تقلبات مزاجية قبل الحيض (PMS).',
  nutritionTip: 'عززي المغنيسيوم، قللي الملح المكرر لتفادي زيادة الاحتباس، واستبدلي السكريات البسيطة بوجبات متوازنة بروتين وألياف.',

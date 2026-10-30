@@ -286,7 +286,7 @@ export const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
                 <span className="text-xs font-bold text-[var(--app-text-secondary)]">
                   بيانات النسخة الاحتياطية الحالية:
                 </span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-peacock-blue/10 text-peacock-indigo dark:text-peacock-teal border border-peacock-blue/20">
                   <ShieldCheck className="w-3 h-3" />
                   محفوظة محلياً 100%
                 </span>
@@ -442,7 +442,7 @@ export const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
             ) : (
               /* Pending Confirmation Card */
               <div className="p-4 rounded-2xl bg-[var(--app-card-muted)] border border-[var(--app-border)] space-y-4 animate-in zoom-in-95">
-                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                <div className="flex items-center gap-2 text-peacock-indigo dark:text-peacock-teal font-bold text-sm">
                   <CheckCircle2 className="w-5 h-5" />
                   <span>تم فحص الملف والتحقق من صحته بنجاح:</span>
                 </div>
@@ -462,7 +462,7 @@ export const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
                   <button
                     type="button"
                     onClick={handleConfirmFullRestore}
-                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="flex-1 py-2.5 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     تأكيد واسترجاع كافة البيانات
@@ -514,7 +514,7 @@ export const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
             />
 
             {detectedPlan && (
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-peacock-blue/10 border border-peacock-blue/20 text-xs text-peacock-indigo-dark dark:text-peacock-teal-light flex items-center justify-between">
                 <span>تم التعرف على خطة: <b>{detectedPlan.clientName || 'المتدرب'}</b></span>
                 <span>الوجبات: <b>{detectedPlan.meals?.length || 0}</b></span>
               </div>

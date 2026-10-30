@@ -140,7 +140,7 @@ export const MedicationsTracker: React.FC<MedicationsTrackerProps> = ({
  <div
  className={`h-full transition-all duration-150 ${
  adherence.adherencePercentage === 100
-? 'bg-[#0D9488]'
+? 'bg-[#4D52B4]'
 : adherence.adherencePercentage >= 50
 ? 'bg-[var(--app-secondary)]'
 : 'bg-[#E0922D]'
@@ -168,7 +168,7 @@ export const MedicationsTracker: React.FC<MedicationsTrackerProps> = ({
  key={dose.key}
  className={`rounded-2xl border transition-all ${
  isTaken
-? 'bg-[#0D9488]/10 dark:bg-[#0D9488]/15 border-[#0D9488]/30 dark:border-[#0D9488]/30'
+? 'bg-[#4D52B4]/10 dark:bg-[#4D52B4]/15 border-[#4D52B4]/30 dark:border-[#4D52B4]/30'
 : isSkipped
 ? 'bg-[var(--app-hero)]/10 dark:bg-[var(--app-hero)]/15 border-[var(--app-hero)]/30 dark:border-[var(--app-hero)]/30'
 : isPostponed
@@ -221,8 +221,8 @@ export const MedicationsTracker: React.FC<MedicationsTrackerProps> = ({
  onClick={() => handleSetDoseStatus(dose.key, 'taken')}
  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
  isTaken
-? 'bg-[#0D9488] text-white scale-102'
-: 'bg-[var(--app-card)] text-[var(--app-text-primary)] border border-[var(--app-border)]/70 hover:bg-[#0D9488]/10'
+? 'bg-[#4D52B4] text-white scale-102'
+: 'bg-[var(--app-card)] text-[var(--app-text-primary)] border border-[var(--app-border)]/70 hover:bg-[#4D52B4]/10'
  }`}
  >
  <Check className="w-3.5 h-3.5" />

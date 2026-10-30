@@ -314,7 +314,7 @@ export default function App() {
   if (currentPath.startsWith('/coach')) {
     return (
       <FeatureHelpProvider>
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors selection:bg-emerald-500 selection:text-white font-sans antialiased">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors selection:bg-peacock-blue selection:text-white font-sans antialiased">
           {toastMessage && (
             <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 dark:bg-slate-100/95 text-white dark:text-slate-900 text-xs font-bold px-4 py-2.5 rounded-2xl app-overlay-shadow backdrop-blur-md animate-in slide-in-from-top duration-200 text-center max-w-[90%] border border-slate-700 dark:border-slate-300">
               {toastMessage}
@@ -341,7 +341,7 @@ export default function App() {
 
   return (
     <FeatureHelpProvider>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors selection:bg-emerald-500 selection:text-white font-sans antialiased pb-20">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors selection:bg-peacock-blue selection:text-white font-sans antialiased pb-20">
         {/* Toast Notification */}
         {toastMessage && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 dark:bg-slate-100/95 text-white dark:text-slate-900 text-xs font-bold px-4 py-2.5 rounded-2xl app-overlay-shadow backdrop-blur-md animate-in slide-in-from-top duration-200 text-center max-w-[90%] border border-slate-700 dark:border-slate-300">

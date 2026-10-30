@@ -61,11 +61,11 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
  {
  id: 'welcome',
  badge: brandCopy.coachGuideBadge,
- badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+ badgeColor: 'bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep dark:text-peacock-teal-light border-peacock-sage dark:border-peacock-indigo-deep',
  title: 'مرحباً بكِ في لوحة تحكم التغذية الإكلينيكية ',
  subtitle: `نظام إدارة الخطط والبدائل والمتابعة بإشراف ${BRAND.doctorName}`,
  description: 'تم تصميم هذه اللوحة لتمنحكِ تحكماً شاملاً وسريعاً في تصميم الخطط الغذائية العلاجية، حساب السعرات والماكروز، مراقبة التحاليل والأدوية، ونظام الحصص التبادلية ADA مع مرونة كاملة في التصدير والمشاركة.',
- icon: <Circle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />,
+ icon: <Circle className="w-8 h-8 text-peacock-indigo dark:text-peacock-teal" />,
  details: [
  {
  title: 'تصميم سريري متكامل (Clinical-First)',
@@ -75,7 +75,7 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
  {
  title: 'نظام الحصص والبدائل المعتمدة (ADA Exchange)',
  description: 'توزيع مرن للبروتين والنشويات والدهون والخضار مع بدائل دقيقة ومكافئة لكل وجبة.',
- icon: <BookOpen className="w-5 h-5 text-teal-500" />
+ icon: <BookOpen className="w-5 h-5 text-peacock-blue" />
  },
  {
  title: 'أزرار مساعدة وتوجيهات مباشرة ()',
@@ -88,21 +88,21 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
  {
  id: 'step1_presets',
  badge: 'الخطوة 1 من 7: مكتبة القوالب',
- badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+ badgeColor: 'bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep dark:text-peacock-teal-light border-peacock-sage dark:border-peacock-indigo-deep',
  title: 'مكتبة القوالب الطبية الجاهزة ',
  subtitle: 'تجهيز خطة علاجية متكاملة بنقرة زر واحدة',
  description: 'تحتوي المكتبة على قوالب إكلينيكية معدة مسبقاً لأشهر الحالات التغذوية لتقليل وقت إعداد الخطة بنسبة 90%.',
- icon: <FolderHeart className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />,
+ icon: <FolderHeart className="w-8 h-8 text-peacock-indigo dark:text-peacock-teal" />,
  details: [
  {
  title: 'قوالب علاجية متخصصة',
  description: 'مقاومة الإنسولين، تكيس المبايض (PCOS)، الكيتو، الصيام المتقطع، كمال الأجسام، وحمية داش لارتفاع الضغط.',
- icon: <FolderHeart className="w-5 h-5 text-emerald-500" />
+ icon: <FolderHeart className="w-5 h-5 text-peacock-blue" />
  },
  {
  title: 'تطبيق فوري مع إمكانية التخصيص',
  description: 'عند اختيار القالب، تُعبأ السعرات، الماكروز، وجداول الوجبات والمكملات تلقائياً مع إمكانية التعديل عليها بحرية.',
- icon: <CheckCircle2 className="w-5 h-5 text-teal-500" />
+ icon: <CheckCircle2 className="w-5 h-5 text-peacock-blue" />
  }
  ],
  clinicalTip: 'استخدمي القوالب كنقطة انطلاق ثم خصصي الحصص حسب وزن وهدف المتدرب الفردي.'
@@ -132,16 +132,16 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
  {
  id: 'step3_medical',
  badge: 'الخطوة 3 من 7: التشخيصات المرضية',
- badgeColor: 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 border-teal-200 dark:border-teal-800',
+ badgeColor: 'bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep dark:text-peacock-teal-light border-peacock-sage dark:border-peacock-indigo-deep',
  title: 'الملف الإكلينيكي والتشخيصات ',
  subtitle: 'ربط الأمراض المزمنة بالتنبيهات الغذائية الذكية',
  description: 'سجلي التاريخ المرضي للمتدرب لتفعيل التنبيهات التلقائية للأطعمة الممنوعة والمسموحة ومراعاة السلامة الإكلينيكية.',
- icon: <Stethoscope className="w-8 h-8 text-teal-600 dark:text-teal-400" />,
+ icon: <Stethoscope className="w-8 h-8 text-peacock-indigo dark:text-peacock-teal" />,
  details: [
  {
  title: 'تشخيصات الأمراض المزمنة',
  description: 'السكري، ضغط الدم، خمول أو فرط الغدة الدرقية، حساسية الجلوتين (Celiac)، ومقاومة الإنسولين.',
- icon: <Stethoscope className="w-5 h-5 text-teal-500" />
+ icon: <Stethoscope className="w-5 h-5 text-peacock-blue" />
  },
  {
  title: 'تنبيهات سلامة وتوجيهات مباشرة',
@@ -176,21 +176,21 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
  {
  id: 'step5_labs_cycle',
  badge: 'الخطوة 5 من 7: التحاليل والدورة',
- badgeColor: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+ badgeColor: 'bg-peacock-pale text-peacock-indigo-dark dark:bg-peacock-ink-deep dark:text-peacock-teal-light border-peacock-sage dark:border-peacock-ink',
  title: 'التحاليل المعملية والتتبع الهرموني ',
  subtitle: 'المتابعة البيوكيميائية وتزامن الهرمونات',
  description: 'تابعي الفحوصات المعملية الدورية ومطابقتها بالنطاقات المرجعية، مع ضبط الخطة حسب مراحل الدورة الشهرية.',
- icon: <Activity className="w-8 h-8 text-rose-600 dark:text-rose-400" />,
+ icon: <Activity className="w-8 h-8 text-peacock-indigo dark:text-peacock-teal-light" />,
  details: [
  {
  title: 'مراقبة التحاليل المعملية (Labs)',
  description: 'تسجيل HbA1c، ملف الدهون Lipid Profile، فيتامين D، ومخزون الحديد مع تصنيف النطاقات الحيوية.',
- icon: <Activity className="w-5 h-5 text-teal-500" />
+ icon: <Activity className="w-5 h-5 text-peacock-blue" />
  },
  {
  title: 'مزامنة الدورة الشهرية (Cycle Syncing)',
  description: 'تفسير احتباس السوائل الطبيعي قبل الدورة وضبط السعرات والمغنيسيوم لتخفيف أعراض PMS.',
- icon: <Heart className="w-5 h-5 text-rose-500" />
+ icon: <Heart className="w-5 h-5 text-peacock-teal" />
  }
  ],
  clinicalTip: 'تحسن المؤشرات المعملية والدهون الحشوية هو الدليل القاطع على نجاح الخطة حتى في فترات ثبات الميزان.'
@@ -198,21 +198,21 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
  {
  id: 'step6_meals_exchange',
  badge: 'الخطوة 6 من 7: نظام الحصص والبدائل',
- badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+ badgeColor: 'bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep dark:text-peacock-teal-light border-peacock-sage dark:border-peacock-indigo-deep',
  title: 'نظام الحصص والبدائل المعتمدة (ADA Exchange) ',
  subtitle: 'مرونة قصوى للمتدرب في استبدال الأكلات بالبدائل المنزلية',
  description: 'وزعي الحصص التبادلية لكل وجبة مع كتابة الأصناف المقترحة وبدائلها المتكافئة لتسهيل التزام المتدرب بدون حيرة.',
- icon: <Utensils className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />,
+ icon: <Utensils className="w-8 h-8 text-peacock-indigo dark:text-peacock-teal" />,
  details: [
  {
  title: 'توزيع الحصص السريع (+ / -)',
  description: 'أزرار تحكم مريحة لإضافة أو إنقاص حصص النشويات، البروتين، الخضار، الفواكه، والدهون في كل وجبة.',
- icon: <SlidersHorizontal className="w-5 h-5 text-emerald-500" />
+ icon: <SlidersHorizontal className="w-5 h-5 text-peacock-blue" />
  },
  {
  title: 'قائمة البدائل التلقائية',
  description: 'يستطيع المتدرب في تطبيقه الضغط على زر ( البدائل) واختيار صنف متكافئ تماماً في السعرات والماكروز.',
- icon: <BookOpen className="w-5 h-5 text-teal-500" />
+ icon: <BookOpen className="w-5 h-5 text-peacock-blue" />
  }
  ],
  clinicalTip: 'توزيع البروتين بالتساوي على مدار اليوم يحفز بناء العضلات والشبع المستمر لأكثر من 4 ساعات.'
@@ -229,7 +229,7 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
  {
  title: 'مشاركة مباشرة على واتساب',
  description: 'توليد رسالة نصية منسقة بجدول الوجبات، الحصص، والملاحظات الطبية بنقرة واحدة.',
- icon: <Share2 className="w-5 h-5 text-emerald-500" />
+ icon: <Share2 className="w-5 h-5 text-peacock-blue" />
  },
  {
  title: 'تخصيص اللوحات وإخفاء الأقسام (Section Visibility)',
@@ -268,13 +268,13 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
  className="relative w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl app-overlay-shadow overflow-hidden my-auto flex flex-col max-h-[92vh]"
  >
  {/* Top Header */}
- <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-emerald-50/80 dark:bg-emerald-950/30 shrink-0">
+ <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 shrink-0">
  <div className="flex items-center gap-2.5">
- <div className="w-10 h-10 rounded-2xl text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+ <div className="w-10 h-10 rounded-2xl text-peacock-indigo dark:text-peacock-teal flex items-center justify-center shrink-0">
  <Stethoscope className="w-5 h-5" />
  </div>
  <div>
- <span className="text-[12px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+ <span className="text-[12px] font-black uppercase tracking-wider text-peacock-indigo-dark dark:text-peacock-teal-light">
  {brandCopy.coachGuideBadge} ({BRAND.doctorName})
  </span>
  <h3 className="font-black text-sm sm:text-base text-slate-900 dark:text-white leading-tight">
@@ -301,9 +301,9 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
  onClick={() => setCurrentStep(idx)}
  className={`h-2 rounded-full transition-all duration-150 cursor-pointer ${
  idx === currentStep
-? 'w-7 bg-emerald-600'
+? 'w-7 bg-peacock-indigo'
 : idx < currentStep
-? 'w-2.5 bg-emerald-400/80 dark:bg-emerald-700'
+? 'w-2.5 bg-peacock-teal/80 dark:bg-peacock-indigo-dark'
 : 'w-2 bg-slate-200 dark:bg-slate-700'
  }`}
  title={`الخطوة ${idx + 1}: ${step.title}`}
@@ -332,14 +332,14 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
  {current.badge}
  </span>
  <div className="flex items-center gap-3">
- <div className="p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 shrink-0">
+ <div className="p-2.5 rounded-2xl bg-peacock-blue/10 border border-peacock-blue/20 shrink-0">
  {current.icon}
  </div>
  <div>
  <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug">
  {current.title}
  </h2>
- <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
+ <p className="text-xs font-bold text-peacock-indigo-dark dark:text-peacock-teal-light">
  {current.subtitle}
  </p>
  </div>
@@ -366,7 +366,7 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
  </h4>
  </div>
  {detail.highlight && (
- <span className="text-[12px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
+ <span className="text-[12px] font-black px-2 py-0.5 rounded-full bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep shrink-0">
  {detail.highlight}
  </span>
  )}
@@ -380,8 +380,8 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
 
  {/* Clinical Pro Tip */}
  {current.clinicalTip && (
- <div className="p-3.5 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-300/60 dark:border-emerald-700/50 flex items-start gap-2.5 text-xs text-emerald-900 dark:text-emerald-200">
- <Circle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+ <div className="p-3.5 rounded-2xl bg-peacock-blue/10 dark:bg-peacock-blue/15 border border-peacock-teal-light/60 dark:border-peacock-indigo-dark/50 flex items-start gap-2.5 text-xs text-peacock-ink dark:text-peacock-sage">
+ <Circle className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal shrink-0 mt-0.5" />
  <div>
  <strong className="font-black">توجيه {BRAND.doctorName} الإكلينيكي: </strong>
  <span className="font-medium">{current.clinicalTip}</span>
@@ -422,7 +422,7 @@ export const CoachOnboardingModal: React.FC<CoachOnboardingModalProps> = ({
  <button
  type="button"
  onClick={handleNext}
- className="min-h-[42px] px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer"
+ className="min-h-[42px] px-5 rounded-2xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-black text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer"
  >
  <span>{isLastStep? 'بدء العمل على اللوحة ': 'الخطوة التالية'}</span>
  {!isLastStep && <ChevronLeft className="w-4 h-4" />}

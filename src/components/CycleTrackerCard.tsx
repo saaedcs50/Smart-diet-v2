@@ -190,8 +190,8 @@ export const CycleTrackerCard: React.FC<CycleTrackerCardProps> = ({
  1: { label: 'منخفضة جداً', icon: '', color: 'text-rose-500' },
  2: { label: 'هادئة / مجهدة', icon: '', color: 'text-amber-500' },
  3: { label: 'معتدلة', icon: '', color: 'text-yellow-500' },
- 4: { label: 'نشيطة', icon: '', color: 'text-teal-500' },
- 5: { label: 'طاقة عالية', icon: '', color: 'text-emerald-500' },
+ 4: { label: 'نشيطة', icon: '', color: 'text-peacock-blue' },
+ 5: { label: 'طاقة عالية', icon: '', color: 'text-peacock-blue' },
  };
 
  return (
@@ -378,7 +378,7 @@ export const CycleTrackerCard: React.FC<CycleTrackerCardProps> = ({
 
  {/* Clinical Flags Note (If set by coach) */}
  {cycleConfig.clinicalFlags && cycleConfig.clinicalFlags.length > 0 && (
- <div className="p-2.5 rounded-2xl bg-[#0D9488]/10 dark:bg-[#0D9488]/20 border border-[#0D9488]/30 text-[12px] text-[#0D9488] dark:text-[#2DD4BF] space-y-1">
+ <div className="p-2.5 rounded-2xl bg-[#4D52B4]/10 dark:bg-[#4D52B4]/20 border border-[#4D52B4]/30 text-[12px] text-[#4D52B4] dark:text-[#70D6C5] space-y-1">
  <span className="font-bold flex items-center gap-1">
  <Info className="w-3.5 h-3.5" />
  <span>سياق سريري معتمد من الأخصائية:</span>
@@ -389,7 +389,7 @@ export const CycleTrackerCard: React.FC<CycleTrackerCardProps> = ({
  return (
  <span
  key={flag}
- className="px-2 py-0.5 rounded-lg bg-[#0D9488]/15 dark:bg-[#0D9488]/30 text-[#0D9488] dark:text-[#2DD4BF] text-[12px] font-bold"
+ className="px-2 py-0.5 rounded-lg bg-[#4D52B4]/15 dark:bg-[#4D52B4]/30 text-[#4D52B4] dark:text-[#70D6C5] text-[12px] font-bold"
  >
  {meta?.label || flag}
  </span>

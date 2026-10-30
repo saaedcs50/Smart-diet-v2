@@ -251,7 +251,7 @@ export const VisualReportCard: React.FC<VisualReportCardProps> = ({
  <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-5 border border-slate-200 dark:border-slate-800 app-overlay-shadow max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-150">
  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-3">
  <div className="flex items-center gap-2">
- <div className="w-8 h-8 rounded-xl dark: text-emerald-600 flex items-center justify-center font-bold">
+ <div className="w-8 h-8 rounded-xl dark: text-peacock-indigo flex items-center justify-center font-bold">
  <Circle className="w-4 h-4" />
  </div>
  <div>
@@ -286,7 +286,7 @@ export const VisualReportCard: React.FC<VisualReportCardProps> = ({
  <div className="grid grid-cols-2 gap-2 mt-4 pt-2">
  <button
  onClick={handleDownload}
- className="py-2.5 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+ className="py-2.5 px-3 rounded-2xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
  >
  <Download className="w-4 h-4" />
  تنزيل الصورة 💾

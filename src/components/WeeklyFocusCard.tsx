@@ -43,12 +43,12 @@ export const WeeklyFocusCard: React.FC<WeeklyFocusCardProps> = ({ plan, day, cur
       className={`p-4 rounded-3xl border space-y-2.5 animate-in fade-in duration-200 ${
         isFinalDay
           ? 'bg-amber-50/80 dark:bg-amber-950/20 border-amber-200/80 dark:border-amber-800/60'
-          : 'bg-white/90 dark:bg-slate-900/90 border-violet-200/80 dark:border-violet-800/60'
+          : 'bg-white/90 dark:bg-slate-900/90 border-peacock-sage/80 dark:border-peacock-indigo-deep/60'
       }`}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-peacock-mist dark:bg-peacock-ink-deep/40 text-peacock-indigo dark:text-peacock-teal flex items-center justify-center shrink-0">
             <Target className="w-4 h-4" />
           </div>
           <div className="min-w-0">
@@ -60,12 +60,12 @@ export const WeeklyFocusCard: React.FC<WeeklyFocusCardProps> = ({ plan, day, cur
             </span>
           </div>
         </div>
-        <span className="text-sm font-black text-violet-600 dark:text-violet-400 shrink-0">{progress.percent}%</span>
+        <span className="text-sm font-black text-peacock-indigo dark:text-peacock-teal shrink-0">{progress.percent}%</span>
       </div>
 
-      <div className="w-full bg-violet-100/70 dark:bg-violet-950/60 h-2.5 rounded-full overflow-hidden">
+      <div className="w-full bg-peacock-pale/70 dark:bg-peacock-ink-deep/60 h-2.5 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-300 ${progress.completed ? 'bg-emerald-500' : 'bg-violet-500'}`}
+          className={`h-full rounded-full transition-all duration-300 ${progress.completed ? 'bg-peacock-blue' : 'bg-peacock-blue'}`}
           style={{ width: `${progress.percent}%` }}
         />
       </div>
@@ -79,7 +79,7 @@ export const WeeklyFocusCard: React.FC<WeeklyFocusCardProps> = ({ plan, day, cur
           <button
             type="button"
             onClick={() => onUpdateDay({ ...day, focusDone: true })}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-500 hover:bg-violet-600 text-white text-xs font-black cursor-pointer shrink-0"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-peacock-blue hover:bg-peacock-indigo text-white text-xs font-black cursor-pointer shrink-0"
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
             أنجزت اليوم

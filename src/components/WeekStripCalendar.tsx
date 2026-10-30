@@ -92,9 +92,9 @@ export const WeekStripCalendar: React.FC<WeekStripCalendarProps> = ({
             <button
               type="button"
               onClick={handleGoToday}
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:scale-105 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-peacock-mist text-peacock-indigo dark:bg-peacock-ink-deep/50 dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep hover:scale-105 transition-all cursor-pointer"
             >
-              <Sparkles className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+              <Sparkles className="w-3 h-3 text-peacock-indigo dark:text-peacock-teal" />
               <span>اليوم</span>
             </button>
           )}
@@ -130,9 +130,9 @@ export const WeekStripCalendar: React.FC<WeekStripCalendarProps> = ({
               onClick={() => onDateChange(day.dateStr)}
               className={`flex flex-col items-center justify-center py-2 sm:py-2.5 px-1 rounded-2xl transition-all duration-200 cursor-pointer relative group ${
                 day.isSelected
-                  ? 'bg-gradient-to-b from-teal-500 to-teal-600 text-white shadow-md shadow-teal-500/25 scale-[1.03]'
+                  ? 'bg-gradient-to-b from-peacock-blue to-peacock-indigo text-white shadow-md shadow-peacock-blue/25 scale-[1.03]'
                   : day.isToday
-                  ? 'bg-teal-50/80 dark:bg-teal-950/40 text-teal-800 dark:text-teal-200 border border-teal-300/80 dark:border-teal-800/80 hover:bg-teal-100/70'
+                  ? 'bg-peacock-mist/80 dark:bg-peacock-ink-deep/40 text-peacock-indigo-deep dark:text-peacock-sage border border-peacock-teal-light/80 dark:border-peacock-indigo-deep/80 hover:bg-peacock-pale/70'
                   : 'hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300'
               }`}
             >
@@ -140,9 +140,9 @@ export const WeekStripCalendar: React.FC<WeekStripCalendarProps> = ({
               <span
                 className={`text-[11px] font-bold leading-tight mb-1 ${
                   day.isSelected
-                    ? 'text-teal-100'
+                    ? 'text-peacock-pale'
                     : day.isToday
-                    ? 'text-teal-600 dark:text-teal-400 font-extrabold'
+                    ? 'text-peacock-indigo dark:text-peacock-teal font-extrabold'
                     : 'text-slate-400 dark:text-slate-500'
                 }`}
               >
@@ -161,7 +161,7 @@ export const WeekStripCalendar: React.FC<WeekStripCalendarProps> = ({
               {/* Indicator Dot for Today or Completed */}
               <div className="mt-1.5 flex items-center justify-center h-1.5">
                 {day.isToday && !day.isSelected && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-peacock-blue animate-pulse" />
                 )}
                 {day.isSelected && (
                   <span className="w-1.5 h-1.5 rounded-full bg-white/80" />

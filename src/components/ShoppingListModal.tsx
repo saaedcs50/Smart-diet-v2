@@ -140,7 +140,7 @@ export const ShoppingListModal: React.FC<ShoppingListModalProps> = ({ isOpen, on
                   onClick={() => updateItem(item.id, { checked: !item.checked })}
                   className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 cursor-pointer transition-colors ${
                     item.checked
-                      ? 'bg-teal-500 border-teal-500 text-white'
+                      ? 'bg-peacock-blue border-peacock-blue text-white'
                       : 'border-slate-300 dark:border-slate-600 text-transparent'
                   }`}
                   aria-label={item.checked ? 'إلغاء تعليم' : 'تعليم كتم شراؤه'}
@@ -155,7 +155,7 @@ export const ShoppingListModal: React.FC<ShoppingListModalProps> = ({ isOpen, on
                   >
                     {item.name}
                     {item.totalQuantity != null && (
-                      <span className="text-teal-600 dark:text-teal-400 font-black">
+                      <span className="text-peacock-indigo dark:text-peacock-teal font-black">
                         {' '}
                         — {item.totalQuantity}
                         {item.unit ? ` ${item.unit}` : ''}
@@ -192,7 +192,7 @@ export const ShoppingListModal: React.FC<ShoppingListModalProps> = ({ isOpen, on
           <button
             type="button"
             onClick={handleAddManual}
-            className="px-3.5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-black text-sm flex items-center gap-1 cursor-pointer"
+            className="px-3.5 rounded-xl bg-peacock-blue hover:bg-peacock-indigo text-white font-black text-sm flex items-center gap-1 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> إضافة
           </button>

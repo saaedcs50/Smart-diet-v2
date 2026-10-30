@@ -203,7 +203,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  return (
  <div className="space-y-4">
  {/* 1. Header & Configuration Banner */}
- <div className="p-4 rounded-3xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-teal-200/80 dark:border-teal-900/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
+ <div className="p-4 rounded-3xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border border-peacock-sage/80 dark:border-peacock-ink/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
  <div>
  <div className="flex items-center gap-2">
  <span className="text-xl"></span>
@@ -219,7 +219,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  <button
  type="button"
  onClick={() => handleOpenAdd()}
- className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs transition-all shrink-0"
+ className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-peacock-indigo hover:bg-peacock-indigo text-white font-bold text-xs transition-all shrink-0"
  >
  <Plus className="w-4 h-4" />
  <span>إضافة قراءة تحليل </span>
@@ -242,7 +242,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  type="checkbox"
  checked={currentConfig.showToClient}
  onChange={(e) => updateConfig((prev) => ({...prev, showToClient: e.target.checked }))}
- className="w-5 h-5 accent-teal-600 rounded cursor-pointer"
+ className="w-5 h-5 accent-peacock-indigo rounded cursor-pointer"
  />
  </label>
 
@@ -260,7 +260,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  type="checkbox"
  checked={currentConfig.allowClientAdd}
  onChange={(e) => updateConfig((prev) => ({...prev, allowClientAdd: e.target.checked }))}
- className="w-5 h-5 accent-teal-600 rounded cursor-pointer"
+ className="w-5 h-5 accent-peacock-indigo rounded cursor-pointer"
  />
  </label>
  </div>
@@ -269,7 +269,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  {isAdding && (
  <form
  onSubmit={handleSaveEntry}
- className="p-5 rounded-3xl bg-white dark:bg-slate-900 border-2 border-teal-500/40 space-y-4 animate-in fade-in duration-200"
+ className="p-5 rounded-3xl bg-white dark:bg-slate-900 border-2 border-peacock-blue/40 space-y-4 animate-in fade-in duration-200"
  >
  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
  <div className="flex items-center gap-2">
@@ -299,7 +299,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  <select
  value={formTestId}
  onChange={(e) => handleTestIdChange(e.target.value)}
- className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none"
+ className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue outline-none"
  >
  {LAB_CATALOG.map((cat) => (
  <option key={cat.id} value={cat.id}>
@@ -321,7 +321,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  onChange={(e) => setFormCustomName(e.target.value)}
  placeholder="مثال: وظائف كبد ALT أو حمض اليوريك"
  required
- className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none"
+ className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue outline-none"
  />
  </div>
  )}
@@ -338,7 +338,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  onChange={(e) => setFormValue(e.target.value)}
  placeholder="مثال: 95 أو 5.6"
  required
- className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none"
+ className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue outline-none"
  />
  </div>
 
@@ -353,7 +353,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  onChange={(e) => setFormUnit(e.target.value)}
  placeholder="mg/dL أو % أو ng/mL"
  required
- className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none"
+ className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue outline-none"
  />
  </div>
 
@@ -367,7 +367,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  value={formDate}
  onChange={(e) => setFormDate(e.target.value)}
  required
- className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none"
+ className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue outline-none"
  />
  </div>
 
@@ -381,7 +381,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  value={formNote}
  onChange={(e) => setFormNote(e.target.value)}
  placeholder="مثال: تحليل بعد جرعة فيتامين د الأسبوعية أو صيام 12 ساعة"
- className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none"
+ className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue outline-none"
  />
  </div>
  </div>
@@ -390,13 +390,13 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  {(() => {
  const meta = getLabTestMeta(formTestId, formCustomName);
  return (
- <div className="p-3 rounded-2xl bg-teal-50/60 dark:bg-teal-950/30 border border-teal-200/60 dark:border-teal-900/40 text-xs text-teal-900 dark:text-teal-200 flex items-start gap-2">
- <Info className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+ <div className="p-3 rounded-2xl bg-peacock-mist/60 dark:bg-peacock-ink-deep/30 border border-peacock-sage/60 dark:border-peacock-ink/40 text-xs text-peacock-ink dark:text-peacock-sage flex items-start gap-2">
+ <Info className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal shrink-0 mt-0.5" />
  <div>
  <span className="font-bold">النطاق الإرشادي العام: </span>
  <span>{meta.rangeGuidance.text}</span>
  {meta.rangeGuidance.hint && (
- <span className="block text-[12px] text-teal-700 dark:text-teal-300 mt-0.5">
+ <span className="block text-[12px] text-peacock-indigo dark:text-peacock-teal-light mt-0.5">
  {meta.rangeGuidance.hint}
  </span>
  )}
@@ -418,7 +418,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  </button>
  <button
  type="submit"
- className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition-all"
+ className="px-5 py-2 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo text-white text-xs font-bold transition-all"
  >
  {editingEntryId? 'حفظ التعديل ': 'حفظ القراءة '}
  </button>
@@ -429,7 +429,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  {/* 4. Quick-start buttons if empty or want to quick-add common tests */}
  {testKeys.length === 0 &&!isAdding && (
  <div className="p-5 text-center rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
- <div className="w-10 h-10 mx-auto text-teal-600 dark:text-teal-400 flex items-center justify-center">
+ <div className="w-10 h-10 mx-auto text-peacock-indigo dark:text-peacock-teal flex items-center justify-center">
  <FlaskConical className="w-8 h-8" />
  </div>
  <div>
@@ -480,7 +480,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  <button
  type="button"
  onClick={() => handleOpenAdd('tsh')}
- className="px-3.5 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-bold transition-all"
+ className="px-3.5 py-2 rounded-xl bg-peacock-mist hover:bg-peacock-pale dark:bg-peacock-ink-deep/40 dark:hover:bg-peacock-ink/60 text-peacock-indigo-dark dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep text-xs font-bold transition-all"
  >
  + TSH غدة
  </button>
@@ -498,7 +498,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  <button
  type="button"
  onClick={() => handleOpenAdd()}
- className="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1"
+ className="text-xs font-bold text-peacock-indigo dark:text-peacock-teal hover:underline flex items-center gap-1"
  >
  <Plus className="w-3.5 h-3.5" />
  <span>إضافة قراءة جديدة</span>
@@ -569,7 +569,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  </span>
  )}
  {summary.trend === 'down' && (
- <span className="inline-flex items-center gap-0.5 text-xs font-extrabold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.5 rounded-md">
+ <span className="inline-flex items-center gap-0.5 text-xs font-extrabold text-peacock-indigo dark:text-peacock-teal bg-peacock-mist dark:bg-peacock-ink-deep/60 px-1.5 py-0.5 rounded-md">
  <TrendingDown className="w-3.5 h-3.5" />
  <span>{summary.diff}</span>
  </span>
@@ -598,7 +598,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  type="button"
  onClick={() => handleOpenAdd(sample.testId)}
  title="إضافة قراءة لهذا التحليل"
- className="p-2 rounded-xl bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors"
+ className="p-2 rounded-xl bg-peacock-mist dark:bg-peacock-ink-deep/50 text-peacock-indigo dark:text-peacock-teal hover:bg-peacock-pale dark:hover:bg-peacock-ink/60 transition-colors"
  >
  <Plus className="w-4 h-4" />
  </button>
@@ -620,7 +620,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
  <span className="flex items-center gap-1.5">
- <Activity className="w-4 h-4 text-teal-500" />
+ <Activity className="w-4 h-4 text-peacock-blue" />
  <span>رسم الاتجاه الزمني ({entries.length} قراءات)</span>
  </span>
  <span className="text-[12px] text-slate-400">
@@ -664,7 +664,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  <span className={`text-[12px] font-bold px-1.5 py-0.5 rounded ${
  item.addedBy === 'coach'
 ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+: 'bg-peacock-mist text-peacock-indigo-dark dark:bg-peacock-ink-deep dark:text-peacock-teal-light'
  }`}>
  {item.addedBy === 'coach'? ' الأخصائي': ' العميل'}
  </span>
@@ -680,7 +680,7 @@ export const LabTrackingManager: React.FC<LabTrackingManagerProps> = ({
  <button
  type="button"
  onClick={() => handleOpenEdit(item)}
- className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950 transition-colors"
+ className="p-1.5 rounded-lg text-slate-400 hover:text-peacock-indigo hover:bg-peacock-mist dark:hover:bg-peacock-ink-deep transition-colors"
  title="تعديل"
  >
  <Edit3 className="w-3.5 h-3.5" />

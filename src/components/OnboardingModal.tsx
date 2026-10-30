@@ -68,11 +68,11 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  {
  id: 'welcome',
  badge: 'الترحيب والمقدمة',
- badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+ badgeColor: 'bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep dark:text-peacock-teal-light border-peacock-sage dark:border-peacock-indigo-deep',
  title: `أهلاً بك${plan.clientName ? ` يا ${plan.clientName}` : ''} في تطبيق المتابعة الصحية`,
  subtitle: `نظام المتابعة بإشراف ${BRAND.doctorName}`,
  description: 'هذا التطبيق صُمم لمساعدتك على الالتزام بالخطة الغذائية اليومية، مع إمكانية استبدال الوجبات بالبدائل المعتمدة ومتابعة المؤشرات بانتظام.',
- icon: <Circle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />,
+ icon: <Circle className="w-8 h-8 text-peacock-indigo dark:text-peacock-teal" />,
  details: [
  {
  title: 'خطة علاجية مخصصة لك',
@@ -83,7 +83,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  {
  title: 'نظام الحصص والبدائل الذكية',
  description: 'كل وجبة محددة المكونات مع إمكانية تبديل أي صنف غير متوفر ببديل معتمد ومكافئ في السعرات.',
- icon: <BookOpen className="w-5 h-5 text-teal-500" />
+ icon: <BookOpen className="w-5 h-5 text-peacock-blue" />
  },
  {
  title: 'يعمل بدون إنترنت وبخصوصية كاملة',
@@ -111,7 +111,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  {
  title: 'تسجيل الوجبات والبدائل (Checkmark )',
  description: 'اضغط على زر الالتزام عند تناول الوجبة، أو اضغط على ( البدائل) لاختيار صنف بديل معتمد.',
- icon: <Utensils className="w-5 h-5 text-emerald-500" />
+ icon: <Utensils className="w-5 h-5 text-peacock-blue" />
  },
  {
  title: 'عداد شرب الماء التفاعلي ',
@@ -144,13 +144,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  {
  title: 'سجل السنتيمترات ومحيط الجسم',
  description: 'متابعة محيط الخصر، البطن، والذراعين: المقاسات تعكس نزول الدهون حتى في أوقات ثبات الميزان.',
- icon: <Award className="w-5 h-5 text-emerald-500" />,
+ icon: <Award className="w-5 h-5 text-peacock-blue" />,
  highlight: 'أدق مقياس للدهون'
  },
  {
  title: 'مقارنة الصور قبل وبعد (Photo Compare )',
  description: 'التقط صور تقدمك دورياً وقارنها جنباً إلى جنب: الصور تحفظ محلياً على جهازك وبسرية تامة.',
- icon: <Circle className="w-5 h-5 text-purple-500" />
+ icon: <Circle className="w-5 h-5 text-peacock-blue" />
  }
  ],
  proTip: 'قس مقاساتك ووزنك مرة أسبوعياً صباحاً على معدة فارغة للحصول على أدق نتيجة.'
@@ -158,16 +158,16 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  {
  id: 'reports_tab',
  badge: 'التبويب الثالث: التقارير والواتساب',
- badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+ badgeColor: 'bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep dark:text-peacock-teal-light border-peacock-sage dark:border-peacock-indigo-deep',
  title: brandCopy.shareProgress,
  subtitle: 'تقرير أسبوعي شامل بنقرة واحدة',
  description: 'صفحة التقارير ترسم لك صورة شاملة لمدى تقدمك في الالتزام، شرب الماء، والوزن خلال الأسبوع.',
- icon: <FileText className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />,
+ icon: <FileText className="w-8 h-8 text-peacock-indigo dark:text-peacock-teal" />,
  details: [
  {
  title: 'إحصائيات الالتزام الأسبوعية',
  description: 'ملخص واضح يوضح متوسط التزامك، أفضل أيامك، ومتوسط شرب الماء وساعات النوم.',
- icon: <CheckCircle2 className="w-5 h-5 text-teal-500" />
+ icon: <CheckCircle2 className="w-5 h-5 text-peacock-blue" />
  },
  {
  title: 'بطاقة القصة المرئية (Story Card )',
@@ -177,7 +177,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  {
  title: 'زر مشاركة التقرير على واتساب ',
  description: `في يوم المتابعة، اضغط على زر "${brandCopy.reportWhatsApp}" ليقوم التطبيق بتجهيز رسالة منسقة وجاهزة لإرسالها مباشرة.`,
- icon: <Share2 className="w-5 h-5 text-emerald-500" />,
+ icon: <Share2 className="w-5 h-5 text-peacock-blue" />,
  highlight: 'متابعة مباشرة مع العيادة'
  }
  ],
@@ -186,21 +186,21 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  {
  id: 'pwa_and_help',
  badge: 'الخطوة الأخيرة: التثبيت والدليل السريع',
- badgeColor: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+ badgeColor: 'bg-peacock-pale text-peacock-indigo-deep dark:bg-peacock-ink-deep dark:text-peacock-teal-light border-peacock-sage dark:border-peacock-indigo-deep',
  title: 'تثبيت التطبيق ومساعد الاستخدام ()',
  subtitle: 'افتحه كأي تطبيق أصلي بدون كتابة روابط',
  description: 'يمكنك إضافة التطبيق مباشرة لشاشة هاتفك وتفعيل الإشعارات لمواعيد الوجبات.',
- icon: <Smartphone className="w-8 h-8 text-purple-600 dark:text-purple-400" />,
+ icon: <Smartphone className="w-8 h-8 text-peacock-indigo dark:text-peacock-teal" />,
  details: [
  {
  title: 'على هواتف أندرويد وآيفون',
  description: 'اضغط على زر المشاركة أو القائمة في المتصفح ثم اختر "إضافة إلى الشاشة الرئيسية" (Add to Home Screen).',
- icon: <Smartphone className="w-5 h-5 text-emerald-500" />
+ icon: <Smartphone className="w-5 h-5 text-peacock-blue" />
  },
  {
  title: 'زر المساعدة بجانب كل ميزة ()',
  description: `ستجد علامة استفهام بجانب كل عنوان في التطبيق: اضغط عليها في أي وقت لمعرفة كل تفاصيل استخدام الميزة و${brandCopy.featureGuides}.`,
- icon: <HelpCircle className="w-5 h-5 text-emerald-500" />,
+ icon: <HelpCircle className="w-5 h-5 text-peacock-blue" />,
  highlight: 'دليل مدمج في كل شاشة'
  },
  {
@@ -241,7 +241,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  {/* Header Bar */}
  <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 backdrop-blur-sm">
  <div className="flex items-center gap-2.5">
- <div className="w-8 h-8 rounded-xl text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm">
+ <div className="w-8 h-8 rounded-xl text-peacock-indigo dark:text-peacock-teal flex items-center justify-center font-bold text-sm">
  {currentStep + 1}/{steps.length}
  </div>
  <div>
@@ -276,9 +276,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  onClick={() => setCurrentStep(idx)}
  className={`h-full transition-all duration-150 flex-1 cursor-pointer ${
  idx === currentStep
-? 'bg-emerald-500'
+? 'bg-peacock-blue'
 : idx < currentStep
-? 'bg-emerald-300 dark:bg-emerald-700'
+? 'bg-peacock-teal-light dark:bg-peacock-indigo-dark'
 : 'bg-transparent'
  }`}
  title={step.badge}
@@ -298,15 +298,15 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  className="space-y-5"
  >
  {/* Title & Subtitle Card */}
- <div className="flex items-start gap-4 p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-100/80 dark:border-emerald-900/50">
- <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl border border-emerald-100/50 dark:border-slate-700 shrink-0">
+ <div className="flex items-start gap-4 p-4 rounded-2xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border border-peacock-pale/80 dark:border-peacock-ink/50">
+ <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl border border-peacock-pale/50 dark:border-slate-700 shrink-0">
  {currentStepData.icon}
  </div>
  <div className="space-y-1">
  <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-snug">
  {currentStepData.title}
  </h3>
- <p className="text-xs sm:text-sm font-medium text-emerald-700 dark:text-emerald-400">
+ <p className="text-xs sm:text-sm font-medium text-peacock-indigo-dark dark:text-peacock-teal">
  {currentStepData.subtitle}
  </p>
  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
@@ -324,7 +324,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  {currentStepData.details.map((detail, dIdx) => (
  <div
  key={dIdx}
- className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-start gap-3 hover:border-emerald-200 dark:hover:border-emerald-800/60 transition-colors"
+ className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-start gap-3 hover:border-peacock-sage dark:hover:border-peacock-indigo-deep/60 transition-colors"
  >
  <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200/60 dark:border-slate-700 shrink-0 mt-0.5">
  {detail.icon}
@@ -335,7 +335,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  {detail.title}
  </span>
  {detail.highlight && (
- <span className="text-[12px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+ <span className="text-[12px] font-bold px-2 py-0.5 rounded-md bg-peacock-blue/10 text-peacock-indigo-dark dark:text-peacock-teal-light border border-peacock-blue/20">
  {detail.highlight}
  </span>
  )}
@@ -380,8 +380,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
  onClick={handleNext}
  className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white transition-all cursor-pointer ${
  isLastStep
-? 'bg-emerald-600 hover:bg-emerald-700'
-: 'bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700'
+? 'bg-peacock-indigo hover:bg-peacock-indigo-dark'
+: 'bg-slate-900 dark:bg-peacock-indigo hover:bg-slate-800 dark:hover:bg-peacock-indigo-dark'
  }`}
  >
  {isLastStep? (

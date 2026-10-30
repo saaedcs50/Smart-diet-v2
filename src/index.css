@@ -17,37 +17,59 @@
   --font-sans: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
   --font-body: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
 
-  --color-brand-primary-text: #3A124D;
-  --color-brand-secondary-text: #6F5A7D;
-  --color-brand-bg: #F8F7F9;
+  --color-brand-primary-text: #234668;
+  --color-brand-secondary-text: #306190;
+  --color-brand-bg: #E1EDD4;
   --color-brand-card: #FFFFFF;
-  --color-brand-muted: #F1E9F8;
-  --color-brand-border: #D8C4E9;
-  --color-brand-hero: #E21B6D;
-  --color-brand-hero-hover: #C91561;
-  --color-brand-secondary: #5B2482;
-  --color-brand-secondary-hover: #43186A;
+  --color-brand-muted: #EAF3FC;
+  --color-brand-border: #AFD2F5;
+  --color-brand-hero: #4D52B4;
+  --color-brand-hero-hover: #393EA0;
+  --color-brand-secondary: #4E9CE8;
+  --color-brand-secondary-hover: #3583CF;
   --color-brand-gold: #E0922D;
   --color-brand-gold-light: #F2C66D;
-  --color-brand-neon: #FF4099;
+  --color-brand-neon: #686CBF;
+  --color-peacock-mist: #F0F6EA;
+  --color-peacock-pale: #E1EDD4;
+  --color-peacock-sage: #CAE5BC;
+  --color-peacock-sage-dark: #A6BC9A;
+  --color-peacock-teal-light: #A2E4D9;
+  --color-peacock-teal: #70D6C5;
+  --color-peacock-teal-dark: #5AAB9E;
+  --color-peacock-blue-light: #9EC9F2;
+  --color-peacock-blue: #4E9CE8;
+  --color-peacock-blue-dark: #3E7DBA;
+  --color-peacock-indigo-lighter: #BBBDE2;
+  --color-peacock-indigo-light: #9DA0D6;
+  --color-peacock-indigo: #4D52B4;
+  --color-peacock-indigo-dark: #3E4290;
+  --color-peacock-indigo-deep: #323575;
+  --color-peacock-ink: #232551;
+  --color-peacock-ink-deep: #171936;
 }
 
 :root {
   /* Surfaces */
-  --app-bg: #F8F7F9;
+  --app-bg: #E1EDD4;
   --app-card: #FFFFFF;
-  --app-card-muted: #F1E9F8;
-  --app-border: #D8C4E9;
+  --app-card-muted: #EAF3FC;
+  --app-border: #AFD2F5;
 
   /* Text */
-  --app-text-primary: #3A124D;
-  --app-text-secondary: #6F5A7D;
+  --app-text-primary: #234668;
+  --app-text-secondary: #306190;
 
   /* Accent (from brand - single accent family) */
-  --app-hero: #E21B6D;
-  --app-hero-hover: #C91561;
-  --app-secondary: #5B2482;
-  --app-secondary-hover: #43186A;
+  --app-hero: #4D52B4;
+  --app-hero-hover: #393EA0;
+  --app-secondary: #4E9CE8;
+  --app-secondary-hover: #3583CF;
+
+  /* Peacock functional */
+  --app-tertiary: #70D6C5;
+  --app-tertiary-hover: #5FB6A7;
+  --app-tint: #CAE5BC;
 
   /* Meaning colours (status only) */
   --app-success: #059669;
@@ -71,10 +93,13 @@
   --app-border: #542870;
   --app-text-primary: #EDE5F5;
   --app-text-secondary: #B792D4;
-  --app-hero: #E21B6D;
-  --app-hero-hover: #FF4099;
-  --app-secondary: #9B45D3;
-  --app-secondary-hover: #B56DE0;
+  --app-hero: #4D52B4;
+  --app-hero-hover: #7175C3;
+  --app-secondary: #8286CB;
+  --app-secondary-hover: #9DA0D6;
+  --app-tertiary: #70D6C5;
+  --app-tertiary-hover: #8ADDCF;
+  --app-tint: #353E3D;
   --app-success: #34D399;
   --app-warning: #FBBF24;
   --app-danger: #F87171;

@@ -56,7 +56,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ plan, activeTab, onChangeT
                 onClick={() => onChangeTab(item.id)}
                 className={`flex items-center justify-center gap-2 py-2 px-3 rounded-full transition-all duration-200 cursor-pointer relative ${
                   isActive
-                    ? 'bg-teal-500 text-white font-black shadow-md shadow-teal-500/25 scale-[1.02]'
+                    ? 'bg-peacock-blue text-white font-black shadow-md shadow-peacock-blue/25 scale-[1.02]'
                     : 'text-slate-500 dark:text-slate-400 font-bold hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
                 }`}
               >
