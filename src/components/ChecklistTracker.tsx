@@ -51,7 +51,7 @@ export const ChecklistTracker: React.FC<ChecklistTrackerProps> = ({ plan, day, o
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl text-[#0D9488] dark:text-[#2DD4BF] flex items-center justify-center font-bold text-sm bg-teal-50 dark:bg-teal-950/40">
+              <div className="w-8 h-8 rounded-xl text-[#4D52B4] dark:text-[#70D6C5] flex items-center justify-center font-bold text-sm bg-peacock-mist dark:bg-peacock-ink-deep/40">
                 <CheckSquare className="w-4 h-4" />
               </div>
               <div>
@@ -68,8 +68,8 @@ export const ChecklistTracker: React.FC<ChecklistTrackerProps> = ({ plan, day, o
             </div>
 
             {isAllChecksDone && (
-              <span className="px-2.5 py-0.5 rounded-full bg-[#0D9488]/10 dark:bg-[#0D9488]/20 text-[#0D9488] dark:text-[#2DD4BF] font-bold text-[12px] flex items-center gap-1">
-                <Circle className="w-3 h-3 text-[#0D9488]" />
+              <span className="px-2.5 py-0.5 rounded-full bg-[#4D52B4]/10 dark:bg-[#4D52B4]/20 text-[#4D52B4] dark:text-[#70D6C5] font-bold text-[12px] flex items-center gap-1">
+                <Circle className="w-3 h-3 text-[#4D52B4]" />
                 اكتملت جميع العادات
               </span>
             )}
@@ -84,14 +84,14 @@ export const ChecklistTracker: React.FC<ChecklistTrackerProps> = ({ plan, day, o
                   onClick={() => toggleCheck(item.id)}
                   className={`w-full text-right p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
                     isDone
-                      ? 'bg-[#0D9488]/10 dark:bg-[#0D9488]/15 border-[#0D9488]/30 dark:border-[#0D9488]/30'
+                      ? 'bg-[#4D52B4]/10 dark:bg-[#4D52B4]/15 border-[#4D52B4]/30 dark:border-[#4D52B4]/30'
                       : 'bg-[var(--app-card-muted)] border-[var(--app-border)]/60 hover:bg-[var(--app-card-muted)]'
                   }`}
                 >
                   <span
                     className={`text-xs font-semibold leading-relaxed ${
                       isDone
-                        ? 'text-[#0D9488] dark:text-[#2DD4BF] line-through opacity-80'
+                        ? 'text-[#4D52B4] dark:text-[#70D6C5] line-through opacity-80'
                         : 'text-[var(--app-text-primary)]'
                     }`}
                   >
@@ -101,7 +101,7 @@ export const ChecklistTracker: React.FC<ChecklistTrackerProps> = ({ plan, day, o
                   <div
                     className={`w-6 h-6 rounded-xl flex items-center justify-center border transition-colors shrink-0 ${
                       isDone
-                        ? 'bg-[#0D9488] border-[#0D9488] text-white'
+                        ? 'bg-[#4D52B4] border-[#4D52B4] text-white'
                         : 'border-[var(--app-border)] bg-[var(--app-card)]'
                     }`}
                   >
@@ -119,7 +119,7 @@ export const ChecklistTracker: React.FC<ChecklistTrackerProps> = ({ plan, day, o
         <div className={`${showChecklist ? 'pt-3 border-t border-[var(--app-border)]/50' : ''} space-y-3`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl text-[var(--app-secondary)] flex items-center justify-center font-bold text-sm bg-purple-50 dark:bg-purple-950/40">
+              <div className="w-8 h-8 rounded-xl text-[var(--app-secondary)] flex items-center justify-center font-bold text-sm bg-peacock-mist dark:bg-peacock-ink-deep/40">
                 <Pill className="w-4 h-4" />
               </div>
               <div>
@@ -133,7 +133,7 @@ export const ChecklistTracker: React.FC<ChecklistTrackerProps> = ({ plan, day, o
             </div>
 
             {isAllSuppsTaken && (
-              <span className="px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/40 text-[var(--app-secondary)] font-bold text-[12px] flex items-center gap-1">
+              <span className="px-2.5 py-0.5 rounded-full bg-peacock-pale dark:bg-peacock-ink-deep/40 text-[var(--app-secondary)] font-bold text-[12px] flex items-center gap-1">
                 <Circle className="w-3 h-3 text-[var(--app-secondary)]" />
                 اكتملت جميع المكملات
               </span>

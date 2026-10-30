@@ -25,7 +25,7 @@ export const PhotoCompareModal: React.FC<PhotoCompareModalProps> = ({ photos, on
  {/* Header */}
  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-3">
  <div className="flex items-center gap-2">
- <div className="w-8 h-8 rounded-xl dark: text-purple-600 flex items-center justify-center font-bold">
+ <div className="w-8 h-8 rounded-xl dark: text-peacock-indigo flex items-center justify-center font-bold">
  <Columns className="w-4 h-4" />
  </div>
  <div>
@@ -60,7 +60,7 @@ export const PhotoCompareModal: React.FC<PhotoCompareModalProps> = ({ photos, on
  </div>
 
  <div>
- <label className="block text-[12px] font-bold text-purple-600 dark:text-purple-400 mb-1">
+ <label className="block text-[12px] font-bold text-peacock-indigo dark:text-peacock-teal mb-1">
  الصورة الحالية (بعد):
  </label>
  <select
@@ -85,7 +85,7 @@ export const PhotoCompareModal: React.FC<PhotoCompareModalProps> = ({ photos, on
  alt="بعد"
  className="absolute inset-0 w-full h-full object-contain"
  />
- <div className="absolute top-2 left-2 bg-purple-600 text-white text-[12px] font-bold px-2 py-0.5 rounded-full">
+ <div className="absolute top-2 left-2 bg-peacock-indigo text-white text-[12px] font-bold px-2 py-0.5 rounded-full">
  بعد ({afterPhoto.date})
  </div>
 

@@ -31,21 +31,21 @@ export const MEDICATION_SLOT_OPTIONS: SlotOptionMeta[] = [
 ];
 
 export const WITH_FOOD_LABELS: Record<WithFoodOption, { label: string; hint: string; badgeColor: string }> = {
- required: { label: 'مع الأكل / الوجبة حتماً', hint: 'يؤخذ أثناء أو مباشرة بعد الوجبة لحماية المعدة وزيادة الامتصاص', badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300' },
+ required: { label: 'مع الأكل / الوجبة حتماً', hint: 'يؤخذ أثناء أو مباشرة بعد الوجبة لحماية المعدة وزيادة الامتصاص', badgeColor: 'bg-peacock-pale text-peacock-indigo-deep border-peacock-teal-light dark:bg-peacock-ink-deep dark:text-peacock-teal-light' },
  empty_stomach: { label: 'على معدة فارغة', hint: 'يؤخذ على الريق أو قبل الأكل بساعة أو بعده بساعتين', badgeColor: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300' },
  optional: { label: 'مع أو بدون الأكل (اختياري)', hint: 'لا يتأثر بوجود الطعام', badgeColor: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300' },
  unspecified: { label: 'غير محدد', hint: '', badgeColor: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400' },
 };
 
 export const APPETITE_EFFECT_LABELS: Record<AppetiteEffect, { label: string; icon: string; color: string }> = {
- decrease: { label: 'يقلل الشهية / يساعد على الشبع', icon: '', color: 'text-teal-600 dark:text-teal-400' },
+ decrease: { label: 'يقلل الشهية / يساعد على الشبع', icon: '', color: 'text-peacock-indigo dark:text-peacock-teal' },
  increase: { label: 'قد يزيد الشهية / يسبب جوعاً', icon: '', color: 'text-amber-600 dark:text-amber-400' },
  none: { label: 'لا تأثير معروف على الشهية', icon: '', color: 'text-slate-500' },
  unknown: { label: 'غير محدد', icon: '', color: 'text-slate-400' },
 };
 
 export const WEIGHT_EFFECT_LABELS: Record<WeightEffect, { label: string; icon: string; color: string }> = {
- loss: { label: 'قد يساهم في نزول الوزن', icon: '', color: 'text-emerald-600 dark:text-emerald-400' },
+ loss: { label: 'قد يساهم في نزول الوزن', icon: '', color: 'text-peacock-indigo dark:text-peacock-teal' },
  gain: { label: 'قد يسبب زيادة وزن أو احتباس سوائل', icon: '', color: 'text-rose-600 dark:text-rose-400' },
  none: { label: 'محايد على الوزن', icon: '', color: 'text-slate-500' },
  unknown: { label: 'غير محدد', icon: '', color: 'text-slate-400' },

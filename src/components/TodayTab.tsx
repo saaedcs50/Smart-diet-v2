@@ -208,7 +208,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
           type="button"
           onClick={() => setIsCardCustomizerOpen(true)}
           title="تخصيص البطاقات ونمط التركيز لتقليل التشتت"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 hover:scale-105 transition-all cursor-pointer shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold text-peacock-indigo dark:text-peacock-teal-light bg-peacock-mist dark:bg-peacock-ink-deep/40 border border-peacock-sage dark:border-peacock-indigo-deep hover:scale-105 transition-all cursor-pointer shadow-xs"
         >
           <Sliders className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">تخصيص العرض</span>
@@ -228,7 +228,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
 
       {/* Batch 1.5: Welcome-back card after an absence of 3+ days */}
       {showWelcomeBack && absence && (
-        <div className="p-4 rounded-3xl bg-teal-50/90 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/60 flex items-start justify-between gap-3 animate-in fade-in duration-200">
+        <div className="p-4 rounded-3xl bg-peacock-mist/90 dark:bg-peacock-ink-deep/30 border border-peacock-sage/80 dark:border-peacock-indigo-deep/60 flex items-start justify-between gap-3 animate-in fade-in duration-200">
           <div className="min-w-0">
             <p className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100">
               {buildWelcomeBackMessage(absence.gapDays)}
@@ -242,7 +242,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
                 openWhatsAppShare(buildWelcomeBackWhatsAppText(plan, absence.gapDays));
                 setWelcomeDismissed(true);
               }}
-              className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white text-xs font-black transition-colors cursor-pointer"
+              className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-peacock-blue hover:bg-peacock-indigo text-white text-xs font-black transition-colors cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
               <span>أرسل لأخصائيتك إنك رجعت</span>
@@ -264,9 +264,9 @@ export const TodayTab: React.FC<TodayTabProps> = ({
         <button
           type="button"
           onClick={() => setShowCopyConfirm(true)}
-          className="w-full p-3.5 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-dashed border-teal-300 dark:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full p-3.5 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-dashed border-peacock-teal-light dark:border-peacock-indigo hover:bg-peacock-mist dark:hover:bg-peacock-ink-deep/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
         >
-          <Copy className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+          <Copy className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
           <span className="text-xs sm:text-sm font-black text-slate-700 dark:text-slate-200">انسخ أمس</span>
           <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
             كرر وجبات وأدوية وماء أمس في هذا اليوم
@@ -279,7 +279,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
         <button
           type="button"
           onClick={() => setShowShoppingList(true)}
-          className="p-3.5 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-violet-200 dark:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          className="p-3.5 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-peacock-sage dark:border-peacock-indigo-deep hover:bg-peacock-mist dark:hover:bg-peacock-ink-deep/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
         >
           <span className="text-sm">🛒</span>
           <span className="text-xs sm:text-sm font-black text-slate-700 dark:text-slate-200">تسوق الأسبوع</span>
@@ -287,7 +287,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
         <button
           type="button"
           onClick={() => setShowIntakeWizard(true)}
-          className="p-3.5 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-teal-200 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-950/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          className="p-3.5 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-peacock-sage dark:border-peacock-indigo-deep hover:bg-peacock-mist dark:hover:bg-peacock-ink-deep/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
         >
           <span className="text-sm">📋</span>
           <span className="text-xs sm:text-sm font-black text-slate-700 dark:text-slate-200">استبيان عميل جديد</span>
@@ -396,7 +396,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
         <section className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-peacock-mist dark:bg-peacock-ink-deep/40 text-peacock-indigo dark:text-peacock-teal flex items-center justify-center font-bold">
                 <Utensils className="w-4 h-4" />
               </div>
               <h3 className="font-black text-slate-800 dark:text-slate-100 text-sm sm:text-base">
@@ -408,7 +408,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
               <button
                 type="button"
                 onClick={onOpenNotifications}
-                className="text-xs font-bold text-slate-500 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400 transition-colors flex items-center gap-1 cursor-pointer"
+                className="text-xs font-bold text-slate-500 hover:text-peacock-indigo dark:text-slate-400 dark:hover:text-peacock-teal transition-colors flex items-center gap-1 cursor-pointer"
                 title="مواعيد الوجبات"
               >
                 <Bell className="w-3.5 h-3.5" />
@@ -484,7 +484,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
           <button
             type="button"
             onClick={onOpenReportModal}
-            className="w-full py-3.5 min-h-[48px] px-6 rounded-3xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-black text-sm sm:text-base transition-all shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2.5 cursor-pointer hover:scale-[1.01]"
+            className="w-full py-3.5 min-h-[48px] px-6 rounded-3xl bg-gradient-to-r from-peacock-blue to-peacock-indigo hover:from-peacock-indigo hover:to-peacock-indigo text-white font-black text-sm sm:text-base transition-all shadow-lg shadow-peacock-blue/25 flex items-center justify-center gap-2.5 cursor-pointer hover:scale-[1.01]"
           >
             <Share2 className="w-5 h-5" />
             <span>إرسال تقرير اليوم لـ{BRAND.doctorNameAlt}</span>
@@ -531,7 +531,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({
             <button
               type="button"
               onClick={handleConfirmCopyYesterday}
-              className="flex-1 py-3 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white font-black text-sm cursor-pointer transition-colors"
+              className="flex-1 py-3 rounded-2xl bg-peacock-blue hover:bg-peacock-indigo text-white font-black text-sm cursor-pointer transition-colors"
             >
               تأكيد النسخ
             </button>

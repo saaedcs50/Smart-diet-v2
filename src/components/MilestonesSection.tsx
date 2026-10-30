@@ -39,13 +39,13 @@ export const MilestonesSection: React.FC<MilestonesSectionProps> = ({ plan, comp
 
   if (compact) {
     return (
-      <div className="bg-[var(--app-card)] border border-purple-100 dark:border-purple-900/40 rounded-3xl p-4 space-y-2.5">
+      <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-4 space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-2 font-bold text-brand-text dark:text-purple-100 text-sm">
+          <span className="flex items-center gap-2 font-bold text-brand-text dark:text-peacock-pale text-sm">
             <Award className="w-4 h-4 text-amber-500" />
             إنجازاتي
           </span>
-          <span className="text-xs font-black text-brand-hero dark:text-pink-400">
+          <span className="text-xs font-black text-brand-hero dark:text-peacock-indigo-light">
             {unlockedCount} من {MILESTONE_DEFINITIONS.length}
           </span>
         </div>
@@ -61,12 +61,12 @@ export const MilestonesSection: React.FC<MilestonesSectionProps> = ({ plan, comp
             ))}
           </div>
         ) : (
-          <p className="text-xs font-medium text-brand-secondary-text dark:text-purple-300">
+          <p className="text-xs font-medium text-brand-secondary-text dark:text-peacock-teal-light">
             لا إنجازات بعد — أول معلم يقترب مع أول يوم تسجيل 🌱
           </p>
         )}
         {next && (
-          <p className="text-[11px] font-bold text-brand-secondary-text dark:text-purple-300">
+          <p className="text-[11px] font-bold text-brand-secondary-text dark:text-peacock-teal-light">
             المعلم التالي: {next.icon} {next.label}
           </p>
         )}
@@ -75,15 +75,15 @@ export const MilestonesSection: React.FC<MilestonesSectionProps> = ({ plan, comp
   }
 
   return (
-    <div className="bg-[var(--app-card)] border border-purple-100 dark:border-purple-900/40 rounded-3xl p-5 transition-colors space-y-4">
+    <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-5 transition-colors space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-2xl text-amber-500 flex items-center justify-center font-bold text-sm">
             <Award className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-bold text-brand-text dark:text-purple-100 text-sm">إنجازاتي 🏆</h3>
-            <span className="text-[12px] text-brand-secondary-text dark:text-purple-300/70">
+            <h3 className="font-bold text-brand-text dark:text-peacock-pale text-sm">إنجازاتي 🏆</h3>
+            <span className="text-[12px] text-brand-secondary-text dark:text-peacock-teal-light/70">
               فتحت {unlockedCount} من {MILESTONE_DEFINITIONS.length} معالم
             </span>
           </div>
@@ -100,12 +100,12 @@ export const MilestonesSection: React.FC<MilestonesSectionProps> = ({ plan, comp
               className={`p-3 rounded-2xl border text-center space-y-1 ${
                 isOpen
                   ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'
-                  : 'bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/60 border-purple-100 dark:border-purple-900/40 opacity-60'
+                  : 'bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/60 border-peacock-pale dark:border-peacock-ink/40 opacity-60'
               }`}
             >
               <div className="text-2xl">{isOpen ? def.icon : '🔒'}</div>
-              <div className="text-xs font-black text-brand-text dark:text-purple-100">{def.label}</div>
-              <div className="text-[11px] font-medium text-brand-secondary-text dark:text-purple-300 leading-snug">
+              <div className="text-xs font-black text-brand-text dark:text-peacock-pale">{def.label}</div>
+              <div className="text-[11px] font-medium text-brand-secondary-text dark:text-peacock-teal-light leading-snug">
                 {def.description}
               </div>
               {isOpen ? (
@@ -114,7 +114,7 @@ export const MilestonesSection: React.FC<MilestonesSectionProps> = ({ plan, comp
                   <button
                     type="button"
                     onClick={() => setSharing(def)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-[11px] font-black cursor-pointer"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-peacock-blue hover:bg-peacock-indigo text-white text-[11px] font-black cursor-pointer"
                   >
                     <Share2 className="w-3 h-3" /> شارك كصورة
                   </button>

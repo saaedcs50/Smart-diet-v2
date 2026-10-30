@@ -267,13 +267,13 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
       {/* Header with Type Badge & Quick Fasting Toggle */}
       <div className="flex items-center justify-between gap-2 border-b border-[var(--app-border)]/40 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold">
+          <div className="w-9 h-9 rounded-2xl bg-peacock-mist dark:bg-peacock-ink-deep/40 text-peacock-indigo dark:text-peacock-teal flex items-center justify-center font-bold">
             {fastingStatus.type === 'islamic' ? (
-              <Moon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              <Moon className="w-5 h-5 text-peacock-indigo dark:text-peacock-teal" />
             ) : fastingStatus.type === 'christian' ? (
               <Leaf className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             ) : (
-              <Timer className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <Timer className="w-5 h-5 text-peacock-indigo dark:text-peacock-teal" />
             )}
           </div>
           <div>
@@ -281,7 +281,7 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
               <h3 className="font-black text-slate-800 dark:text-slate-100 text-sm sm:text-base">
                 {fastingStatus.titleAr}
               </h3>
-              <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/80">
+              <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-peacock-mist dark:bg-peacock-ink-deep/50 text-peacock-indigo dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep/80">
                 {fastingStatus.badgeLabel}
               </span>
             </div>
@@ -298,7 +298,7 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
             onClick={() => handleToggleTodayFasting(!fastingStatus.isFasting)}
             className={`text-xs font-bold px-2.5 py-1.5 rounded-xl border transition-colors flex items-center gap-1 cursor-pointer ${
               fastingStatus.isFasting
-                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 text-emerald-700 dark:text-emerald-300'
+                ? 'bg-peacock-mist dark:bg-peacock-ink-deep/40 border-peacock-teal-light text-peacock-indigo-dark dark:text-peacock-teal-light'
                 : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
             }`}
             title="تبديل حالة الصيام لهذا اليوم"
@@ -323,17 +323,17 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
       {fastingStatus.type === 'islamic' && fastingStatus.isFasting && islamicCountdown && (
         <div className="space-y-3.5 animate-in fade-in">
           {/* Main Islamic Countdown Box */}
-          <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 space-y-3">
+          <div className="p-4 rounded-2xl bg-peacock-mist/60 dark:bg-peacock-ink-deep/30 border border-peacock-sage/80 dark:border-peacock-indigo-deep/60 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-800 dark:text-emerald-200 flex items-center gap-1.5">
+              <span className="text-xs font-bold text-peacock-indigo-deep dark:text-peacock-sage flex items-center gap-1.5">
                 {islamicCountdown.phase === 'daytime' ? (
                   <Sun className="w-4 h-4 text-amber-500" />
                 ) : (
-                  <Moon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <Moon className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
                 )}
                 {islamicCountdown.title}
               </span>
-              <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
+              <span className="text-[11px] font-bold text-peacock-indigo-dark dark:text-peacock-teal-light">
                 {islamicCountdown.targetLabel}
               </span>
             </div>
@@ -341,37 +341,37 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
             {/* Countdown digits */}
             <div className="flex items-center justify-center gap-3 py-1">
               <div className="flex flex-col items-center">
-                <span className="font-mono text-2xl sm:text-3xl font-black text-emerald-950 dark:text-emerald-100">
+                <span className="font-mono text-2xl sm:text-3xl font-black text-peacock-ink-deep dark:text-peacock-pale">
                   {String(islamicCountdown.hours).padStart(2, '0')}
                 </span>
-                <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold">ساعة</span>
+                <span className="text-[10px] text-peacock-indigo-dark dark:text-peacock-teal-light font-bold">ساعة</span>
               </div>
-              <span className="text-2xl font-bold text-emerald-400 dark:text-emerald-600">:</span>
+              <span className="text-2xl font-bold text-peacock-teal dark:text-peacock-indigo">:</span>
               <div className="flex flex-col items-center">
-                <span className="font-mono text-2xl sm:text-3xl font-black text-emerald-950 dark:text-emerald-100">
+                <span className="font-mono text-2xl sm:text-3xl font-black text-peacock-ink-deep dark:text-peacock-pale">
                   {String(islamicCountdown.minutes).padStart(2, '0')}
                 </span>
-                <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold">دقيقة</span>
+                <span className="text-[10px] text-peacock-indigo-dark dark:text-peacock-teal-light font-bold">دقيقة</span>
               </div>
-              <span className="text-2xl font-bold text-emerald-400 dark:text-emerald-600">:</span>
+              <span className="text-2xl font-bold text-peacock-teal dark:text-peacock-indigo">:</span>
               <div className="flex flex-col items-center">
-                <span className="font-mono text-2xl sm:text-3xl font-black text-emerald-950 dark:text-emerald-100">
+                <span className="font-mono text-2xl sm:text-3xl font-black text-peacock-ink-deep dark:text-peacock-pale">
                   {String(islamicCountdown.seconds).padStart(2, '0')}
                 </span>
-                <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold">ثانية</span>
+                <span className="text-[10px] text-peacock-indigo-dark dark:text-peacock-teal-light font-bold">ثانية</span>
               </div>
             </div>
 
             {/* Daytime Progress Bar */}
             {islamicCountdown.phase === 'daytime' && (
               <div className="space-y-1">
-                <div className="w-full bg-emerald-200/60 dark:bg-emerald-900/60 h-2.5 rounded-full overflow-hidden">
+                <div className="w-full bg-peacock-sage/60 dark:bg-peacock-ink/60 h-2.5 rounded-full overflow-hidden">
                   <div 
-                    className="bg-emerald-600 h-full rounded-full transition-all duration-300"
+                    className="bg-peacock-indigo h-full rounded-full transition-all duration-300"
                     style={{ width: `${islamicCountdown.progressPercent}%` }}
                   />
                 </div>
-                <div className="flex justify-between text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                <div className="flex justify-between text-[10px] font-bold text-peacock-indigo-dark dark:text-peacock-teal">
                   <span>الإمساك {fastingStatus.fajrTime}</span>
                   <span>{islamicCountdown.progressPercent}% من ساعات الصيام</span>
                   <span>الإفطار {fastingStatus.maghribTime}</span>
@@ -465,7 +465,7 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                <div className="flex items-center gap-2 text-xs font-bold text-peacock-indigo-dark dark:text-peacock-teal-light bg-peacock-mist dark:bg-peacock-ink-deep/40 p-2.5 rounded-xl border border-peacock-sage dark:border-peacock-indigo-deep">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>يمكنك الآن تناول وجباتك النباتية المعتمدة واستخدام بنك البدائل في بطاقات الوجبات.</span>
                 </div>
@@ -477,20 +477,20 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
           <button
             type="button"
             onClick={() => setShowProteinCombinerModal(true)}
-            className="w-full p-3 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-right flex items-center justify-between gap-2 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors cursor-pointer"
+            className="w-full p-3 rounded-2xl bg-peacock-mist dark:bg-peacock-ink-deep/40 border border-peacock-sage dark:border-peacock-indigo-deep text-right flex items-center justify-between gap-2 hover:bg-peacock-pale dark:hover:bg-peacock-ink/50 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-2">
-              <Leaf className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
+              <Leaf className="w-5 h-5 text-peacock-indigo dark:text-peacock-teal shrink-0" />
               <div>
-                <span className="text-xs font-black text-teal-900 dark:text-teal-200 block">
+                <span className="text-xs font-black text-peacock-ink dark:text-peacock-sage block">
                   مرشد دمج البروتين النباتي (Plant Protein Combiner)
                 </span>
-                <span className="text-[11px] text-teal-700 dark:text-teal-300 block">
+                <span className="text-[11px] text-peacock-indigo dark:text-peacock-teal-light block">
                   كيف تحصل على بروتين كامل القيمة الحيوية أثناء الصوم
                 </span>
               </div>
             </div>
-            <ChevronDown className="w-4 h-4 text-teal-600 -rotate-90" />
+            <ChevronDown className="w-4 h-4 text-peacock-indigo -rotate-90" />
           </button>
         </div>
       )}
@@ -536,21 +536,21 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
             <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-3">
               <div className="flex items-center gap-3">
                 <div className="flex flex-col items-center">
-                  <span className="font-mono text-3xl sm:text-4xl font-black text-teal-600 dark:text-teal-400">
+                  <span className="font-mono text-3xl sm:text-4xl font-black text-peacock-indigo dark:text-peacock-teal">
                     {String(hours).padStart(2, '0')}
                   </span>
                   <span className="text-[10px] text-slate-500 font-bold">ساعة</span>
                 </div>
                 <span className="text-2xl font-bold text-slate-400">:</span>
                 <div className="flex flex-col items-center">
-                  <span className="font-mono text-3xl sm:text-4xl font-black text-teal-600 dark:text-teal-400">
+                  <span className="font-mono text-3xl sm:text-4xl font-black text-peacock-indigo dark:text-peacock-teal">
                     {String(minutes).padStart(2, '0')}
                   </span>
                   <span className="text-[10px] text-slate-500 font-bold">دقيقة</span>
                 </div>
                 <span className="text-2xl font-bold text-slate-400">:</span>
                 <div className="flex flex-col items-center">
-                  <span className="font-mono text-3xl sm:text-4xl font-black text-teal-600 dark:text-teal-400">
+                  <span className="font-mono text-3xl sm:text-4xl font-black text-peacock-indigo dark:text-peacock-teal">
                     {String(seconds).padStart(2, '0')}
                   </span>
                   <span className="text-[10px] text-slate-500 font-bold">ثانية</span>
@@ -562,7 +562,7 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
                 <div className="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
                   <div 
                     className={`h-full rounded-full transition-all duration-300 ${
-                      isGoalReached ? 'bg-emerald-500' : 'bg-teal-600'
+                      isGoalReached ? 'bg-peacock-blue' : 'bg-peacock-indigo'
                     }`}
                     style={{ width: `${progressPercent}%` }}
                   />
@@ -589,9 +589,9 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
           {!isFasting && (
             <div className="space-y-3">
               {completedHours && (
-                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-200 font-bold">
-                    <Award className="w-4 h-4 text-emerald-600" />
+                <div className="p-3 rounded-xl bg-peacock-mist dark:bg-peacock-ink-deep/40 border border-peacock-sage dark:border-peacock-indigo-deep flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-peacock-indigo-deep dark:text-peacock-sage font-bold">
+                    <Award className="w-4 h-4 text-peacock-indigo" />
                     <span>سجلت اليوم: {completedHours} ساعة صيام مكتملة!</span>
                   </div>
                   <button
@@ -608,7 +608,7 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
                 <button
                   type="button"
                   onClick={() => handleStartFasting(0)}
-                  className="flex-1 min-h-[44px] px-4 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-black transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                  className="flex-1 min-h-[44px] px-4 py-2.5 rounded-2xl bg-peacock-indigo hover:bg-peacock-indigo text-white text-xs font-black transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                 >
                   <Play className="w-4 h-4 fill-white" />
                   <span>بدء عداد الصيام الآن</span>
@@ -636,7 +636,7 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
                         key={h}
                         type="button"
                         onClick={() => handleStartFasting(h)}
-                        className="py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-teal-50 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer"
+                        className="py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-peacock-mist border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer"
                       >
                         منذ {h} ساعات
                       </button>
@@ -729,7 +729,7 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
                   </h4>
                   <div className="flex flex-wrap gap-1.5">
                     {tip.items.map((it, i) => (
-                      <span key={i} className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      <span key={i} className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-peacock-mist dark:bg-peacock-ink-deep/60 text-peacock-indigo-dark dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep">
                         {it}
                       </span>
                     ))}
@@ -750,7 +750,7 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
           <div className="bg-[var(--app-card)] border border-[var(--app-border)] rounded-3xl p-5 max-w-lg w-full space-y-4 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[var(--app-border)]/50 pb-3">
               <div className="flex items-center gap-2">
-                <Leaf className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                <Leaf className="w-5 h-5 text-peacock-indigo dark:text-peacock-teal" />
                 <h3 className="font-black text-slate-800 dark:text-slate-100 text-sm sm:text-base">
                   مرشد دمج البروتين النباتي (Plant Protein Combiner)
                 </h3>
@@ -772,7 +772,7 @@ export const FastingTimer: React.FC<FastingTimerProps> = ({
               {PLANT_PROTEIN_COMBOS.map((combo, idx) => (
                 <div key={idx} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black text-teal-800 dark:text-teal-200">
+                    <h4 className="text-xs font-black text-peacock-indigo-deep dark:text-peacock-sage">
                       ⚡ {combo.title}
                     </h4>
                   </div>

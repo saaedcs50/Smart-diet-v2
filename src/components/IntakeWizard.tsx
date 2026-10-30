@@ -79,7 +79,7 @@ export const IntakeWizard: React.FC<IntakeWizardProps> = ({ isOpen, onClose, pla
       <div className="max-w-3xl mx-auto px-4 py-5 space-y-5 pb-28">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-2xl bg-peacock-mist dark:bg-peacock-ink-deep/40 text-peacock-indigo dark:text-peacock-teal flex items-center justify-center">
               <ClipboardList className="w-4 h-4" />
             </div>
             <div>
@@ -102,7 +102,7 @@ export const IntakeWizard: React.FC<IntakeWizardProps> = ({ isOpen, onClose, pla
         {/* مؤشر الخطوات */}
         <div className="flex gap-1.5">
           {STEP_TITLES.map((t, i) => (
-            <div key={t} className={`h-2 flex-1 rounded-full ${i <= step ? 'bg-teal-500' : 'bg-slate-200 dark:bg-slate-800'}`} />
+            <div key={t} className={`h-2 flex-1 rounded-full ${i <= step ? 'bg-peacock-blue' : 'bg-slate-200 dark:bg-slate-800'}`} />
           ))}
         </div>
 
@@ -218,7 +218,7 @@ export const IntakeWizard: React.FC<IntakeWizardProps> = ({ isOpen, onClose, pla
                 type="button"
                 disabled={!canNext}
                 onClick={() => setStep(step + 1)}
-                className="flex-1 py-3 rounded-2xl bg-teal-500 hover:bg-teal-600 disabled:opacity-40 text-white font-black text-sm flex items-center justify-center gap-1 cursor-pointer"
+                className="flex-1 py-3 rounded-2xl bg-peacock-blue hover:bg-peacock-indigo disabled:opacity-40 text-white font-black text-sm flex items-center justify-center gap-1 cursor-pointer"
               >
                 التالي <ChevronLeft className="w-4 h-4" />
               </button>
@@ -226,7 +226,7 @@ export const IntakeWizard: React.FC<IntakeWizardProps> = ({ isOpen, onClose, pla
               <button
                 type="button"
                 onClick={handleFinish}
-                className="flex-1 py-3 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white font-black text-sm flex items-center justify-center gap-2 cursor-pointer"
+                className="flex-1 py-3 rounded-2xl bg-peacock-blue hover:bg-peacock-indigo text-white font-black text-sm flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Save className="w-4 h-4" /> حفظ المسودة
               </button>

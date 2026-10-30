@@ -43,15 +43,15 @@ export const MedicationCatalogModal: React.FC<MedicationCatalogModalProps> = ({
       <div className="relative w-full max-w-4xl max-h-[92vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 dark:from-purple-950/30 dark:via-indigo-950/20 dark:to-purple-950/30 flex items-center justify-between shrink-0">
+        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-peacock-mist via-indigo-50 to-peacock-mist dark:from-peacock-ink-deep/30 dark:via-indigo-950/20 dark:to-peacock-ink-deep/30 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <div className="w-10 h-10 rounded-2xl bg-peacock-indigo text-white flex items-center justify-center shadow-lg shadow-peacock-blue/20">
               <Stethoscope className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                 دليل الأدوية والمكملات في السوق المصري
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-peacock-pale text-peacock-indigo-dark dark:bg-peacock-ink/60 dark:text-peacock-teal-light">
                   {EGYPTIAN_MEDICATIONS_DATABASE.length} صنف مسجل
                 </span>
               </h3>
@@ -79,7 +79,7 @@ export const MedicationCatalogModal: React.FC<MedicationCatalogModalProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="ابحث بالاسم التجاري (كونكور، جلوكوفاج، أورليستات...) أو المادة الفعالة أو الاستخدام..."
-              className="w-full pr-10 pl-10 py-2.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+              className="w-full pr-10 pl-10 py-2.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-peacock-blue"
               autoFocus
             />
             {searchQuery && (
@@ -100,7 +100,7 @@ export const MedicationCatalogModal: React.FC<MedicationCatalogModalProps> = ({
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-3 py-1.5 rounded-xl shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
                   selectedCategory === cat.id
-                    ? 'bg-purple-600 text-white shadow-sm'
+                    ? 'bg-peacock-indigo text-white shadow-sm'
                     : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
@@ -126,12 +126,12 @@ export const MedicationCatalogModal: React.FC<MedicationCatalogModalProps> = ({
                 return (
                   <div
                     key={med.id}
-                    className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:border-purple-300 dark:hover:border-purple-700/60 transition-all flex flex-col justify-between gap-2.5 group shadow-xs"
+                    className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:border-peacock-teal-light dark:hover:border-peacock-indigo-dark/60 transition-all flex flex-col justify-between gap-2.5 group shadow-xs"
                   >
                     <div>
                       {/* Top badges */}
                       <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-100 dark:border-purple-900/40">
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-peacock-mist text-peacock-indigo-dark dark:bg-peacock-ink-deep/60 dark:text-peacock-teal-light border border-peacock-pale dark:border-peacock-ink/40">
                           {med.categoryIcon} {med.categoryAr}
                         </span>
                         <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">
@@ -140,7 +140,7 @@ export const MedicationCatalogModal: React.FC<MedicationCatalogModalProps> = ({
                       </div>
 
                       {/* Trade Name */}
-                      <h4 className="text-sm font-black text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                      <h4 className="text-sm font-black text-slate-900 dark:text-white group-hover:text-peacock-indigo dark:group-hover:text-peacock-teal transition-colors">
                         {med.tradeName}
                       </h4>
 
@@ -151,8 +151,8 @@ export const MedicationCatalogModal: React.FC<MedicationCatalogModalProps> = ({
 
                       {/* Timing & Notes */}
                       <div className="mt-2.5 space-y-1.5 text-xs">
-                        <div className="flex items-start gap-1.5 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 p-2 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
-                          <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5 text-emerald-600" />
+                        <div className="flex items-start gap-1.5 text-peacock-indigo-dark dark:text-peacock-teal bg-peacock-mist dark:bg-peacock-ink-deep/30 p-2 rounded-xl border border-peacock-pale dark:border-peacock-ink/30">
+                          <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5 text-peacock-indigo" />
                           <span className="font-semibold leading-relaxed">
                             {med.defaultTiming}
                           </span>
@@ -183,8 +183,8 @@ export const MedicationCatalogModal: React.FC<MedicationCatalogModalProps> = ({
                         onClick={() => handleChoose(med)}
                         className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-emerald-600 text-white shadow-xs'
-                            : 'bg-purple-600 hover:bg-purple-700 text-white shadow-xs hover:shadow-purple-500/20'
+                            ? 'bg-peacock-indigo text-white shadow-xs'
+                            : 'bg-peacock-indigo hover:bg-peacock-indigo-dark text-white shadow-xs hover:shadow-peacock-blue/20'
                         }`}
                       >
                         {isSelected ? (
@@ -210,7 +210,7 @@ export const MedicationCatalogModal: React.FC<MedicationCatalogModalProps> = ({
         {/* Footer */}
         <div className="p-3 sm:p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 shrink-0">
           <div className="flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-purple-500" />
+            <Sparkles className="w-4 h-4 text-peacock-blue" />
             <span>يمكنك اختيار عدة أدوية متتالية لإضافتها إلى خطة المتدرب</span>
             <span className="hidden sm:inline text-slate-400 dark:text-slate-500">
               · بيانات الأدوية إصدار {MEDS_DATA_VERSION} (آخر تحديث {MEDS_DATA_UPDATED_AT}) — راجع الأسعار دوريًا

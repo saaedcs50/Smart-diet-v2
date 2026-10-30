@@ -54,7 +54,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
  {/* Header */}
  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-3">
  <div className="flex items-center gap-2">
- <div className="w-8 h-8 rounded-xl dark: text-emerald-600 flex items-center justify-center font-bold">
+ <div className="w-8 h-8 rounded-xl dark: text-peacock-indigo flex items-center justify-center font-bold">
  <Share2 className="w-4 h-4" />
  </div>
  <div>
@@ -70,7 +70,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
  </div>
 
  {/* Motivational Banner */}
- <div className="p-3 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/80 mb-3 flex items-center justify-between">
+ <div className="p-3 rounded-2xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border border-peacock-sage dark:border-peacock-indigo-deep/80 mb-3 flex items-center justify-between">
  <div className="flex items-center gap-2">
  <span className="text-2xl">
  {score >= 85? '': score >= 60? '': ''}
@@ -109,7 +109,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
 
  <button
  onClick={handleNativeShare}
- className="py-3 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+ className="py-3 px-3 rounded-2xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
  >
  <Share2 className="w-4 h-4" />
  مشاركة النظام

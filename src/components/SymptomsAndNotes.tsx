@@ -85,7 +85,7 @@ export const SymptomsAndNotes: React.FC<SymptomsAndNotesProps> = ({ plan, day, o
  {showDoctorNotes && (
  <div className={`${showSymptoms? 'pt-3 border-t border-[var(--app-border)]/50': ''} space-y-2`}>
  <div className="flex items-center gap-2">
- <div className="w-8 h-8 rounded-xl text-[#0D9488] dark:text-[#2DD4BF] flex items-center justify-center font-bold text-sm">
+ <div className="w-8 h-8 rounded-xl text-[#4D52B4] dark:text-[#70D6C5] flex items-center justify-center font-bold text-sm">
  <MessageSquare className="w-4 h-4" />
  </div>
  <div>
@@ -103,7 +103,7 @@ export const SymptomsAndNotes: React.FC<SymptomsAndNotesProps> = ({ plan, day, o
  value={day.notes || ''}
  onChange={(e) => onUpdateDay({...day, notes: e.target.value })}
  placeholder={`أدخل أي استفسار أو تفاصيل ترغب بمشاركتها مع ${BRAND.doctorName}...`}
- className="w-full text-xs p-3 rounded-2xl border border-[var(--app-border)]/70 bg-[var(--app-card-muted)] text-[var(--app-text-primary)] outline-none focus:ring-2 focus:ring-[#0D9488] resize-none leading-relaxed"
+ className="w-full text-xs p-3 rounded-2xl border border-[var(--app-border)]/70 bg-[var(--app-card-muted)] text-[var(--app-text-primary)] outline-none focus:ring-2 focus:ring-[#4D52B4] resize-none leading-relaxed"
  />
  </div>
  )}

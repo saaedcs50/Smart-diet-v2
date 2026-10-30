@@ -41,11 +41,11 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({
  badgeEmoji = '';
  } else if (score.total >= 90) {
  feedbackText = 'التزام كامل بالخطة اليومية.';
- feedbackColor = 'text-[#0D9488] dark:text-[#2DD4BF]';
+ feedbackColor = 'text-[#4D52B4] dark:text-[#70D6C5]';
  badgeEmoji = '';
  } else if (score.total >= 75) {
  feedbackText = 'مستوى الالتزام مرتفع.';
- feedbackColor = 'text-[#0D9488] dark:text-[#2DD4BF]';
+ feedbackColor = 'text-[#4D52B4] dark:text-[#70D6C5]';
  badgeEmoji = '';
  } else if (score.total >= 50) {
  feedbackText = 'مستوى التزام جيد.';
@@ -77,7 +77,7 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({
  isFreeze
 ? 'text-[#0284C7]'
 : score.total >= 75
-? 'text-[#0D9488]'
+? 'text-[#4D52B4]'
 : score.total >= 50
 ? 'text-[#E0922D]'
 : 'text-[var(--app-hero)]'

@@ -202,7 +202,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  <h3 className="font-black text-slate-800 dark:text-slate-100 text-base sm:text-lg">
  حاسبة السعرات والماكروز 
  </h3>
- <span className="text-[12px] font-black bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+ <span className="text-[12px] font-black bg-peacock-pale dark:bg-peacock-ink-deep/60 text-peacock-indigo-dark dark:text-peacock-teal-light px-2 py-0.5 rounded-md border border-peacock-sage dark:border-peacock-indigo-deep">
  لوحة الأخصائية
  </span>
  </div>
@@ -229,13 +229,13 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  onClick={() => setActiveMethod('samar')}
  className={`py-2.5 px-3 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
  activeMethod === 'samar'
-? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 dark: scale-[1.01]'
+? 'bg-white dark:bg-slate-900 text-peacock-indigo dark:text-peacock-teal dark: scale-[1.01]'
 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
  }`}
  >
- <Circle className="w-4 h-4 text-emerald-500" />
+ <Circle className="w-4 h-4 text-peacock-blue" />
  <span>معادلة سمر</span>
- <span className="text-[12px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.2 rounded-md">
+ <span className="text-[12px] font-black bg-peacock-pale dark:bg-peacock-ink-deep/80 text-peacock-indigo-dark dark:text-peacock-teal-light px-1.5 py-0.2 rounded-md">
  الوزن المثالي
  </span>
  </button>
@@ -267,10 +267,10 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  {activeMethod === 'samar' && (
  <div className="space-y-4">
  {/* Quick verification sample bar */}
- <div className="p-2.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 text-xs">
+ <div className="p-2.5 rounded-2xl bg-peacock-mist/70 dark:bg-peacock-ink-deep/40 border border-peacock-sage/80 dark:border-peacock-ink/50 text-xs">
  <div className="flex items-center justify-between mb-2">
- <div className="flex items-center gap-1.5 text-emerald-950 dark:text-emerald-200">
- <Circle className="w-4 h-4 text-emerald-600 shrink-0" />
+ <div className="flex items-center gap-1.5 text-peacock-ink-deep dark:text-peacock-sage">
+ <Circle className="w-4 h-4 text-peacock-indigo shrink-0" />
  <span className="font-bold">أمثلة التحقق السريع من معادلة سمر (طول 170 سم):</span>
  </div>
  </div>
@@ -278,21 +278,21 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  <button
  type="button"
  onClick={() => applySamarExample('light', 'cut_moderate')}
- className="text-[12px] font-black text-emerald-800 dark:text-emerald-200 bg-white dark:bg-slate-850 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer"
+ className="text-[12px] font-black text-peacock-indigo-deep dark:text-peacock-sage bg-white dark:bg-slate-850 px-2.5 py-1 rounded-lg border border-peacock-sage dark:border-peacock-indigo-deep hover:bg-peacock-pale dark:hover:bg-peacock-ink/60 transition-colors cursor-pointer"
  >
  عمل بسيط (كلي 2065 | عجز ½كجم: 1565) 
  </button>
  <button
  type="button"
  onClick={() => applySamarExample('moderate', 'maintain')}
- className="text-[12px] font-black text-emerald-800 dark:text-emerald-200 bg-white dark:bg-slate-850 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer"
+ className="text-[12px] font-black text-peacock-indigo-deep dark:text-peacock-sage bg-white dark:bg-slate-850 px-2.5 py-1 rounded-lg border border-peacock-sage dark:border-peacock-indigo-deep hover:bg-peacock-pale dark:hover:bg-peacock-ink/60 transition-colors cursor-pointer"
  >
  عمل متوسط (كلي 2345) 
  </button>
  <button
  type="button"
  onClick={() => applySamarExample('heavy', 'maintain')}
- className="text-[12px] font-black text-emerald-800 dark:text-emerald-200 bg-white dark:bg-slate-850 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer"
+ className="text-[12px] font-black text-peacock-indigo-deep dark:text-peacock-sage bg-white dark:bg-slate-850 px-2.5 py-1 rounded-lg border border-peacock-sage dark:border-peacock-indigo-deep hover:bg-peacock-pale dark:hover:bg-peacock-ink/60 transition-colors cursor-pointer"
  >
  عمل شاق (كلي 3115) 
  </button>
@@ -303,7 +303,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700">
  <div className="flex items-center justify-between mb-1.5">
  <label className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
- <Scale className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+ <Scale className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  <span>الطول (سم): إلزامي لحساب الوزن المثالي:</span>
  </label>
  <span className="text-[12px] font-bold text-slate-500">
@@ -323,7 +323,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  className={`w-full text-lg font-black p-2.5 rounded-xl border bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-center focus:ring-2 outline-hidden transition-colors ${
 !samarHeightValid
 ? 'border-red-400 focus:ring-red-400 bg-red-50/20'
-: 'border-slate-200 dark:border-slate-700 focus:ring-emerald-500'
+: 'border-slate-200 dark:border-slate-700 focus:ring-peacock-blue'
  }`}
  />
  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
@@ -365,13 +365,13 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  onClick={() => setSamarWorkLevel('light')}
  className={`p-3 rounded-2xl text-right border transition-all cursor-pointer ${
  samarWorkLevel === 'light'
-? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 ring-2 ring-emerald-500/30 text-emerald-950 dark:text-emerald-100'
+? 'bg-peacock-mist dark:bg-peacock-ink-deep/60 border-peacock-blue ring-2 ring-peacock-blue/30 text-peacock-ink-deep dark:text-peacock-pale'
 : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
  }`}
  >
  <div className="flex items-center justify-between mb-1">
  <span className="font-black text-xs sm:text-sm">عمل بسيط</span>
- <span className="text-xs font-black px-2 py-0.5 rounded-md bg-emerald-200/70 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200">
+ <span className="text-xs font-black px-2 py-0.5 rounded-md bg-peacock-sage/70 dark:bg-peacock-ink/60 text-peacock-indigo-deep dark:text-peacock-sage">
  معامل: 7
  </span>
  </div>
@@ -386,13 +386,13 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  onClick={() => setSamarWorkLevel('moderate')}
  className={`p-3 rounded-2xl text-right border transition-all cursor-pointer ${
  samarWorkLevel === 'moderate'
-? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 ring-2 ring-emerald-500/30 text-emerald-950 dark:text-emerald-100'
+? 'bg-peacock-mist dark:bg-peacock-ink-deep/60 border-peacock-blue ring-2 ring-peacock-blue/30 text-peacock-ink-deep dark:text-peacock-pale'
 : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
  }`}
  >
  <div className="flex items-center justify-between mb-1">
  <span className="font-black text-xs sm:text-sm">عمل متوسط</span>
- <span className="text-xs font-black px-2 py-0.5 rounded-md bg-emerald-200/70 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200">
+ <span className="text-xs font-black px-2 py-0.5 rounded-md bg-peacock-sage/70 dark:bg-peacock-ink/60 text-peacock-indigo-deep dark:text-peacock-sage">
  معامل: 11
  </span>
  </div>
@@ -407,13 +407,13 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  onClick={() => setSamarWorkLevel('heavy')}
  className={`p-3 rounded-2xl text-right border transition-all cursor-pointer ${
  samarWorkLevel === 'heavy'
-? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 ring-2 ring-emerald-500/30 text-emerald-950 dark:text-emerald-100'
+? 'bg-peacock-mist dark:bg-peacock-ink-deep/60 border-peacock-blue ring-2 ring-peacock-blue/30 text-peacock-ink-deep dark:text-peacock-pale'
 : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
  }`}
  >
  <div className="flex items-center justify-between mb-1">
  <span className="font-black text-xs sm:text-sm">عمل شاق</span>
- <span className="text-xs font-black px-2 py-0.5 rounded-md bg-emerald-200/70 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200">
+ <span className="text-xs font-black px-2 py-0.5 rounded-md bg-peacock-sage/70 dark:bg-peacock-ink/60 text-peacock-indigo-deep dark:text-peacock-sage">
  معامل: 22
  </span>
  </div>
@@ -435,7 +435,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  onClick={() => setSamarGoal('maintain')}
  className={`p-2.5 rounded-2xl text-center border transition-all cursor-pointer ${
  samarGoal === 'maintain'
-? 'bg-emerald-600 border-emerald-600 text-white font-black'
+? 'bg-peacock-indigo border-peacock-indigo text-white font-black'
 : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
  }`}
  >
@@ -448,7 +448,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  onClick={() => setSamarGoal('cut_moderate')}
  className={`p-2.5 rounded-2xl text-center border transition-all cursor-pointer ${
  samarGoal === 'cut_moderate'
-? 'bg-emerald-600 border-emerald-600 text-white font-black'
+? 'bg-peacock-indigo border-peacock-indigo text-white font-black'
 : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
  }`}
  >
@@ -461,7 +461,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  onClick={() => setSamarGoal('cut_aggressive')}
  className={`p-2.5 rounded-2xl text-center border transition-all cursor-pointer ${
  samarGoal === 'cut_aggressive'
-? 'bg-emerald-600 border-emerald-600 text-white font-black'
+? 'bg-peacock-indigo border-peacock-indigo text-white font-black'
 : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
  }`}
  >
@@ -474,7 +474,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  onClick={() => setSamarGoal('bulk_mild')}
  className={`p-2.5 rounded-2xl text-center border transition-all cursor-pointer ${
  samarGoal === 'bulk_mild'
-? 'bg-emerald-600 border-emerald-600 text-white font-black'
+? 'bg-peacock-indigo border-peacock-indigo text-white font-black'
 : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
  }`}
  >
@@ -526,18 +526,18 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  {samarCalc.isValid && (
  <div className="space-y-3">
  {/* Big Target Calories Display */}
- <div className="p-4 rounded-3xl bg-emerald-50/80 dark:bg-emerald-950/30 border-2 border-emerald-400 dark:border-emerald-600">
+ <div className="p-4 rounded-3xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border-2 border-peacock-teal dark:border-peacock-indigo">
  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
  <div>
- <div className="flex items-center gap-1.5 text-xs font-black text-emerald-800 dark:text-emerald-300">
- <Flame className="w-4 h-4 text-emerald-600 dark:text-emerald-400 fill-current" />
+ <div className="flex items-center gap-1.5 text-xs font-black text-peacock-indigo-deep dark:text-peacock-teal-light">
+ <Flame className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal fill-current" />
  <span>السعرات اليومية المستهدفة (معادلة سمر):</span>
  </div>
  <div className="flex items-baseline gap-2 mt-1">
- <span className="text-2xl font-black text-emerald-950 dark:text-emerald-100 font-mono tracking-tight">
+ <span className="text-2xl font-black text-peacock-ink-deep dark:text-peacock-pale font-mono tracking-tight">
  {samarGoalResult.targetCalories}
  </span>
- <span className="text-sm font-black text-emerald-700 dark:text-emerald-400">
+ <span className="text-sm font-black text-peacock-indigo-dark dark:text-peacock-teal">
  كيلو كالوري / يوم
  </span>
  </div>
@@ -547,7 +547,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  <span className="font-bold text-slate-600 dark:text-slate-300">
  السعرات الكلية: <strong className="font-mono font-black text-slate-800 dark:text-slate-100">{samarCalc.total}</strong> ك.س
  </span>
- <span className="font-bold text-emerald-700 dark:text-emerald-300">
+ <span className="font-bold text-peacock-indigo-dark dark:text-peacock-teal-light">
  {samarGoalResult.deficitOrSurplus < 0? (
  <>عجز: <span className="font-mono">{samarGoalResult.deficitOrSurplus}</span> ك.س</>
  ): samarGoalResult.deficitOrSurplus > 0? (
@@ -574,7 +574,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
  <div className="font-black text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700/60 pb-1.5 flex items-center justify-between">
  <span>تفكيك خطوات معادلة سمر:</span>
- <span className="text-[12px] font-mono text-emerald-600 dark:text-emerald-400">
+ <span className="text-[12px] font-mono text-peacock-indigo dark:text-peacock-teal">
  الطول: {numSamarHeight} سم
  </span>
  </div>
@@ -584,7 +584,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
  <span className="font-bold text-slate-500 block text-[12px]">1) الوزن المثالي:</span>
  <div className="font-mono font-black text-slate-800 dark:text-slate-100 text-xs mt-0.5">
- {numSamarHeight} − 100 = <span className="text-emerald-600 dark:text-emerald-400">{samarCalc.idealWeight} كجم</span>
+ {numSamarHeight} − 100 = <span className="text-peacock-indigo dark:text-peacock-teal">{samarCalc.idealWeight} كجم</span>
  </div>
  </div>
 
@@ -592,7 +592,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
  <span className="font-bold text-slate-500 block text-[12px]">2) الطاقة الأساسية:</span>
  <div className="font-mono font-black text-slate-800 dark:text-slate-100 text-xs mt-0.5">
- {samarCalc.idealWeight} × 22.5 = <span className="text-emerald-600 dark:text-emerald-400">{samarCalc.basal} ك.س</span>
+ {samarCalc.idealWeight} × 22.5 = <span className="text-peacock-indigo dark:text-peacock-teal">{samarCalc.basal} ك.س</span>
  </div>
  </div>
 
@@ -600,7 +600,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
  <span className="font-bold text-slate-500 block text-[12px]">3) طاقة النشاط ({samarWorkLevel === 'light'? 'بسيط: 7': samarWorkLevel === 'moderate'? 'متوسط: 11': 'شاق: 22'}):</span>
  <div className="font-mono font-black text-slate-800 dark:text-slate-100 text-xs mt-0.5">
- {samarCalc.idealWeight} × {samarCalc.activityCoefficient} = <span className="text-emerald-600 dark:text-emerald-400">{samarCalc.activity} ك.س</span>
+ {samarCalc.idealWeight} × {samarCalc.activityCoefficient} = <span className="text-peacock-indigo dark:text-peacock-teal">{samarCalc.activity} ك.س</span>
  </div>
  </div>
 
@@ -608,14 +608,14 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
  <span className="font-bold text-slate-500 block text-[12px]">4) السعرات الكلية:</span>
  <div className="font-mono font-black text-slate-800 dark:text-slate-100 text-xs mt-0.5">
- {samarCalc.basal} + {samarCalc.activity} = <span className="text-emerald-600 dark:text-emerald-400">{samarCalc.total} ك.س</span>
+ {samarCalc.basal} + {samarCalc.activity} = <span className="text-peacock-indigo dark:text-peacock-teal">{samarCalc.total} ك.س</span>
  </div>
  </div>
  </div>
 
  {/* Educational Rule Line (Literal Prompt Mandate) */}
  <div className="pt-1.5 border-t border-slate-200 dark:border-slate-700/60 text-center">
- <code className="text-[12px] font-mono font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/60 inline-block">
+ <code className="text-[12px] font-mono font-bold text-peacock-indigo-deep dark:text-peacock-teal-light bg-peacock-mist dark:bg-peacock-ink-deep/60 px-2 py-1 rounded-lg border border-peacock-sage dark:border-peacock-indigo-deep/60 inline-block">
  الوزن المثالي = الطول − 100 | الأساسية = المثالي × 22.5 | النشاط = المثالي × 7/11/22
  </code>
  </div>
@@ -625,7 +625,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700">
  <div className="flex items-center justify-between mb-2">
  <span className="text-xs font-black text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
- <Sliders className="w-3.5 h-3.5 text-emerald-600" />
+ <Sliders className="w-3.5 h-3.5 text-peacock-indigo" />
  <span>اقتراح توزيع الماكروز (مبني على الوزن المثالي {samarCalc.idealWeight} كجم):</span>
  </span>
  </div>
@@ -646,8 +646,8 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  </div>
 
  {/* Carbs */}
- <div className="p-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-900/70">
- <div className="flex items-center justify-center gap-1 text-emerald-700 dark:text-emerald-400 text-xs font-black">
+ <div className="p-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-peacock-sage dark:border-peacock-ink/70">
+ <div className="flex items-center justify-center gap-1 text-peacock-indigo-dark dark:text-peacock-teal text-xs font-black">
  <span></span>
  <span>نشويات</span>
  </div>
@@ -676,8 +676,8 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  </div>
 
  {/* Medical Disclaimer Note (Literal Mandate) */}
- <div className="p-2.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 text-[12px] text-emerald-900 dark:text-emerald-200 flex items-start gap-1.5">
- <Info className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+ <div className="p-2.5 rounded-2xl bg-peacock-mist/60 dark:bg-peacock-ink-deep/30 border border-peacock-sage/80 dark:border-peacock-ink/50 text-[12px] text-peacock-ink dark:text-peacock-sage flex items-start gap-1.5">
+ <Info className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal shrink-0 mt-0.5" />
  <span>
  <strong>تنويه:</strong> «معادلة سمر تقدير إرشادي حسب الوزن المثالي (الطول−100) ويُراجع حسب الحالة ومعدل الالتزام والنزول الأسبوعي».
  </span>
@@ -1003,8 +1003,8 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  </span>
  </div>
 
- <div className="p-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-900/70">
- <div className="flex items-center justify-center gap-1 text-emerald-700 dark:text-emerald-400 text-xs font-black">
+ <div className="p-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-peacock-sage dark:border-peacock-ink/70">
+ <div className="flex items-center justify-center gap-1 text-peacock-indigo-dark dark:text-peacock-teal text-xs font-black">
  <span></span>
  <span>نشويات</span>
  </div>
@@ -1061,7 +1061,7 @@ export const BMRCalculatorModal: React.FC<BMRCalculatorModalProps> = ({
  activeMethod === 'samar' &&!samarCalc.isValid
 ? 'opacity-40 cursor-not-allowed bg-slate-400 text-white'
 : activeMethod === 'samar'
-? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+? 'bg-peacock-indigo hover:bg-peacock-indigo-dark text-white'
 : 'bg-blue-600 hover:bg-blue-700 text-white'
  }`}
  >

@@ -207,7 +207,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  return (
  <div className="space-y-4">
  {/* 1. Header Banner & Quick Actions */}
- <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-teal-200 dark:border-teal-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+ <div className="p-4 rounded-2xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border border-peacock-sage dark:border-peacock-ink/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
  <div className="flex items-center gap-3">
  <div className="w-10 h-10 rounded-2xl text-white flex items-center justify-center font-bold shrink-0">
  <Stethoscope className="w-5 h-5" />
@@ -217,7 +217,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  <h4 className="font-black text-slate-800 dark:text-slate-100 text-sm">
  ملفات الحالات المرضية والتشخيصات
  </h4>
- <span className="px-2 py-0.5 rounded-full text-[12px] font-black bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700">
+ <span className="px-2 py-0.5 rounded-full text-[12px] font-black bg-peacock-pale dark:bg-peacock-ink-deep text-peacock-indigo-deep dark:text-peacock-teal-light border border-peacock-teal-light dark:border-peacock-indigo">
  {activeCount} {activeCount === 1? 'حالة مسجلة': activeCount === 2? 'حالتان مسجلتان': 'حالات مسجلة'}
  </span>
  </div>
@@ -233,12 +233,12 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  onClick={handleToggleShowToClient}
  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
  currentMedical.showToClient
-? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+? 'bg-peacock-mist dark:bg-peacock-ink-deep/40 text-peacock-indigo-dark dark:text-peacock-teal-light border-peacock-teal-light dark:border-peacock-indigo-deep'
 : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
  }`}
  title="تحديد هل تظهر بطاقة الحالة الصحية للعميل في تبويب الجسم أم لا"
  >
- {currentMedical.showToClient? <Eye className="w-3.5 h-3.5 text-emerald-600" />: <EyeOff className="w-3.5 h-3.5 text-slate-400" />}
+ {currentMedical.showToClient? <Eye className="w-3.5 h-3.5 text-peacock-indigo" />: <EyeOff className="w-3.5 h-3.5 text-slate-400" />}
  <span>{currentMedical.showToClient? 'ظاهر للمتدرب': 'مخفي عن المتدرب'}</span>
  </button>
  </div>
@@ -246,7 +246,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  {/* 2. Main Macro Suggestions Trigger Button */}
  <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-3">
  <div className="flex items-center gap-2">
- <Circle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+ <Circle className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal shrink-0" />
  <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
  {activeCount > 0
 ? `جاهز لاقتراح وتعديل الماكروز بناءً على (${activeCount}) حالات مسجلة`
@@ -257,7 +257,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  type="button"
  disabled={activeCount === 0}
  onClick={handleCalculateSuggestions}
- className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+ className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-black bg-peacock-indigo hover:bg-peacock-indigo-dark disabled:opacity-40 text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer"
  >
  <Sliders className="w-3.5 h-3.5" />
  <span>تطبيق اقتراحات الماكروز حسب الحالات </span>
@@ -297,7 +297,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  key={meta.id}
  className={`rounded-2xl border transition-all ${
  isActive
-? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300/80 dark:border-emerald-800/80'
+? 'bg-peacock-mist/40 dark:bg-peacock-ink-deep/20 border-peacock-teal-light/80 dark:border-peacock-indigo-deep/80'
 : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 hover:border-slate-300'
  }`}
  >
@@ -310,7 +310,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  <div
  className={`w-6 h-6 rounded-xl flex items-center justify-center border transition-colors shrink-0 ${
  isActive
-? 'bg-emerald-600 border-emerald-600 text-white'
+? 'bg-peacock-indigo border-peacock-indigo text-white'
 : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
  }`}
  >
@@ -337,7 +337,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  <span
  className={`text-[12px] font-bold px-2 py-0.5 rounded-lg border ${
  isActive
-? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+? 'bg-peacock-pale dark:bg-peacock-ink/60 text-peacock-indigo-deep dark:text-peacock-sage border-peacock-teal-light dark:border-peacock-indigo-dark'
 : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
  }`}
  >
@@ -348,10 +348,10 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
 
  {/* Extended Details / Notes (When condition is active) */}
  {isActive && (
- <div className="px-3.5 pb-3.5 pt-1 border-t border-emerald-200/60 dark:border-emerald-900/40 space-y-2.5 animate-in slide-in-from-top duration-150">
+ <div className="px-3.5 pb-3.5 pt-1 border-t border-peacock-sage/60 dark:border-peacock-ink/40 space-y-2.5 animate-in slide-in-from-top duration-150">
  {/* Clinical Guideline Hint */}
- <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-emerald-200/60 dark:border-emerald-800/40 text-[12px] text-emerald-900 dark:text-emerald-200 flex items-start gap-1.5">
- <Info className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+ <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-peacock-sage/60 dark:border-peacock-indigo-deep/40 text-[12px] text-peacock-ink dark:text-peacock-sage flex items-start gap-1.5">
+ <Info className="w-3.5 h-3.5 text-peacock-indigo shrink-0 mt-0.5" />
  <span>
  <strong>الإرشاد السريري:</strong> {meta.macroRuleSummary}
  </span>
@@ -375,7 +375,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  onClick={() => handleUpdateConditionItem(meta.id, { severity: sev.id as any })}
  className={`py-1 px-1 rounded-lg text-[12px] font-bold border transition-colors cursor-pointer ${
  activeItem?.severity === sev.id
-? 'bg-emerald-600 text-white border-emerald-600'
+? 'bg-peacock-indigo text-white border-peacock-indigo'
 : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
  }`}
  >
@@ -409,7 +409,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  placeholder="مثال: يتناول جلوكوفاج 500 بعد الغداء، تجنب السكريات المكررة تماماً..."
  value={activeItem?.notes || ''}
  onChange={(e) => handleUpdateConditionItem(meta.id, { notes: e.target.value })}
- className="w-full text-xs p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+ className="w-full text-xs p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-peacock-blue resize-none"
  />
  </div>
  </div>
@@ -494,7 +494,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  },
  })
  }
- className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 resize-none leading-relaxed"
+ className="w-full text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-peacock-blue resize-none leading-relaxed"
  />
  </div>
 
@@ -503,7 +503,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  <div className="fixed inset-0 z-60 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in zoom-in-95 duration-150">
  <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl border border-slate-200 dark:border-slate-800 app-overlay-shadow max-h-[90vh] flex flex-col overflow-hidden">
  {/* Modal Header */}
- <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-emerald-50/50 dark:bg-emerald-950/40">
+ <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-peacock-mist/50 dark:bg-peacock-ink-deep/40">
  <div className="flex items-center gap-2.5">
  <div className="w-9 h-9 rounded-2xl text-white flex items-center justify-center font-bold">
  <Circle className="w-5 h-5" />
@@ -546,7 +546,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  {/* Side-by-Side Comparison: Current vs Suggested */}
  <div className="space-y-2">
  <h5 className="font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
- <ArrowRightLeft className="w-4 h-4 text-emerald-600" />
+ <ArrowRightLeft className="w-4 h-4 text-peacock-indigo" />
  <span>مقارنة الأهداف الحالية مقابل المقترحة سريرياً:</span>
  </h5>
 
@@ -562,7 +562,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  <span>{draft.targetCalories || '--'} kcal</span>
  </div>
  <div className="flex justify-between">
- <span className="text-emerald-600">البروتين:</span>
+ <span className="text-peacock-indigo">البروتين:</span>
  <span>{draft.targetProtein || '--'}g</span>
  </div>
  <div className="flex justify-between">
@@ -581,17 +581,17 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  </div>
 
  {/* Suggested */}
- <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 space-y-2">
- <span className="text-[12px] font-black text-emerald-800 dark:text-emerald-300 block text-center">
+ <div className="p-3 rounded-2xl bg-peacock-mist dark:bg-peacock-ink-deep/40 border border-peacock-teal-light dark:border-peacock-indigo-dark space-y-2">
+ <span className="text-[12px] font-black text-peacock-indigo-deep dark:text-peacock-teal-light block text-center">
  القيم المقترحة للحالات 
  </span>
  <div className="space-y-1.5 font-black text-slate-800 dark:text-slate-100">
  <div className="flex justify-between">
- <span className="text-emerald-700 dark:text-emerald-400">السعرات:</span>
+ <span className="text-peacock-indigo-dark dark:text-peacock-teal">السعرات:</span>
  <span>{suggestedResult.suggestedCalories} kcal</span>
  </div>
  <div className="flex justify-between">
- <span className="text-emerald-600">البروتين:</span>
+ <span className="text-peacock-indigo">البروتين:</span>
  <span>{suggestedResult.suggestedProtein}g</span>
  </div>
  <div className="flex justify-between">
@@ -644,7 +644,7 @@ export const MedicalConditionsEditor: React.FC<MedicalConditionsEditorProps> = (
  <button
  type="button"
  onClick={handleApplySuggestedMacros}
- className="px-5 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white transition-all cursor-pointer flex items-center gap-1.5"
+ className="px-5 py-2 rounded-xl text-xs font-black bg-peacock-indigo hover:bg-peacock-indigo-dark text-white transition-all cursor-pointer flex items-center gap-1.5"
  >
  <Check className="w-4 h-4" />
  <span>اعتماد وتطبيق الماكروز المقترحة</span>

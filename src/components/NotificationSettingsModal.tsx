@@ -130,7 +130,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
 ? settings.mealReminders.meals.filter((m) => m.enabled).length
 : 0;
  if (activeMealsCount > 0) {
- tags.push({ label: `وجبات (${activeMealsCount})`, color: 'bg-emerald-950 text-emerald-300 border-emerald-700' });
+ tags.push({ label: `وجبات (${activeMealsCount})`, color: 'bg-peacock-ink-deep text-peacock-teal-light border-peacock-indigo-dark' });
  }
 
  if (settings.waterReminders.enabled) {
@@ -141,7 +141,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  const disabledSet = new Set(settings.medicationReminders.disabledMedicationIds || []);
  const enabledMedsCount = activeMedications.filter((m) =>!disabledSet.has(m.id)).length;
  if (enabledMedsCount > 0) {
- tags.push({ label: `أدوية (${enabledMedsCount})`, color: 'bg-teal-950 text-teal-300 border-teal-700' });
+ tags.push({ label: `أدوية (${enabledMedsCount})`, color: 'bg-peacock-ink-deep text-peacock-teal-light border-peacock-indigo' });
  }
  }
 
@@ -154,12 +154,12 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  }
 
  if (settings.fastingReminders?.enabled) {
- tags.push({ label: 'الصيام المتقطع', color: 'bg-violet-950 text-violet-300 border-violet-700' });
+ tags.push({ label: 'الصيام المتقطع', color: 'bg-peacock-ink-deep text-peacock-teal-light border-peacock-indigo-dark' });
  }
 
  if (settings.weeklyWeightReminder?.enabled) {
  const dayName = WEEKDAYS.find((w) => w.val === (settings.weeklyWeightReminder.weekday ?? 6))?.label || 'السبت';
- tags.push({ label: `الوزن (${dayName})`, color: 'bg-pink-950 text-pink-300 border-pink-700' });
+ tags.push({ label: `الوزن (${dayName})`, color: 'bg-pink-950 text-peacock-indigo-lighter border-pink-700' });
  }
 
  if (settings.workoutReminder?.enabled) {
@@ -167,7 +167,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  }
 
  if (settings.nightReviewReminder?.enabled) {
- tags.push({ label: 'المراجعة الليلية', color: 'bg-purple-950 text-purple-300 border-purple-700' });
+ tags.push({ label: 'المراجعة الليلية', color: 'bg-peacock-ink-deep text-peacock-teal-light border-peacock-indigo-dark' });
  }
 
  if (settings.streakReminder?.enabled) {
@@ -340,14 +340,14 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-fade-in overflow-y-auto dir-rtl">
  <div className="bg-slate-900 border border-slate-700/80 rounded-3xl w-full max-w-xl app-overlay-shadow overflow-hidden my-4 flex flex-col max-h-[92vh]">
  {/* Header */}
- <div className="bg-emerald-50/80 dark:bg-emerald-950/30 p-4 sm:p-5 text-white flex items-center justify-between shrink-0">
+ <div className="bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 p-4 sm:p-5 text-white flex items-center justify-between shrink-0">
  <div className="flex items-center gap-3">
  <div className="w-10 h-10 rounded-2xl backdrop-blur-md flex items-center justify-center text-xl shrink-0">
  <Bell className="w-5 h-5 text-white" />
  </div>
  <div>
  <h2 className="text-base sm:text-lg font-black">منظومة الإشعارات والتنبيهات المتقدمة</h2>
- <p className="text-[12px] text-emerald-100">تغطية شاملة للوجبات، الأدوية، النوم، الصيام، والعادات</p>
+ <p className="text-[12px] text-peacock-pale">تغطية شاملة للوجبات، الأدوية، النوم، الصيام، والعادات</p>
  </div>
  </div>
  <button
@@ -364,7 +364,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  {settings.enabled && activeTagsSummary.length > 0 && (
  <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-3 space-y-1.5">
  <div className="flex items-center justify-between text-[12px] font-bold text-slate-400">
- <span className="flex items-center gap-1.5 text-emerald-400">
+ <span className="flex items-center gap-1.5 text-peacock-teal">
  <Circle className="w-3.5 h-3.5" />
  <span>المفعّل حالياً في منظومة التنبيهات:</span>
  </span>
@@ -392,7 +392,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  </span>
  <button
  onClick={refreshStatus}
- className="text-[12px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 cursor-pointer"
+ className="text-[12px] text-peacock-teal hover:text-peacock-teal-light font-bold flex items-center gap-1 cursor-pointer"
  >
  <RefreshCw className="w-3 h-3" />
  <span>فحص حي</span>
@@ -404,7 +404,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  <div className="p-2 rounded-xl bg-slate-800/90 border border-slate-700/80 text-center space-y-0.5">
  <span className="text-slate-400 block">Service Worker</span>
  {status?.swActive? (
- <span className="font-black text-emerald-400 flex items-center justify-center gap-1">
+ <span className="font-black text-peacock-teal flex items-center justify-center gap-1">
  <CheckCircle2 className="w-3 h-3" /> نشط وجاهز
  </span>
  ): (
@@ -418,7 +418,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  <div className="p-2 rounded-xl bg-slate-800/90 border border-slate-700/80 text-center space-y-0.5">
  <span className="text-slate-400 block">صلاحية التنبيه</span>
  {status?.permission === 'granted'? (
- <span className="font-black text-emerald-400 flex items-center justify-center gap-1">
+ <span className="font-black text-peacock-teal flex items-center justify-center gap-1">
  <CheckCircle2 className="w-3 h-3" /> مسموح
  </span>
  ): status?.permission === 'denied'? (
@@ -449,14 +449,14 @@ export const NotificationSettingsModal: React.FC<Props> = ({
 
  {/* Permission Action Banner */}
  {status?.permission === 'granted'? (
- <div className="bg-emerald-950/70 border border-emerald-500/40 rounded-2xl p-3 flex items-center justify-between text-emerald-300">
+ <div className="bg-peacock-ink-deep/70 border border-peacock-blue/40 rounded-2xl p-3 flex items-center justify-between text-peacock-teal-light">
  <div className="flex items-center gap-2">
- <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 "></span>
+ <span className="w-2.5 h-2.5 rounded-full bg-peacock-teal "></span>
  <span className="text-xs font-bold">الإشعارات مفعلة ومستعدة للظهور </span>
  </div>
  <button
  onClick={() => handleTestNotification('general')}
- className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-xl transition-all shadow flex items-center gap-1 cursor-pointer"
+ className="text-xs bg-peacock-indigo hover:bg-peacock-blue text-white font-bold px-3 py-1.5 rounded-xl transition-all shadow flex items-center gap-1 cursor-pointer"
  >
  <Circle className="w-3.5 h-3.5" />
  <span>تجربة إشعار حي</span>
@@ -489,7 +489,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  )}
 
  {testSent && (
- <div className="text-xs text-emerald-400 bg-emerald-950/80 p-2.5 rounded-xl border border-emerald-500/40 text-center font-bold flex items-center justify-center gap-1">
+ <div className="text-xs text-peacock-teal bg-peacock-ink-deep/80 p-2.5 rounded-xl border border-peacock-blue/40 text-center font-bold flex items-center justify-center gap-1">
  <Circle className="w-4 h-4" />
  <span>تم إرسال الإشعار التجريبي مع النغمة بنجاح! تفقد أعلى الشاشة.</span>
  </div>
@@ -516,7 +516,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  {/* Sound & Tone Setting */}
  <div className="pt-3 flex items-center justify-between">
  <div className="flex items-center gap-2">
- <Volume2 className="w-4 h-4 text-emerald-400" />
+ <Volume2 className="w-4 h-4 text-peacock-teal" />
  <div>
  <h4 className="text-xs font-bold text-slate-200">صوت ونغمات التنبيه الموسيقية</h4>
  <p className="text-[12px] text-slate-400">نغمات لطيفة متخصصة لكل تصنيف (ماء، وجبات، أدوية، نوم)</p>
@@ -542,11 +542,11 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  className="w-full p-3.5 flex items-center justify-between bg-slate-800/80 hover:bg-slate-750 transition-colors text-right cursor-pointer"
  >
  <div className="flex items-center gap-2.5">
- <div className="w-8 h-8 rounded-xl flex items-center justify-center text-emerald-400 shrink-0">
+ <div className="w-8 h-8 rounded-xl flex items-center justify-center text-peacock-teal shrink-0">
  <Utensils className="w-4 h-4" />
  </div>
  <div>
- <h4 className="font-bold text-sm text-emerald-300">مواعيد وتنبيهات الوجبات اليومية</h4>
+ <h4 className="font-bold text-sm text-peacock-teal-light">مواعيد وتنبيهات الوجبات اليومية</h4>
  <p className="text-[12px] text-slate-400">
  {settings.mealReminders.enabled? `مفعل (${settings.mealReminders.meals.filter((m) => m.enabled).length} وجبات)`: 'معطل'}
  </p>
@@ -578,7 +578,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  <button
  type="button"
  onClick={() => handleTestNotification('meal')}
- className="text-[12px] text-emerald-400 hover:text-emerald-300 font-bold underline cursor-pointer"
+ className="text-[12px] text-peacock-teal hover:text-peacock-teal-light font-bold underline cursor-pointer"
  >
  تجربة نغمة الوجبة 
  </button>
@@ -597,7 +597,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  type="checkbox"
  checked={meal.enabled}
  onChange={(e) => handleMealToggle(idx, e.target.checked)}
- className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-400 accent-emerald-500 cursor-pointer"
+ className="w-4 h-4 rounded text-peacock-blue focus:ring-peacock-teal accent-peacock-blue cursor-pointer"
  />
  <span className={`text-xs font-bold truncate ${meal.enabled? 'text-slate-100': 'text-slate-500 line-through'}`}>
  {meal.name}
@@ -611,7 +611,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  value={meal.time}
  onChange={(e) => handleMealTimeChange(idx, e.target.value)}
  disabled={!meal.enabled}
- className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-emerald-400 font-mono font-bold focus:border-emerald-500 focus:outline-none disabled:opacity-40"
+ className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-peacock-teal font-mono font-bold focus:border-peacock-blue focus:outline-none disabled:opacity-40"
  />
  </div>
  </div>
@@ -631,11 +631,11 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  className="w-full p-3.5 flex items-center justify-between bg-slate-800/80 hover:bg-slate-750 transition-colors text-right cursor-pointer"
  >
  <div className="flex items-center gap-2.5">
- <div className="w-8 h-8 rounded-xl flex items-center justify-center text-teal-400 shrink-0">
+ <div className="w-8 h-8 rounded-xl flex items-center justify-center text-peacock-teal shrink-0">
  <Pill className="w-4 h-4" />
  </div>
  <div>
- <h4 className="font-bold text-sm text-teal-300">مواعيد وجرعات الأدوية العلاجية </h4>
+ <h4 className="font-bold text-sm text-peacock-teal-light">مواعيد وجرعات الأدوية العلاجية </h4>
  <p className="text-[12px] text-slate-400">
  {settings.medicationReminders?.enabled
 ? `مفعل (${activeMedications.length} أدوية مسجلة بالخطة)`
@@ -659,7 +659,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  }
  className="sr-only peer"
  />
- <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-500"></div>
+ <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-peacock-blue"></div>
  </label>
  {openSections.medications? <ChevronUp className="w-4 h-4 text-slate-400" />: <ChevronDown className="w-4 h-4 text-slate-400" />}
  </div>
@@ -672,7 +672,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  <button
  type="button"
  onClick={() => handleTestNotification('medication')}
- className="text-[12px] text-teal-400 hover:text-teal-300 font-bold underline cursor-pointer"
+ className="text-[12px] text-peacock-teal hover:text-peacock-teal-light font-bold underline cursor-pointer"
  >
  تجربة نغمة الدواء 
  </button>
@@ -695,7 +695,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  },
  })
  }
- className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-teal-400 font-bold focus:outline-none"
+ className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-peacock-teal font-bold focus:outline-none"
  >
  <option value={15}>15 دقيقة</option>
  <option value={30}>30 دقيقة</option>
@@ -722,7 +722,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  key={med.id}
  className={`p-3 rounded-xl border transition-all ${
  isMedEnabled
-? 'bg-slate-900/90 border-teal-800/60 text-slate-200'
+? 'bg-slate-900/90 border-peacock-indigo-deep/60 text-slate-200'
 : 'bg-slate-900/40 border-slate-800 text-slate-500 opacity-60'
  }`}
  >
@@ -732,7 +732,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  type="checkbox"
  checked={isMedEnabled}
  onChange={(e) => handleToggleMedicationItem(med.id, e.target.checked)}
- className="w-4 h-4 rounded text-teal-500 focus:ring-teal-400 accent-teal-500 cursor-pointer"
+ className="w-4 h-4 rounded text-peacock-blue focus:ring-peacock-teal accent-peacock-blue cursor-pointer"
  />
  <div className="min-w-0">
  <span className="font-bold text-xs truncate block">{med.name}</span>
@@ -764,7 +764,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  >
  <span>{t.label || t.slot}</span>
  {approxTime && (
- <span className="text-teal-400 font-mono font-bold">({approxTime})</span>
+ <span className="text-peacock-teal font-mono font-bold">({approxTime})</span>
  )}
  </div>
  );
@@ -1167,11 +1167,11 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  className="w-full p-3.5 flex items-center justify-between bg-slate-800/80 hover:bg-slate-750 transition-colors text-right cursor-pointer"
  >
  <div className="flex items-center gap-2.5">
- <div className="w-8 h-8 rounded-xl flex items-center justify-center text-violet-400 shrink-0">
+ <div className="w-8 h-8 rounded-xl flex items-center justify-center text-peacock-teal shrink-0">
  <Timer className="w-4 h-4" />
  </div>
  <div>
- <h4 className="font-bold text-sm text-violet-300">الصيام المتقطع ونهاية النافذة ⏱</h4>
+ <h4 className="font-bold text-sm text-peacock-teal-light">الصيام المتقطع ونهاية النافذة ⏱</h4>
  <p className="text-[12px] text-slate-400">
  {settings.fastingReminders?.enabled? 'مفعل (تنبيه عند اكتمال الهدف)': 'معطل'}
  </p>
@@ -1190,7 +1190,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  }
  className="sr-only peer"
  />
- <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-500"></div>
+ <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-peacock-blue"></div>
  </label>
  {openSections.fasting? <ChevronUp className="w-4 h-4 text-slate-400" />: <ChevronDown className="w-4 h-4 text-slate-400" />}
  </div>
@@ -1203,7 +1203,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  <button
  type="button"
  onClick={() => handleTestNotification('fasting')}
- className="text-[12px] text-violet-400 hover:text-violet-300 font-bold underline cursor-pointer"
+ className="text-[12px] text-peacock-teal hover:text-peacock-teal-light font-bold underline cursor-pointer"
  >
  تجربة إشعار الصيام 
  </button>
@@ -1214,7 +1214,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  <span className="font-bold text-slate-200 block">إشعار فتح نافذة الأكل</span>
  <span className="text-[12px] text-slate-400">يُرسل التنبيه عند وصولك لهدف الصيام في العداد</span>
  </div>
- <span className="text-violet-400 font-bold text-xs bg-violet-950 px-2 py-1 rounded-md border border-violet-800">
+ <span className="text-peacock-teal font-bold text-xs bg-peacock-ink-deep px-2 py-1 rounded-md border border-peacock-indigo-deep">
  تلقائي عند بلوغ الهدف
  </span>
  </div>
@@ -1232,11 +1232,11 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  className="w-full p-3.5 flex items-center justify-between bg-slate-800/80 hover:bg-slate-750 transition-colors text-right cursor-pointer"
  >
  <div className="flex items-center gap-2.5">
- <div className="w-8 h-8 rounded-xl flex items-center justify-center text-pink-400 shrink-0">
+ <div className="w-8 h-8 rounded-xl flex items-center justify-center text-peacock-indigo-light shrink-0">
  <Scale className="w-4 h-4" />
  </div>
  <div>
- <h4 className="font-bold text-sm text-pink-300">قياس وتوثيق الوزن الأسبوعي </h4>
+ <h4 className="font-bold text-sm text-peacock-indigo-lighter">قياس وتوثيق الوزن الأسبوعي </h4>
  <p className="text-[12px] text-slate-400">
  {settings.weeklyWeightReminder?.enabled
 ? `أسبوعياً (يوم ${WEEKDAYS.find((w) => w.val === (settings.weeklyWeightReminder.weekday ?? 6))?.label} - ${settings.weeklyWeightReminder.time})`
@@ -1260,7 +1260,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  }
  className="sr-only peer"
  />
- <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500"></div>
+ <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-peacock-blue"></div>
  </label>
  {openSections.weight? <ChevronUp className="w-4 h-4 text-slate-400" />: <ChevronDown className="w-4 h-4 text-slate-400" />}
  </div>
@@ -1273,7 +1273,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  <button
  type="button"
  onClick={() => handleTestNotification('weight')}
- className="text-[12px] text-pink-400 hover:text-pink-300 font-bold underline cursor-pointer"
+ className="text-[12px] text-peacock-indigo-light hover:text-peacock-indigo-lighter font-bold underline cursor-pointer"
  >
  تجربة نغمة الوزن 
  </button>
@@ -1293,7 +1293,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  },
  })
  }
- className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-pink-400 font-bold focus:outline-none"
+ className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-peacock-indigo-light font-bold focus:outline-none"
  >
  {WEEKDAYS.map((w) => (
  <option key={w.val} value={w.val}>
@@ -1317,7 +1317,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  },
  })
  }
- className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-pink-400 font-mono font-bold focus:border-pink-500 focus:outline-none"
+ className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-peacock-indigo-light font-mono font-bold focus:border-peacock-blue focus:outline-none"
  />
  </div>
  </div>
@@ -1397,11 +1397,11 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  className="w-full p-3.5 flex items-center justify-between bg-slate-800/80 hover:bg-slate-750 transition-colors text-right cursor-pointer"
  >
  <div className="flex items-center gap-2.5">
- <div className="w-8 h-8 rounded-xl flex items-center justify-center text-purple-400 shrink-0">
+ <div className="w-8 h-8 rounded-xl flex items-center justify-center text-peacock-teal shrink-0">
  <Circle className="w-4 h-4" />
  </div>
  <div>
- <h4 className="font-bold text-sm text-purple-300">المراجعة والتوثيق الليلي الذكي </h4>
+ <h4 className="font-bold text-sm text-peacock-teal-light">المراجعة والتوثيق الليلي الذكي </h4>
  <p className="text-[12px] text-slate-400">
  {settings.nightReviewReminder?.enabled? `يومياً (${settings.nightReviewReminder.time})`: 'معطل'}
  </p>
@@ -1420,7 +1420,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  }
  className="sr-only peer"
  />
- <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+ <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-peacock-blue"></div>
  </label>
  {openSections.nightReview? <ChevronUp className="w-4 h-4 text-slate-400" />: <ChevronDown className="w-4 h-4 text-slate-400" />}
  </div>
@@ -1446,7 +1446,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  nightReviewReminder: {...settings.nightReviewReminder, time: e.target.value },
  })
  }
- className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-purple-400 font-mono font-bold focus:border-purple-500 focus:outline-none"
+ className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-peacock-teal font-mono font-bold focus:border-peacock-blue focus:outline-none"
  />
  </div>
  </div>
@@ -1482,11 +1482,11 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  onClick={() => setActiveGuideTab('android')}
  className={`flex-1 py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
  activeGuideTab === 'android'
-? 'bg-emerald-950/80 border-emerald-500 text-emerald-300'
+? 'bg-peacock-ink-deep/80 border-peacock-blue text-peacock-teal-light'
 : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750'
  }`}
  >
- <BatteryCharging className="w-3.5 h-3.5 text-emerald-400" />
+ <BatteryCharging className="w-3.5 h-3.5 text-peacock-teal" />
  <span>دليل أندرويد (توفير البطارية)</span>
  </button>
 
@@ -1506,9 +1506,9 @@ export const NotificationSettingsModal: React.FC<Props> = ({
 
  {/* Android Guide Content */}
  {activeGuideTab === 'android' && (
- <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-800/80 space-y-2 text-xs leading-relaxed">
- <h5 className="font-black text-emerald-300 flex items-center gap-1.5">
- <BatteryCharging className="w-4 h-4 text-emerald-400" />
+ <div className="p-3.5 rounded-2xl bg-peacock-ink-deep/40 border border-peacock-indigo-deep/80 space-y-2 text-xs leading-relaxed">
+ <h5 className="font-black text-peacock-teal-light flex items-center gap-1.5">
+ <BatteryCharging className="w-4 h-4 text-peacock-teal" />
  خطوة واحدة لضمان وصول التنبيهات دائماً في أندرويد (Unrestrict Battery):
  </h5>
  <ol className="list-decimal list-inside space-y-1 text-slate-300 text-[12px]">
@@ -1516,7 +1516,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  <li>ابحث عن هذا التطبيق أو متصفحك الحالي (Chrome / Edge).</li>
  <li>اضغط على <b>"البطارية" (Battery)</b> وقم بتغيير الخيار إلى <b>"غير مقيد" (Unrestricted)</b>.</li>
  </ol>
- <p className="text-[12px] text-emerald-400/90 italic">
+ <p className="text-[12px] text-peacock-teal/90 italic">
  * هذا يمنع نظام أندرويد من إدخال الخدمة في وضع النوم (Doze Mode) ويضمن وصول الإشعارات في دقيقتها.
  </p>
  </div>
@@ -1547,7 +1547,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  <button
  type="button"
  onClick={resetToDefaultPreset}
- className="text-emerald-400 hover:text-emerald-300 font-bold underline decoration-dashed flex items-center gap-1 cursor-pointer"
+ className="text-peacock-teal hover:text-peacock-teal-light font-bold underline decoration-dashed flex items-center gap-1 cursor-pointer"
  >
  <span>إعادة ضبط المواعيد النموذجية لكافة الأقسام</span>
  </button>
@@ -1565,7 +1565,7 @@ export const NotificationSettingsModal: React.FC<Props> = ({
  </button>
  <button
  onClick={handleSaveAndClose}
- className="px-6 py-2.5 rounded-xl text-xs font-black text-slate-950 bg-emerald-400 hover:bg-emerald-300 transition-all flex items-center gap-2 cursor-pointer"
+ className="px-6 py-2.5 rounded-xl text-xs font-black text-slate-950 bg-peacock-teal hover:bg-peacock-teal-light transition-all flex items-center gap-2 cursor-pointer"
  >
  {savedFeedback? 'تم حفظ الإعدادات بنجاح ': 'حفظ ونشاط الإشعارات'}
  </button>

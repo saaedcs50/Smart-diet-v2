@@ -186,7 +186,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  <div>
  <h3 className="font-black text-slate-800 dark:text-slate-100 text-base flex items-center gap-2">
  مكتبة القوالب العلاجية والغذائية 
- <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+ <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-peacock-pale dark:bg-peacock-ink-deep text-peacock-indigo-dark dark:text-peacock-teal-light">
  {presets.length} قوالب جاهزة
  </span>
  </h3>
@@ -215,7 +215,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
 
  <button
  onClick={() => setShowSaveCustomModal(true)}
- className="px-3 py-2 rounded-2xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center gap-1.5 cursor-pointer"
+ className="px-3 py-2 rounded-2xl text-xs font-black bg-peacock-indigo hover:bg-peacock-indigo-dark text-white transition-all flex items-center gap-1.5 cursor-pointer"
  >
  <BookmarkPlus className="w-4 h-4" />
  <span className="hidden sm:inline">حفظ الخطة الحالية كقالب </span>
@@ -263,7 +263,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  return (
  <div
  key={preset.id}
- className="bg-white dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700 rounded-3xl p-4 sm:p-5 flex flex-col justify-between hover:border-emerald-500/50 hover: transition-all group"
+ className="bg-white dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700 rounded-3xl p-4 sm:p-5 flex flex-col justify-between hover:border-peacock-blue/50 hover: transition-all group"
  >
  <div className="space-y-3">
  {/* Top Tag & Actions */}
@@ -277,7 +277,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  <button
  onClick={(e) => handleExportPreset(preset, e)}
  title="تصدير القالب كملف JSON"
- className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-xl transition-colors cursor-pointer"
+ className="p-1.5 text-slate-500 hover:text-peacock-indigo hover:bg-peacock-mist dark:hover:bg-peacock-ink-deep/40 rounded-xl transition-colors cursor-pointer"
  >
  <Download className="w-4 h-4" />
  </button>
@@ -320,7 +320,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
 
  <div className="bg-slate-50 dark:bg-slate-900/60 p-2 rounded-2xl border border-slate-100 dark:border-slate-800">
  <span className="text-[12px] text-slate-400 font-bold block">البروتين</span>
- <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+ <span className="text-xs font-black text-peacock-indigo dark:text-peacock-teal">
  {preset.targetProtein} جم
  </span>
  </div>
@@ -335,7 +335,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
 
  {/* Macronutrient breakdown bar */}
  <div className="flex items-center gap-2 text-[12px] font-bold text-slate-500 dark:text-slate-400 pt-1">
- <span className="text-emerald-600 dark:text-emerald-400">P: {preset.targetProtein}g</span>
+ <span className="text-peacock-indigo dark:text-peacock-teal">P: {preset.targetProtein}g</span>
  <span>•</span>
  <span className="text-amber-600 dark:text-amber-400">C: {preset.targetCarbs}g</span>
  <span>•</span>
@@ -357,7 +357,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
 
  <button
  onClick={() => handleApply(preset)}
- className="py-2.5 px-3 rounded-2xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+ className="py-2.5 px-3 rounded-2xl text-xs font-black bg-peacock-indigo hover:bg-peacock-indigo-dark text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer"
  >
  <Zap className="w-3.5 h-3.5" />
  <span>تطبيق القالب </span>
@@ -381,7 +381,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  {/* Modal Footer Note */}
  <div className="p-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
  <span className="flex items-center gap-1.5 font-bold">
- <Circle className="w-4 h-4 text-emerald-500" />
+ <Circle className="w-4 h-4 text-peacock-blue" />
  <span>عند تطبيق القالب، سيتم الاحتفاظ باسم المتدرب الحالي وطوله ووزنه تلقائياً.</span>
  </span>
  <button
@@ -423,8 +423,8 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  {/* Preview Content */}
  <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs">
  {/* Summary box */}
- <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 space-y-1">
- <span className="font-black text-emerald-800 dark:text-emerald-300 block"> الهدف والوصف الطبي:</span>
+ <div className="p-3.5 rounded-2xl bg-peacock-mist dark:bg-peacock-ink-deep/40 border border-peacock-sage dark:border-peacock-indigo-deep/60 space-y-1">
+ <span className="font-black text-peacock-indigo-deep dark:text-peacock-teal-light block"> الهدف والوصف الطبي:</span>
  <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
  {previewPreset.description}
  </p>
@@ -464,7 +464,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  {/* Meals list */}
  <div className="space-y-2.5">
  <h5 className="font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
- <Utensils className="w-4 h-4 text-emerald-600" />
+ <Utensils className="w-4 h-4 text-peacock-indigo" />
  <span>الوجبات والبدائل المقررة ({previewPreset.planData.meals.length}):</span>
  </h5>
  <div className="space-y-2">
@@ -472,14 +472,14 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  <div key={m.id} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-1.5">
  <div className="flex items-center justify-between font-black text-slate-800 dark:text-slate-100">
  <span>{idx + 1}. {m.name}</span>
- <span className="text-[12px] text-emerald-600 dark:text-emerald-400">{m.calories} كالوري | {m.proteinGrams}g بروتين</span>
+ <span className="text-[12px] text-peacock-indigo dark:text-peacock-teal">{m.calories} كالوري | {m.proteinGrams}g بروتين</span>
  </div>
  <p className="text-slate-600 dark:text-slate-300 font-medium">
  <strong className="text-slate-700 dark:text-slate-200">المحتوى الأساسي:</strong> {m.items}
  </p>
  {m.alternatives && m.alternatives.length > 0 && (
  <div className="pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-[12px] text-slate-500 dark:text-slate-400 space-y-0.5">
- <strong className="text-emerald-700 dark:text-emerald-400 block"> البدائل المعتمدة:</strong>
+ <strong className="text-peacock-indigo-dark dark:text-peacock-teal block"> البدائل المعتمدة:</strong>
  {m.alternatives.map((alt, aidx) => (
  <div key={aidx}>• {alt}</div>
  ))}
@@ -518,7 +518,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  <div className="space-y-1">
  {previewPreset.planData.checklist.map((c) => (
  <div key={c.id} className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 font-medium flex items-center gap-2">
- <span className="text-emerald-600 font-black"></span>
+ <span className="text-peacock-indigo font-black"></span>
  <span>{c.label}</span>
  </div>
  ))}
@@ -555,7 +555,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  onClick={() => {
  handleApply(previewPreset);
  }}
- className="px-6 py-2.5 rounded-2xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white transition-all cursor-pointer flex items-center gap-1.5"
+ className="px-6 py-2.5 rounded-2xl text-xs font-black bg-peacock-indigo hover:bg-peacock-indigo-dark text-white transition-all cursor-pointer flex items-center gap-1.5"
  >
  <Zap className="w-4 h-4" />
  <span>تطبيق هذا القالب على مسودة الخطة </span>
@@ -571,7 +571,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 app-overlay-shadow p-5 space-y-4">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2">
- <div className="w-8 h-8 rounded-xl dark: text-emerald-600 flex items-center justify-center font-bold">
+ <div className="w-8 h-8 rounded-xl dark: text-peacock-indigo flex items-center justify-center font-bold">
  <BookmarkPlus className="w-4 h-4" />
  </div>
  <h4 className="font-black text-slate-800 dark:text-slate-100 text-sm">
@@ -594,7 +594,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  placeholder="مثلاً: خطة نباتية خاصة / تنشيف سريع 1400 كالوري..."
  value={customPresetName}
  onChange={(e) => setCustomPresetName(e.target.value)}
- className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-bold outline-none focus:ring-2 focus:ring-emerald-500"
+ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-bold outline-none focus:ring-2 focus:ring-peacock-blue"
  />
  </div>
 
@@ -625,7 +625,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  placeholder="وصف مختصر لمميزات هذا القالب وحالات استخدامه..."
  value={customPresetSummary}
  onChange={(e) => setCustomPresetSummary(e.target.value)}
- className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium outline-none focus:ring-2 focus:ring-emerald-500"
+ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium outline-none focus:ring-2 focus:ring-peacock-blue"
  />
  </div>
 
@@ -646,7 +646,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  </button>
  <button
  type="submit"
- className="flex-1 py-2.5 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white"
+ className="flex-1 py-2.5 rounded-xl font-black bg-peacock-indigo hover:bg-peacock-indigo-dark text-white"
  >
  حفظ في مكتبتي 
  </button>

@@ -131,20 +131,20 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  return (
  <div className="space-y-4 pb-12 animate-in fade-in duration-150">
  {/* 1. Weight & Target Progress Banner */}
- <div className="bg-[var(--app-card)] border border-purple-100 dark:border-purple-900/40 rounded-3xl p-5 transition-colors space-y-4">
+ <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-5 transition-colors space-y-4">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2.5">
- <div className="w-9 h-9 rounded-2xl text-brand-secondary dark:text-purple-300 flex items-center justify-center font-bold text-sm">
+ <div className="w-9 h-9 rounded-2xl text-brand-secondary dark:text-peacock-teal-light flex items-center justify-center font-bold text-sm">
  <Scale className="w-4 h-4" />
  </div>
  <div>
  <div className="flex items-center gap-1.5">
- <h3 className="font-bold text-brand-text dark:text-purple-100 text-sm">
+ <h3 className="font-bold text-brand-text dark:text-peacock-pale text-sm">
  الوزن الصباحي والهدف
  </h3>
  <HelpButton featureId="bodyMeasurements" size="sm" />
  </div>
- <span className="text-[12px] text-brand-secondary-text dark:text-purple-300/70">
+ <span className="text-[12px] text-brand-secondary-text dark:text-peacock-teal-light/70">
  (يُفضل الوزن على الريق بعد الاستيقاظ وقبل الإفطار)
  </span>
  </div>
@@ -161,8 +161,8 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  {/* Input and Key Numbers */}
  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
  {/* Weight Input */}
- <div className="bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/80 p-3.5 rounded-2xl border border-purple-100 dark:border-purple-900/40">
- <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-purple-300 mb-1">
+ <div className="bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/80 p-3.5 rounded-2xl border border-peacock-pale dark:border-peacock-ink/40">
+ <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-peacock-teal-light mb-1">
  وزن اليوم (كجم):
  </label>
  <div className="flex items-center gap-2">
@@ -178,24 +178,24 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  weight: e.target.value? parseFloat(e.target.value): null,
  })
  }
- className="w-full text-base font-extrabold p-2 rounded-xl border border-purple-100 dark:border-purple-800/60 bg-[var(--app-card)] text-brand-text dark:text-purple-100 outline-none focus:ring-2 focus:ring-brand-hero"
+ className="w-full text-base font-extrabold p-2 rounded-xl border border-peacock-pale dark:border-peacock-indigo-deep/60 bg-[var(--app-card)] text-brand-text dark:text-peacock-pale outline-none focus:ring-2 focus:ring-brand-hero"
  />
  <span className="text-xs font-bold text-brand-secondary-text">كجم</span>
  </div>
  </div>
 
  {/* Start Weight */}
- <div className="bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/80 p-3.5 rounded-2xl border border-purple-100 dark:border-purple-900/40 flex flex-col justify-center">
- <span className="text-[12px] font-bold text-brand-secondary-text dark:text-purple-300 block">وزن بداية الرحلة:</span>
- <span className="text-base font-extrabold text-brand-text dark:text-purple-100 mt-1">
+ <div className="bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/80 p-3.5 rounded-2xl border border-peacock-pale dark:border-peacock-ink/40 flex flex-col justify-center">
+ <span className="text-[12px] font-bold text-brand-secondary-text dark:text-peacock-teal-light block">وزن بداية الرحلة:</span>
+ <span className="text-base font-extrabold text-brand-text dark:text-peacock-pale mt-1">
  {startWeight? `${startWeight} كجم`: '-'}
  </span>
  </div>
 
  {/* Target Weight */}
- <div className="bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/80 p-3.5 rounded-2xl border border-purple-100 dark:border-purple-900/40 flex flex-col justify-center">
- <span className="text-[12px] font-bold text-brand-secondary-text dark:text-purple-300 block">الهدف المطلوب:</span>
- <span className="text-base font-extrabold text-brand-hero dark:text-pink-400 mt-1">
+ <div className="bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/80 p-3.5 rounded-2xl border border-peacock-pale dark:border-peacock-ink/40 flex flex-col justify-center">
+ <span className="text-[12px] font-bold text-brand-secondary-text dark:text-peacock-teal-light block">الهدف المطلوب:</span>
+ <span className="text-base font-extrabold text-brand-hero dark:text-peacock-indigo-light mt-1">
  {targetWeight? `${targetWeight} كجم`: '-'}
  </span>
  </div>
@@ -203,20 +203,20 @@ export const BodyTab: React.FC<BodyTabProps> = ({
 
  {/* Progress toward target bar */}
  {targetWeight && currentWeight && (
- <div className="pt-2 border-t border-purple-50 dark:border-purple-900/30 space-y-1.5">
+ <div className="pt-2 border-t border-peacock-mist dark:border-peacock-ink/30 space-y-1.5">
  <div className="flex justify-between items-center text-xs font-bold">
- <span className="text-brand-text dark:text-purple-200">
+ <span className="text-brand-text dark:text-peacock-sage">
  {remainingKg!== null && remainingKg > 0
 ? `باقي ${remainingKg} كجم للوصول للهدف`
 : remainingKg!== null && remainingKg <= 0
 ? 'تم الوصول للوزن المستهدف'
 : 'نحو الوزن المستهدف'}
  </span>
- <span className="text-brand-hero dark:text-pink-400">
+ <span className="text-brand-hero dark:text-peacock-indigo-light">
  {targetProgressPercent}%
  </span>
  </div>
- <div className="w-full bg-purple-100/60 dark:bg-purple-950/60 h-2 rounded-full overflow-hidden">
+ <div className="w-full bg-peacock-pale/60 dark:bg-peacock-ink-deep/60 h-2 rounded-full overflow-hidden">
  <div
  className="bg-brand-hero h-full rounded-full transition-all duration-150"
  style={{ width: `${targetProgressPercent}%` }}
@@ -232,10 +232,10 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  {/* 2. Clinical Indicators (BMI & WHtR) */}
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
  {/* BMI Card */}
- <div className="bg-[var(--app-card)] border border-purple-100 dark:border-purple-900/40 rounded-3xl p-4 space-y-1.5">
+ <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-4 space-y-1.5">
  <div className="flex items-center justify-between">
- <span className="text-xs font-bold text-brand-secondary-text dark:text-purple-300">مؤشر كتلة الجسم (BMI)</span>
- <span className="text-lg font-extrabold text-brand-text dark:text-purple-100">
+ <span className="text-xs font-bold text-brand-secondary-text dark:text-peacock-teal-light">مؤشر كتلة الجسم (BMI)</span>
+ <span className="text-lg font-extrabold text-brand-text dark:text-peacock-pale">
  {bmi.val}
  </span>
  </div>
@@ -243,10 +243,10 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  </div>
 
  {/* WHtR Card */}
- <div className="bg-[var(--app-card)] border border-purple-100 dark:border-purple-900/40 rounded-3xl p-4 space-y-1.5">
+ <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-4 space-y-1.5">
  <div className="flex items-center justify-between">
- <span className="text-xs font-bold text-brand-secondary-text dark:text-purple-300">نسبة الوسط للطول (WHtR)</span>
- <span className="text-lg font-extrabold text-brand-text dark:text-purple-100">
+ <span className="text-xs font-bold text-brand-secondary-text dark:text-peacock-teal-light">نسبة الوسط للطول (WHtR)</span>
+ <span className="text-lg font-extrabold text-brand-text dark:text-peacock-pale">
  {whtr.val}
  </span>
  </div>
@@ -267,11 +267,11 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  <Circle className="w-4 h-4" />
  </div>
  <div>
- <h3 className="font-bold text-brand-text dark:text-purple-100 text-sm">
+ <h3 className="font-bold text-brand-text dark:text-peacock-pale text-sm">
  الدورة الشهرية وتغيرات الوزن
  </h3>
  {cycleInfo.dayOfCycle!== null && (
- <span className="text-[12px] text-brand-secondary-text dark:text-purple-300 font-medium">
+ <span className="text-[12px] text-brand-secondary-text dark:text-peacock-teal-light font-medium">
  اليوم {cycleInfo.dayOfCycle} من الدورة • {cycleInfo.phaseName}
  </span>
  )}
@@ -285,15 +285,15 @@ export const BodyTab: React.FC<BodyTabProps> = ({
 
  {/* Weight vs 7-day average comparison */}
  {weightAvgInfo.average7Days!== null && weightAvgInfo.diffFromAverage!== null && (
- <div className="p-3 rounded-2xl bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/70 border border-purple-100 dark:border-purple-900/30 flex items-center justify-between text-xs">
- <span className="text-brand-secondary-text dark:text-purple-300 font-medium">
- متوسط وزنك آخر {weightAvgInfo.count} أيام: <strong className="text-brand-text dark:text-purple-100">{weightAvgInfo.average7Days} كجم</strong>
+ <div className="p-3 rounded-2xl bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/70 border border-peacock-pale dark:border-peacock-ink/30 flex items-center justify-between text-xs">
+ <span className="text-brand-secondary-text dark:text-peacock-teal-light font-medium">
+ متوسط وزنك آخر {weightAvgInfo.count} أيام: <strong className="text-brand-text dark:text-peacock-pale">{weightAvgInfo.average7Days} كجم</strong>
  </span>
  <span
  className={`font-bold px-2 py-0.5 rounded-lg text-xs ${
  weightAvgInfo.diffFromAverage > 0
-? 'bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-300'
-: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
+? 'bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-peacock-indigo-lighter'
+: 'bg-peacock-pale dark:bg-peacock-ink-deep text-peacock-indigo-deep dark:text-peacock-teal-light'
  }`}
  >
  {weightAvgInfo.diffFromAverage > 0? `+${weightAvgInfo.diffFromAverage}`: weightAvgInfo.diffFromAverage} كجم عن متوسط الأسبوع
@@ -318,22 +318,22 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  ((plan.medicalConditions?.conditions && plan.medicalConditions.conditions.length > 0) ||
  (plan.medicalConditions?.allergies && plan.medicalConditions.allergies.length > 0) ||
  plan.medicalConditions?.customConditionNotes) && (
- <div className="bg-[var(--app-card)] border border-purple-100 dark:border-purple-900/40 rounded-3xl p-5 space-y-3.5">
+ <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-5 space-y-3.5">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2.5">
- <div className="w-9 h-9 rounded-2xl text-brand-secondary dark:text-purple-300 flex items-center justify-center font-bold text-sm">
+ <div className="w-9 h-9 rounded-2xl text-brand-secondary dark:text-peacock-teal-light flex items-center justify-center font-bold text-sm">
  <Stethoscope className="w-4 h-4" />
  </div>
  <div>
- <h3 className="font-bold text-brand-text dark:text-purple-100 text-sm">
+ <h3 className="font-bold text-brand-text dark:text-peacock-pale text-sm">
  الملف الطبي والحالات المسجلة
  </h3>
- <span className="text-[12px] text-brand-secondary-text dark:text-purple-300">
+ <span className="text-[12px] text-brand-secondary-text dark:text-peacock-teal-light">
  {brandCopy.approvedBy}
  </span>
  </div>
  </div>
- <span className="px-2.5 py-1 rounded-xl bg-purple-50 dark:bg-purple-950 text-brand-secondary dark:text-purple-300 font-bold text-[12px] border border-purple-200 dark:border-purple-800">
+ <span className="px-2.5 py-1 rounded-xl bg-peacock-mist dark:bg-peacock-ink-deep text-brand-secondary dark:text-peacock-teal-light font-bold text-[12px] border border-peacock-sage dark:border-peacock-indigo-deep">
  خطة علاجية مخصصة
  </span>
  </div>
@@ -341,22 +341,22 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  {/* Conditions Chips */}
  {plan.medicalConditions.conditions && plan.medicalConditions.conditions.length > 0 && (
  <div className="space-y-2">
- <span className="text-xs font-bold text-brand-secondary-text dark:text-purple-300 block">
+ <span className="text-xs font-bold text-brand-secondary-text dark:text-peacock-teal-light block">
  التشخيصات المسجلة:
  </span>
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
  {plan.medicalConditions.conditions.map((cond) => (
  <div
  key={cond.id}
- className="p-2.5 rounded-2xl bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/70 border border-purple-100 dark:border-purple-900/40 space-y-1"
+ className="p-2.5 rounded-2xl bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/70 border border-peacock-pale dark:border-peacock-ink/40 space-y-1"
  >
  <div className="flex items-center justify-between">
- <span className="font-bold text-brand-text dark:text-purple-100 text-xs flex items-center gap-1.5">
- <HeartPulse className="w-3.5 h-3.5 text-brand-secondary dark:text-purple-400" />
+ <span className="font-bold text-brand-text dark:text-peacock-pale text-xs flex items-center gap-1.5">
+ <HeartPulse className="w-3.5 h-3.5 text-brand-secondary dark:text-peacock-teal" />
  {cond.label}
  </span>
  {cond.severity && (
- <span className="text-[12px] font-bold px-1.5 py-0.5 rounded-md bg-purple-100/60 dark:bg-purple-950/60 text-brand-secondary dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+ <span className="text-[12px] font-bold px-1.5 py-0.5 rounded-md bg-peacock-pale/60 dark:bg-peacock-ink-deep/60 text-brand-secondary dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep">
  {cond.severity === 'mild'
 ? 'خفيفة'
 : cond.severity === 'moderate'
@@ -366,7 +366,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  )}
  </div>
  {cond.notes && (
- <p className="text-[12px] text-brand-secondary-text dark:text-purple-300 leading-relaxed pt-0.5">
+ <p className="text-[12px] text-brand-secondary-text dark:text-peacock-teal-light leading-relaxed pt-0.5">
  {cond.notes}
  </p>
  )}
@@ -399,8 +399,8 @@ export const BodyTab: React.FC<BodyTabProps> = ({
 
  {/* Doctor/Coach Clinical Notes */}
  {plan.medicalConditions.customConditionNotes && (
- <div className="p-3 rounded-2xl bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/70 border border-purple-100 dark:border-purple-900/40 text-xs text-brand-text dark:text-purple-200 leading-relaxed">
- <span className="font-bold text-brand-text dark:text-purple-100 block mb-1">
+ <div className="p-3 rounded-2xl bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/70 border border-peacock-pale dark:border-peacock-ink/40 text-xs text-brand-text dark:text-peacock-sage leading-relaxed">
+ <span className="font-bold text-brand-text dark:text-peacock-pale block mb-1">
  إرشادات طبية خاصة:
  </span>
  {plan.medicalConditions.customConditionNotes}
@@ -411,12 +411,12 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  {plan.medicationPlan?.showToClient!== false &&
  plan.medicationPlan?.items &&
  plan.medicationPlan.items.filter((m) => m.active!== false).length > 0 && (
- <div className="pt-2 border-t border-purple-100/60 dark:border-purple-900/40 flex items-center justify-between text-xs font-bold text-brand-text dark:text-purple-200">
- <span className="flex items-center gap-1.5 text-brand-secondary dark:text-purple-400">
+ <div className="pt-2 border-t border-peacock-pale/60 dark:border-peacock-ink/40 flex items-center justify-between text-xs font-bold text-brand-text dark:text-peacock-sage">
+ <span className="flex items-center gap-1.5 text-brand-secondary dark:text-peacock-teal">
  <Pill className="w-3.5 h-3.5" />
  <span>أدوية مسجلة في الخطة:</span>
  </span>
- <span className="px-2 py-0.5 rounded-lg bg-purple-100 dark:bg-purple-950 text-brand-secondary dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-[12px]">
+ <span className="px-2 py-0.5 rounded-lg bg-peacock-pale dark:bg-peacock-ink-deep text-brand-secondary dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep text-[12px]">
  {plan.medicationPlan.items.filter((m) => m.active!== false).length} أدوية
  </span>
  </div>
@@ -428,19 +428,19 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  <MilestonesSection plan={plan} compact onNotify={onNotify} />
 
  {/* 3. Body Circumferences */}
- <div className="bg-[var(--app-card)] border border-purple-100 dark:border-purple-900/40 rounded-3xl p-5 transition-colors space-y-3">
+ <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-5 transition-colors space-y-3">
  <div className="flex items-center gap-2.5">
- <div className="w-9 h-9 rounded-2xl text-brand-secondary dark:text-purple-300 flex items-center justify-center font-bold text-sm">
+ <div className="w-9 h-9 rounded-2xl text-brand-secondary dark:text-peacock-teal-light flex items-center justify-center font-bold text-sm">
  <Ruler className="w-4 h-4" />
  </div>
  <div>
  <div className="flex items-center gap-1.5">
- <h3 className="font-bold text-brand-text dark:text-purple-100 text-sm">
+ <h3 className="font-bold text-brand-text dark:text-peacock-pale text-sm">
  قياسات الجسم بالمتر (سم)
  </h3>
  <HelpButton featureId="bodyMeasurements" size="sm" />
  </div>
- <span className="text-[12px] text-brand-secondary-text dark:text-purple-300/70">
+ <span className="text-[12px] text-brand-secondary-text dark:text-peacock-teal-light/70">
  (يُفضل قياسها مرة أسبوعياً لمتابعة النحت)
  </span>
  </div>
@@ -449,7 +449,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
  {/* Waist */}
  <div>
- <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-purple-300 mb-1">
+ <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-peacock-teal-light mb-1">
  الوسط (فوق السرة بـ 1سم):
  </label>
  <input
@@ -466,13 +466,13 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  },
  })
  }
- className="w-full text-xs font-bold p-2.5 rounded-xl border border-purple-100 dark:border-purple-900/40 bg-[var(--app-bg)] dark:bg-[var(--app-bg)] text-brand-text dark:text-purple-100"
+ className="w-full text-xs font-bold p-2.5 rounded-xl border border-peacock-pale dark:border-peacock-ink/40 bg-[var(--app-bg)] dark:bg-[var(--app-bg)] text-brand-text dark:text-peacock-pale"
  />
  </div>
 
  {/* Chest */}
  <div>
- <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-purple-300 mb-1">
+ <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-peacock-teal-light mb-1">
  محيط الصدر:
  </label>
  <input
@@ -489,13 +489,13 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  },
  })
  }
- className="w-full text-xs font-bold p-2.5 rounded-xl border border-purple-100 dark:border-purple-900/40 bg-[var(--app-bg)] dark:bg-[var(--app-bg)] text-brand-text dark:text-purple-100"
+ className="w-full text-xs font-bold p-2.5 rounded-xl border border-peacock-pale dark:border-peacock-ink/40 bg-[var(--app-bg)] dark:bg-[var(--app-bg)] text-brand-text dark:text-peacock-pale"
  />
  </div>
 
  {/* Hips */}
  <div>
- <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-purple-300 mb-1">
+ <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-peacock-teal-light mb-1">
  الأرداف (الهيبس):
  </label>
  <input
@@ -512,13 +512,13 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  },
  })
  }
- className="w-full text-xs font-bold p-2.5 rounded-xl border border-purple-100 dark:border-purple-900/40 bg-[var(--app-bg)] dark:bg-[var(--app-bg)] text-brand-text dark:text-purple-100"
+ className="w-full text-xs font-bold p-2.5 rounded-xl border border-peacock-pale dark:border-peacock-ink/40 bg-[var(--app-bg)] dark:bg-[var(--app-bg)] text-brand-text dark:text-peacock-pale"
  />
  </div>
 
  {/* Arm */}
  <div>
- <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-purple-300 mb-1">
+ <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-peacock-teal-light mb-1">
  الذراع:
  </label>
  <input
@@ -535,13 +535,13 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  },
  })
  }
- className="w-full text-xs font-bold p-2.5 rounded-xl border border-purple-100 dark:border-purple-900/40 bg-[var(--app-bg)] dark:bg-[var(--app-bg)] text-brand-text dark:text-purple-100"
+ className="w-full text-xs font-bold p-2.5 rounded-xl border border-peacock-pale dark:border-peacock-ink/40 bg-[var(--app-bg)] dark:bg-[var(--app-bg)] text-brand-text dark:text-peacock-pale"
  />
  </div>
 
  {/* Thigh */}
  <div>
- <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-purple-300 mb-1">
+ <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-peacock-teal-light mb-1">
  الفخذ:
  </label>
  <input
@@ -558,13 +558,13 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  },
  })
  }
- className="w-full text-xs font-bold p-2.5 rounded-xl border border-purple-100 dark:border-purple-900/40 bg-[var(--app-bg)] dark:bg-[var(--app-bg)] text-brand-text dark:text-purple-100"
+ className="w-full text-xs font-bold p-2.5 rounded-xl border border-peacock-pale dark:border-peacock-ink/40 bg-[var(--app-bg)] dark:bg-[var(--app-bg)] text-brand-text dark:text-peacock-pale"
  />
  </div>
 
  {/* Neck */}
  <div>
- <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-purple-300 mb-1">
+ <label className="block text-[12px] font-bold text-brand-secondary-text dark:text-peacock-teal-light mb-1">
  الرقبة:
  </label>
  <input
@@ -581,7 +581,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  },
  })
  }
- className="w-full text-xs font-bold p-2.5 rounded-xl border border-purple-100 dark:border-purple-900/40 bg-[var(--app-bg)] dark:bg-[var(--app-bg)] text-brand-text dark:text-purple-100"
+ className="w-full text-xs font-bold p-2.5 rounded-xl border border-peacock-pale dark:border-peacock-ink/40 bg-[var(--app-bg)] dark:bg-[var(--app-bg)] text-brand-text dark:text-peacock-pale"
  />
  </div>
  </div>
@@ -597,7 +597,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  )}
 
  {/* 5. Private Progress Photos Gallery */}
- <div className="bg-[var(--app-card)] border border-purple-100 dark:border-purple-900/40 rounded-3xl p-5 transition-colors space-y-4">
+ <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-5 transition-colors space-y-4">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2.5">
  <div className="w-9 h-9 rounded-2xl text-brand-hero flex items-center justify-center font-bold text-sm">
@@ -605,12 +605,12 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  </div>
  <div>
  <div className="flex items-center gap-1.5">
- <h3 className="font-bold text-brand-text dark:text-purple-100 text-sm">
+ <h3 className="font-bold text-brand-text dark:text-peacock-pale text-sm">
  معرض صور التطور الشخصي
  </h3>
  <HelpButton featureId="photoCompare" size="sm" />
  </div>
- <span className="text-[12px] text-brand-secondary-text dark:text-purple-300 flex items-center gap-1">
+ <span className="text-[12px] text-brand-secondary-text dark:text-peacock-teal-light flex items-center gap-1">
  <ShieldCheck className="w-3 h-3 text-emerald-500" />
  محفوظة على جهازك فقط
  </span>
@@ -628,7 +628,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
 
  {/* Upload Button */}
  <div>
- <label className="w-full py-3 rounded-2xl border-2 border-dashed border-purple-200 dark:border-purple-900/60 hover:border-brand-hero bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/40 text-brand-text dark:text-purple-200 font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer">
+ <label className="w-full py-3 rounded-2xl border-2 border-dashed border-peacock-sage dark:border-peacock-ink/60 hover:border-brand-hero bg-[var(--app-bg)] dark:bg-[var(--app-bg)]/40 text-brand-text dark:text-peacock-sage font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer">
  <Plus className="w-4 h-4 text-brand-hero" />
  {isUploadingPhoto? 'جاري حفظ الصورة...': 'إضافة صورة تطور ليوم النهاردة'}
  <input
@@ -647,7 +647,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  {dayPhotos.map((photo) => (
  <div
  key={photo.id}
- className="relative rounded-2xl overflow-hidden aspect-3/4 bg-slate-950 border border-purple-100 dark:border-purple-900/40 group"
+ className="relative rounded-2xl overflow-hidden aspect-3/4 bg-slate-950 border border-peacock-pale dark:border-peacock-ink/40 group"
  >
  <img
  src={photo.data}
@@ -670,7 +670,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  ))}
  </div>
  ): (
- <p className="text-center text-xs text-brand-secondary-text dark:text-purple-300 py-3">
+ <p className="text-center text-xs text-brand-secondary-text dark:text-peacock-teal-light py-3">
  لا توجد صور لهذا اليوم. أضيفي صورة من الزر بالأعلى.
  </p>
  )}

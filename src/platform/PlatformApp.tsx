@@ -109,7 +109,7 @@ function Field({
 const inputClass =
   'w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
 const buttonClass =
-  'rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50';
+  'rounded-xl bg-peacock-indigo px-4 py-2 text-sm font-bold text-white disabled:opacity-50';
 const ghostButtonClass =
   'rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 dark:border-slate-700 dark:text-slate-200';
 
@@ -341,7 +341,7 @@ function InviteForm({ clinicId, createdBy, isAdmin }: { clinicId: string; create
             {isAdmin && <option value="admin">أدمن</option>}
           </select>
         </Field>
-        {message && <p className="text-xs font-bold text-emerald-700">{message}</p>}
+        {message && <p className="text-xs font-bold text-peacock-indigo-dark">{message}</p>}
         {error && <p className="text-xs font-bold text-red-600">{error}</p>}
         <button className={buttonClass} type="submit" disabled={busy}>
           إنشاء الدعوة

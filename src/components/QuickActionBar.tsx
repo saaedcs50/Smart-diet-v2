@@ -29,7 +29,7 @@ export const QuickActionBar: React.FC<QuickActionBarProps> = ({ plan, day, onUpd
     >
       <div className="pointer-events-auto w-full max-w-3xl rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-700/80 shadow-lg shadow-slate-900/10 px-2.5 py-2">
         {state.allDone ? (
-          <div className="flex items-center justify-center gap-2 py-1.5 text-emerald-600 dark:text-emerald-400">
+          <div className="flex items-center justify-center gap-2 py-1.5 text-peacock-indigo dark:text-peacock-teal">
             <PartyPopper className="w-4 h-4 shrink-0" />
             <span className="text-xs sm:text-sm font-black whitespace-nowrap">يومك مكتمل 🎉</span>
           </div>
@@ -39,7 +39,7 @@ export const QuickActionBar: React.FC<QuickActionBarProps> = ({ plan, day, onUpd
               <button
                 type="button"
                 onClick={() => onUpdateDay(markMealDone(day, state.nextMeal!.id))}
-                className="flex-1 min-w-0 px-2 py-2 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                className="flex-1 min-w-0 px-2 py-2 rounded-2xl bg-peacock-blue hover:bg-peacock-indigo text-white flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                 title={`تعليم «${state.nextMeal.name}» كمأخوذة`}
               >
                 <Check className="w-4 h-4 shrink-0" />
@@ -63,7 +63,7 @@ export const QuickActionBar: React.FC<QuickActionBarProps> = ({ plan, day, onUpd
               <button
                 type="button"
                 onClick={() => onUpdateDay(markMedicationTaken(day, state.nextMedication!.key))}
-                className="flex-1 min-w-0 px-2 py-2 rounded-2xl bg-violet-50 dark:bg-violet-950/40 hover:bg-violet-100 dark:hover:bg-violet-900/40 text-violet-700 dark:text-violet-300 border border-violet-200/80 dark:border-violet-800/80 flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                className="flex-1 min-w-0 px-2 py-2 rounded-2xl bg-peacock-mist dark:bg-peacock-ink-deep/40 hover:bg-peacock-pale dark:hover:bg-peacock-ink/40 text-peacock-indigo-dark dark:text-peacock-teal-light border border-peacock-sage/80 dark:border-peacock-indigo-deep/80 flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                 title={`تعليم «${state.nextMedication.medicationName}» كمأخوذ`}
               >
                 <Pill className="w-4 h-4 shrink-0" />

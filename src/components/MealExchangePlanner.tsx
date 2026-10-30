@@ -133,15 +133,15 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  return (
  <div className="space-y-4 text-right dir-rtl">
  {/* Header Info & Actions Bar */}
- <div className="p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+ <div className="p-3.5 rounded-2xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border border-peacock-sage dark:border-peacock-indigo-deep/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
  <div>
  <div className="flex items-center gap-2">
- <h4 className="text-xs font-black text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
- <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+ <h4 className="text-xs font-black text-peacock-ink dark:text-peacock-sage flex items-center gap-1.5">
+ <Layers className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  نظام بدائل الأغذية الإكلينيكي (Clinical Exchange List) 
  </h4>
  </div>
- <p className="text-[12px] text-emerald-800/80 dark:text-emerald-300 mt-0.5">
+ <p className="text-[12px] text-peacock-indigo-deep/80 dark:text-peacock-teal-light mt-0.5">
  وزّعي الحصص الغذائية على الوجبات وسيقوم النظام بحساب السعرات وتوليد الوجبات والبدائل تلقائياً
  </p>
  </div>
@@ -151,7 +151,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  <button
  type="button"
  onClick={handleGenerateAllMeals}
- className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+ className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-bold text-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
  >
  <Circle className="w-3.5 h-3.5" />
  <span>توليد الكل تلقائياً </span>
@@ -161,9 +161,9 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  <button
  type="button"
  onClick={() => setShowCatalogModal(!showCatalogModal)}
- className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 font-bold text-xs hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors flex items-center justify-center gap-1"
+ className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-peacock-teal-light dark:border-peacock-indigo-dark text-peacock-indigo-dark dark:text-peacock-teal-light font-bold text-xs hover:bg-peacock-mist dark:hover:bg-peacock-ink-deep/40 transition-colors flex items-center justify-center gap-1"
  >
- <Info className="w-3.5 h-3.5 text-emerald-600" />
+ <Info className="w-3.5 h-3.5 text-peacock-indigo" />
  <span>دليل الحصص</span>
  </button>
  </div>
@@ -173,7 +173,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 space-y-3">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2">
- <Calculator className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+ <Calculator className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
  <h4 className="text-xs font-black text-slate-800 dark:text-slate-200">
  إجمالي اليوم من الحصص والماكروز مقابل الأهداف
  </h4>
@@ -198,7 +198,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
  <div 
  className={`h-full rounded-full transition-all duration-150 ${
- calPct > 105? 'bg-amber-500': 'bg-emerald-500'
+ calPct > 105? 'bg-amber-500': 'bg-peacock-blue'
  }`}
  style={{ width: `${Math.min(100, calPct)}%` }}
  />
@@ -214,13 +214,13 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  <span className="text-slate-500 font-bold flex items-center gap-1">
  بروتين
  </span>
- <span className="font-black text-emerald-600 dark:text-emerald-400">
+ <span className="font-black text-peacock-indigo dark:text-peacock-teal">
  {totals.proteinGrams}g / {targetProt}g
  </span>
  </div>
  <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
  <div 
- className="h-full rounded-full bg-emerald-600 transition-all duration-150"
+ className="h-full rounded-full bg-peacock-indigo transition-all duration-150"
  style={{ width: `${Math.min(100, protPct)}%` }}
  />
  </div>
@@ -256,13 +256,13 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  <span className="text-slate-500 font-bold flex items-center gap-1">
  دهون
  </span>
- <span className="font-black text-purple-600 dark:text-purple-400">
+ <span className="font-black text-peacock-indigo dark:text-peacock-teal">
  {totals.fatsGrams}g / {targetFats}g
  </span>
  </div>
  <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
  <div 
- className="h-full rounded-full bg-purple-500 transition-all duration-150"
+ className="h-full rounded-full bg-peacock-blue transition-all duration-150"
  style={{ width: `${Math.min(100, fatsPct)}%` }}
  />
  </div>
@@ -297,7 +297,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  {/* Modal Header */}
  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
  <div className="flex items-center gap-2.5">
- <div className="w-9 h-9 rounded-2xl dark: text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+ <div className="w-9 h-9 rounded-2xl dark: text-peacock-indigo dark:text-peacock-teal flex items-center justify-center font-bold">
  <BookOpen className="w-5 h-5" />
  </div>
  <div>
@@ -326,7 +326,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  onClick={() => setCatalogTab('groups')}
  className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
  catalogTab === 'groups'
-? 'bg-emerald-600 text-white'
+? 'bg-peacock-indigo text-white'
 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
  }`}
  >
@@ -362,7 +362,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
 ? 'ابحث عن أي طعام أو حصة (عيش بلدي، فول، قريش، تونة، شوفان، ملوخية، بطاطا، طحينة، رايب)...'
 : 'ابحث في الأطباق المركبة (كشري، محشي، مسقعة، فتة، حواوشي، بصارة، بامية)...'
  }
- className="w-full pr-9 pl-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-emerald-500"
+ className="w-full pr-9 pl-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-peacock-blue"
  />
  {catalogSearch && (
  <button
@@ -393,7 +393,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  onClick={() => setCatalogViewMode('egyptian')}
  className={`px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-all ${
  catalogViewMode === 'egyptian'
-? 'bg-emerald-600 text-white'
+? 'bg-peacock-indigo text-white'
 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
  }`}
  >
@@ -437,7 +437,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  onClick={() => setSelectedCatalogCategory(g.id)}
  className={`px-3 py-1 rounded-full font-bold whitespace-nowrap flex items-center gap-1 transition-colors border ${
  selectedCatalogCategory === g.id
-? `${g.colorClass.badge} font-black ring-1 ring-emerald-500/30`
+? `${g.colorClass.badge} font-black ring-1 ring-peacock-blue/30`
 : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400'
  }`}
  >
@@ -505,7 +505,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  </div>
 
  <div className="flex items-center gap-1.5 flex-wrap">
- <span className="text-[12px] font-black px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+ <span className="text-[12px] font-black px-2.5 py-1 rounded-full bg-peacock-pale dark:bg-peacock-ink-deep text-peacock-indigo-deep dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep">
  {group.calories} ك.س / حصة
  </span>
  <span className="text-[12px] font-bold px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-mono">
@@ -530,20 +530,20 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  {filteredItems.map((item) => (
  <div
  key={item.id}
- className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between gap-1 hover:border-emerald-500/40 transition-colors"
+ className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between gap-1 hover:border-peacock-blue/40 transition-colors"
  >
  <div className="flex items-start justify-between gap-1.5">
  <span className="font-bold text-xs text-slate-900 dark:text-slate-100 leading-snug">
  {item.nameAr}
  </span>
  {item.tags?.includes('egyptian') && (
- <span className="text-[12px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded-md shrink-0 border border-emerald-200/60 dark:border-emerald-900">
+ <span className="text-[12px] font-bold text-peacock-indigo-dark dark:text-peacock-teal-light bg-peacock-mist dark:bg-peacock-ink-deep/60 px-1.5 py-0.5 rounded-md shrink-0 border border-peacock-sage/60 dark:border-peacock-ink">
  مصري
  </span>
  )}
  </div>
  <div className="flex items-center justify-between text-[12px] pt-1 border-t border-slate-100 dark:border-slate-800/80">
- <span className="text-emerald-700 dark:text-emerald-400 font-black">
+ <span className="text-peacock-indigo-dark dark:text-peacock-teal font-black">
  {item.servingAr}
  </span>
  <span className="text-[12px] text-slate-400">
@@ -559,7 +559,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  {/* Egyptian Staples Section */}
  {(catalogViewMode === 'all' || catalogViewMode === 'egyptian') && (filteredEgyptian.length > 0 ||!catalogSearch) && (
  <div className="space-y-1.5 pt-1">
- <div className="flex items-center gap-1.5 text-xs font-black text-emerald-800 dark:text-emerald-300">
+ <div className="flex items-center gap-1.5 text-xs font-black text-peacock-indigo-deep dark:text-peacock-teal-light">
  <span></span>
  <span>أمثلة سريعة للأطعمة والأطباق المصرية المعتادة:</span>
  </div>
@@ -567,9 +567,9 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  {(filteredEgyptian.length > 0? filteredEgyptian: group.egyptianExamples).map((item, idx) => (
  <div
  key={idx}
- className="p-2 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-emerald-100 dark:border-emerald-950/60 text-[12px] text-slate-800 dark:text-slate-200 leading-snug flex items-start gap-1.5"
+ className="p-2 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-peacock-pale dark:border-peacock-ink-deep/60 text-[12px] text-slate-800 dark:text-slate-200 leading-snug flex items-start gap-1.5"
  >
- <span className="text-emerald-500 font-black shrink-0 mt-0.5">•</span>
+ <span className="text-peacock-blue font-black shrink-0 mt-0.5">•</span>
  <span>{item}</span>
  </div>
  ))}
@@ -671,7 +671,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  <strong className="text-slate-800 dark:text-slate-200">التفكيك الغذائي:</strong> {dish.breakdown}
  </p>
  {dish.servingAdvice && (
- <p className="text-[12px] text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 p-2 rounded-xl border border-emerald-200/60 dark:border-emerald-900/60 leading-snug">
+ <p className="text-[12px] text-peacock-indigo-deep dark:text-peacock-teal-light bg-peacock-mist dark:bg-peacock-ink-deep/40 p-2 rounded-xl border border-peacock-sage/60 dark:border-peacock-ink/60 leading-snug">
  <strong> كيفية الحساب:</strong> {dish.servingAdvice}
  </p>
  )}
@@ -713,7 +713,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  key={meal.id || mealIdx}
  className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
  isExpanded
-? 'bg-white dark:bg-slate-900 border-emerald-500/50 ring-1 ring-emerald-500/20'
+? 'bg-white dark:bg-slate-900 border-peacock-blue/50 ring-1 ring-peacock-blue/20'
 : 'bg-white/80 dark:bg-slate-900/80 border-slate-200/90 dark:border-slate-800 hover:border-slate-300'
  }`}
  >
@@ -723,7 +723,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  className="p-3.5 flex items-center justify-between cursor-pointer select-none gap-2"
  >
  <div className="flex items-center gap-2.5 min-w-0">
- <div className="w-8 h-8 rounded-xl text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-xs shrink-0">
+ <div className="w-8 h-8 rounded-xl text-peacock-indigo dark:text-peacock-teal flex items-center justify-center font-black text-xs shrink-0">
  {mealIdx + 1}
  </div>
 
@@ -799,7 +799,7 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  key={group.id}
  className={`p-2.5 rounded-xl border transition-all ${
  currentQty > 0
-? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800'
+? 'bg-peacock-mist/40 dark:bg-peacock-ink-deep/20 border-peacock-teal-light dark:border-peacock-indigo-deep'
 : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/80'
  }`}
  >
@@ -850,10 +850,10 @@ export const MealExchangePlanner: React.FC<MealExchangePlannerProps> = ({
  <button
  type="button"
  onClick={() => handleAutoGenerateMeal(mealIdx)}
- className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+ className="px-3.5 py-2 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo-dark text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
  title="توليد فوري للمكونات والبدائل بناءً على الكتالوج المحلي"
  >
- <Circle className="w-3.5 h-3.5 text-emerald-200" />
+ <Circle className="w-3.5 h-3.5 text-peacock-sage" />
  <span>توليد مكونات وبدائل الوجبة تلقائياً </span>
  </button>
  </div>

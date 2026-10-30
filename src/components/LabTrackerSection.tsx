@@ -157,7 +157,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  <button
  type="button"
  onClick={() => handleOpenAdd()}
- className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 dark:hover:bg-teal-900/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 text-xs font-bold transition-all"
+ className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-peacock-mist hover:bg-peacock-pale dark:bg-peacock-ink-deep/60 dark:hover:bg-peacock-ink/60 text-peacock-indigo dark:text-peacock-teal-light border border-peacock-sage dark:border-peacock-indigo-deep text-xs font-bold transition-all"
  >
  <Plus className="w-3.5 h-3.5" />
  <span>إضافة تحليل </span>
@@ -175,7 +175,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  <button
  type="button"
  onClick={() => handleOpenAdd()}
- className="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline"
+ className="text-xs font-bold text-peacock-indigo dark:text-peacock-teal hover:underline"
  >
  + إضافة أول نتيجة تحليل الآن
  </button>
@@ -213,7 +213,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  <div className="flex items-center justify-between w-full">
  <div className="flex items-center gap-2">
  <span className="text-base">{meta.icon}</span>
- <span className="font-extrabold text-slate-800 dark:text-slate-100 text-xs group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+ <span className="font-extrabold text-slate-800 dark:text-slate-100 text-xs group-hover:text-peacock-indigo dark:group-hover:text-peacock-teal transition-colors">
  {meta.shortName}
  </span>
  </div>
@@ -242,7 +242,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  </span>
  )}
  {summary.trend === 'down' && (
- <span className="inline-flex items-center gap-0.5 text-xs font-extrabold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.5 rounded-md">
+ <span className="inline-flex items-center gap-0.5 text-xs font-extrabold text-peacock-indigo dark:text-peacock-teal bg-peacock-mist dark:bg-peacock-ink-deep/60 px-1.5 py-0.5 rounded-md">
  <TrendingDown className="w-3 h-3" />
  <span>{summary.diff}</span>
  </span>
@@ -265,7 +265,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  <span className={`text-[12px] font-bold px-2 py-0.5 rounded-full border truncate max-w-[200px] ${evalResult.badgeClass}`}>
  {evalResult.label}
  </span>
- <span className="text-[12px] text-teal-600 dark:text-teal-400 font-bold transition-transform">
+ <span className="text-[12px] text-peacock-indigo dark:text-peacock-teal font-bold transition-transform">
  عرض الرسم ←
  </span>
  </div>
@@ -311,7 +311,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  </div>
 
  {/* Latest Value Banner */}
- <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-teal-200/70 dark:border-teal-900/50 flex items-center justify-between">
+ <div className="p-4 rounded-2xl bg-peacock-mist/80 dark:bg-peacock-ink-deep/30 border border-peacock-sage/70 dark:border-peacock-ink/50 flex items-center justify-between">
  <div>
  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block">
  آخر قراءة ({selectedSummary.current.date})
@@ -333,7 +333,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  selectedSummary.trend === 'up'
 ? 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300'
 : selectedSummary.trend === 'down'
-? 'bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300'
+? 'bg-peacock-pale dark:bg-peacock-ink-deep text-peacock-indigo dark:text-peacock-teal-light'
 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
  }`}
  >
@@ -342,7 +342,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  </span>
  )}
  <div className="text-[12px] text-slate-500 dark:text-slate-400 font-medium">
- النطاق الإرشادي: <strong className="text-teal-700 dark:text-teal-300">{selectedMeta.rangeGuidance.text}</strong>
+ النطاق الإرشادي: <strong className="text-peacock-indigo dark:text-peacock-teal-light">{selectedMeta.rangeGuidance.text}</strong>
  </div>
  </div>
  </div>
@@ -351,7 +351,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
  <span className="flex items-center gap-1.5">
- <Activity className="w-4 h-4 text-teal-500" />
+ <Activity className="w-4 h-4 text-peacock-blue" />
  <span>تتبع الاتجاه عبر الزمن</span>
  </span>
  <span className="text-[12px] text-slate-400">
@@ -362,12 +362,12 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  </div>
 
  {/* Clinical Reference Explanation */}
- <div className="p-3.5 rounded-2xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-200/60 dark:border-teal-900/40 text-xs text-teal-900 dark:text-teal-200 space-y-1">
+ <div className="p-3.5 rounded-2xl bg-peacock-mist/50 dark:bg-peacock-ink-deep/20 border border-peacock-sage/60 dark:border-peacock-ink/40 text-xs text-peacock-ink dark:text-peacock-sage space-y-1">
  <div className="flex items-center gap-1.5 font-bold">
- <Circle className="w-4 h-4 text-teal-500" />
+ <Circle className="w-4 h-4 text-peacock-blue" />
  <span>أهمية هذا المؤشر:</span>
  </div>
- <p className="leading-relaxed text-[12px] text-teal-800 dark:text-teal-300">
+ <p className="leading-relaxed text-[12px] text-peacock-indigo-deep dark:text-peacock-teal-light">
  {selectedMeta.rangeGuidance.hint || selectedMeta.rangeGuidance.text}
  </p>
  </div>
@@ -405,7 +405,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  <span className={`text-[12px] font-bold px-1.5 py-0.5 rounded ${
  item.addedBy === 'coach'
 ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+: 'bg-peacock-mist text-peacock-indigo-dark dark:bg-peacock-ink-deep dark:text-peacock-teal-light'
  }`}>
  {item.addedBy === 'coach'? ' الأخصائي': ' العميل'}
  </span>
@@ -423,7 +423,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  setSelectedTestKey(null);
  handleOpenAdd(selectedMeta.id);
  }}
- className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs transition-all flex items-center gap-1.5"
+ className="px-4 py-2 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo text-white font-bold text-xs transition-all flex items-center gap-1.5"
  >
  <Plus className="w-3.5 h-3.5" />
  <span>إضافة قراءة جديدة لهذا التحليل</span>
@@ -477,7 +477,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  <select
  value={formTestId}
  onChange={(e) => handleTestIdChange(e.target.value)}
- className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none"
+ className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue outline-none"
  >
  {LAB_CATALOG.map((cat) => (
  <option key={cat.id} value={cat.id}>
@@ -498,7 +498,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  onChange={(e) => setFormCustomName(e.target.value)}
  placeholder="مثال: وظائف كبد أو حمض اليوريك"
  required
- className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none"
+ className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue outline-none"
  />
  </div>
  )}
@@ -516,7 +516,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  onChange={(e) => setFormValue(e.target.value)}
  placeholder="مثال: 95"
  required
- className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none"
+ className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue outline-none"
  />
  </div>
 
@@ -531,7 +531,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  onChange={(e) => setFormUnit(e.target.value)}
  placeholder="mg/dL"
  required
- className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none"
+ className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue outline-none"
  />
  </div>
  </div>
@@ -546,7 +546,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  value={formDate}
  onChange={(e) => setFormDate(e.target.value)}
  required
- className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none"
+ className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue outline-none"
  />
  </div>
 
@@ -560,7 +560,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  value={formNote}
  onChange={(e) => setFormNote(e.target.value)}
  placeholder="مثال: تحليل بمعمل البرج بعد صيام 10 ساعات"
- className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 outline-none"
+ className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-peacock-blue outline-none"
  />
  </div>
 
@@ -568,8 +568,8 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  {(() => {
  const meta = getLabTestMeta(formTestId, formCustomName);
  return (
- <div className="p-3 rounded-2xl bg-teal-50/60 dark:bg-teal-950/30 border border-teal-200/60 dark:border-teal-900/40 text-xs text-teal-900 dark:text-teal-200 flex items-start gap-2">
- <Info className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+ <div className="p-3 rounded-2xl bg-peacock-mist/60 dark:bg-peacock-ink-deep/30 border border-peacock-sage/60 dark:border-peacock-ink/40 text-xs text-peacock-ink dark:text-peacock-sage flex items-start gap-2">
+ <Info className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal shrink-0 mt-0.5" />
  <div>
  <span className="font-bold">النطاق الإرشادي: </span>
  <span>{meta.rangeGuidance.text}</span>
@@ -588,7 +588,7 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  </button>
  <button
  type="submit"
- className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition-all"
+ className="px-5 py-2 rounded-xl bg-peacock-indigo hover:bg-peacock-indigo text-white text-xs font-bold transition-all"
  >
  حفظ النتيجة 
  </button>

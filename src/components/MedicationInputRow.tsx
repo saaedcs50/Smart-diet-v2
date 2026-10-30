@@ -84,10 +84,10 @@ export const MedicationInputRow: React.FC<MedicationInputRowProps> = ({
                   setShowSuggestions(true);
                 }
               }}
-              className="w-full text-xs sm:text-sm font-bold p-2 pr-7 rounded-xl bg-slate-50/70 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+              className="w-full text-xs sm:text-sm font-bold p-2 pr-7 rounded-xl bg-slate-50/70 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-peacock-blue"
               placeholder="اسم الدواء أو المكمل (مثال: كونكور، جلوكوفاج، أورليستات...)"
             />
-            <Pill className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Pill className="w-3.5 h-3.5 text-peacock-indigo dark:text-peacock-teal absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {/* Autocomplete Suggestions Dropdown */}
@@ -95,28 +95,28 @@ export const MedicationInputRow: React.FC<MedicationInputRowProps> = ({
             <div className="absolute top-full right-0 left-0 mt-1.5 z-40 bg-white dark:bg-slate-850 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden max-h-60 overflow-y-auto">
               <div className="p-1.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-705 text-[10px] font-bold text-slate-500 flex items-center justify-between">
                 <span>أدوية ومكملات مقترحة من السوق المصري</span>
-                <span className="text-purple-600 dark:text-purple-400">انقر للاختيار التلقائي</span>
+                <span className="text-peacock-indigo dark:text-peacock-teal">انقر للاختيار التلقائي</span>
               </div>
               {suggestions.map((sug) => (
                 <button
                   key={sug.id}
                   type="button"
                   onClick={() => handleSelectMedication(sug)}
-                  className="w-full text-right p-2.5 hover:bg-purple-50 dark:hover:bg-purple-950/40 border-b border-slate-100/60 dark:border-slate-800/60 last:border-0 transition-colors flex items-start justify-between gap-2 cursor-pointer"
+                  className="w-full text-right p-2.5 hover:bg-peacock-mist dark:hover:bg-peacock-ink-deep/40 border-b border-slate-100/60 dark:border-slate-800/60 last:border-0 transition-colors flex items-start justify-between gap-2 cursor-pointer"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-black text-slate-900 dark:text-white">
                         {sug.tradeName}
                       </span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 font-bold">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-peacock-pale dark:bg-peacock-ink/50 text-peacock-indigo-dark dark:text-peacock-teal-light font-bold">
                         {sug.categoryIcon} {sug.categoryAr.split('(')[0]}
                       </span>
                     </div>
                     <p className="text-[10px] text-slate-400 font-mono mt-0.5" dir="ltr">
                       {sug.scientificName}
                     </p>
-                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+                    <p className="text-[11px] text-peacock-indigo dark:text-peacock-teal font-semibold mt-1">
                       ⏰ {sug.defaultTiming}
                     </p>
                   </div>
@@ -130,7 +130,7 @@ export const MedicationInputRow: React.FC<MedicationInputRowProps> = ({
         <button
           type="button"
           onClick={onOpenCatalog}
-          className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/50 cursor-pointer shrink-0 transition-colors"
+          className="p-2 rounded-xl bg-peacock-mist dark:bg-peacock-ink-deep/40 hover:bg-peacock-pale dark:hover:bg-peacock-ink/60 text-peacock-indigo-dark dark:text-peacock-teal-light border border-peacock-sage/80 dark:border-peacock-indigo-deep/50 cursor-pointer shrink-0 transition-colors"
           title="تصفح دليل الأدوية والمكملات"
         >
           <Search className="w-3.5 h-3.5" />
@@ -143,7 +143,7 @@ export const MedicationInputRow: React.FC<MedicationInputRowProps> = ({
             value={item.time || ''}
             onChange={(e) => onChange({ ...item, time: e.target.value })}
             onFocus={() => setShowTimeDropdown(true)}
-            className="w-full text-xs font-bold p-2 pr-2 pl-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 text-slate-800 dark:text-slate-100 text-center placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500 truncate"
+            className="w-full text-xs font-bold p-2 pr-2 pl-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/80 text-slate-800 dark:text-slate-100 text-center placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-peacock-blue truncate"
             placeholder="التوقيت"
           />
           <button
@@ -167,7 +167,7 @@ export const MedicationInputRow: React.FC<MedicationInputRowProps> = ({
                     onChange({ ...item, time: timing });
                     setShowTimeDropdown(false);
                   }}
-                  className="w-full text-right px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-950/50 hover:text-purple-600 dark:hover:text-purple-300 transition-colors"
+                  className="w-full text-right px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-peacock-mist dark:hover:bg-peacock-ink-deep/50 hover:text-peacock-indigo dark:hover:text-peacock-teal-light transition-colors"
                 >
                   {timing}
                 </button>

@@ -28,9 +28,9 @@ export const WeightTrajectoryCard: React.FC<WeightTrajectoryCardProps> = ({ plan
     if (pointsCount === 0) return null;
     const missingInputs = !plan.startWeight || !plan.targetWeight;
     return (
-      <div className="bg-[var(--app-card)] border border-purple-100 dark:border-purple-900/40 rounded-3xl p-4 flex items-start gap-2.5">
+      <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-4 flex items-start gap-2.5">
         <Info className="w-4 h-4 text-brand-secondary shrink-0 mt-0.5" />
-        <p className="text-xs font-bold text-brand-secondary-text dark:text-purple-300 leading-relaxed">
+        <p className="text-xs font-bold text-brand-secondary-text dark:text-peacock-teal-light leading-relaxed">
           {missingInputs
             ? 'حدد وزن البداية والهدف من الأخصائية'
             : 'سجّل 3 قياسات وزن على الأقل ليظهر منحنى «المتوقع مقابل الفعلي» هنا.'}
@@ -78,9 +78,9 @@ export const WeightTrajectoryCard: React.FC<WeightTrajectoryCardProps> = ({ plan
 
   const statusColor =
     trajectory.status === 'on-track'
-      ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+      ? 'bg-peacock-pale dark:bg-peacock-ink-deep text-peacock-indigo-deep dark:text-peacock-teal-light border-peacock-sage dark:border-peacock-indigo-deep'
       : trajectory.status === 'faster'
-        ? 'bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border-teal-200 dark:border-teal-800'
+        ? 'bg-peacock-pale dark:bg-peacock-ink-deep text-peacock-indigo-deep dark:text-peacock-teal-light border-peacock-sage dark:border-peacock-indigo-deep'
         : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800';
 
   const formatDateLabel = (dateStr: string) => {
@@ -89,15 +89,15 @@ export const WeightTrajectoryCard: React.FC<WeightTrajectoryCardProps> = ({ plan
   };
 
   return (
-    <div className="bg-[var(--app-card)] border border-purple-100 dark:border-purple-900/40 rounded-3xl p-5 transition-colors space-y-3">
+    <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-5 transition-colors space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl text-brand-secondary dark:text-purple-300 flex items-center justify-center font-bold text-sm">
+          <div className="w-9 h-9 rounded-2xl text-brand-secondary dark:text-peacock-teal-light flex items-center justify-center font-bold text-sm">
             <TrendingDown className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-bold text-brand-text dark:text-purple-100 text-sm">الوزن المتوقع مقابل الفعلي</h3>
-            <span className="text-[12px] text-brand-secondary-text dark:text-purple-300/70">
+            <h3 className="font-bold text-brand-text dark:text-peacock-pale text-sm">الوزن المتوقع مقابل الفعلي</h3>
+            <span className="text-[12px] text-brand-secondary-text dark:text-peacock-teal-light/70">
               آخر قياس {latestActual.weight} كجم • المتوقع الآن {expectedToday} كجم
             </span>
           </div>
@@ -131,7 +131,7 @@ export const WeightTrajectoryCard: React.FC<WeightTrajectoryCardProps> = ({ plan
             points={actualLine}
             fill="none"
             stroke="currentColor"
-            className="text-teal-500"
+            className="text-peacock-blue"
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -144,7 +144,7 @@ export const WeightTrajectoryCard: React.FC<WeightTrajectoryCardProps> = ({ plan
                 r={i === actualPoints.length - 1 ? '6' : '4.5'}
                 fill="#ffffff"
                 stroke="currentColor"
-                className="text-teal-500 dark:fill-slate-900"
+                className="text-peacock-blue dark:fill-slate-900"
                 strokeWidth="2.5"
               />
               <text
@@ -170,7 +170,7 @@ export const WeightTrajectoryCard: React.FC<WeightTrajectoryCardProps> = ({ plan
 
       <div className="flex items-center gap-4 text-[11px] font-bold text-slate-500 dark:text-slate-400">
         <span className="flex items-center gap-1.5">
-          <span className="w-5 h-0.5 bg-teal-500 inline-block rounded" /> فعلي
+          <span className="w-5 h-0.5 bg-peacock-blue inline-block rounded" /> فعلي
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-5 border-t-2 border-dashed border-slate-400 inline-block" /> متوقع (معدل آمن)

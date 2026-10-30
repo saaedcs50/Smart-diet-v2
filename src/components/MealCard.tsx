@@ -112,7 +112,7 @@ export const MealCard: React.FC<MealCardProps> = ({
     <div
       className={`rounded-3xl p-4 sm:p-5 border transition-all duration-200 ${
         isCommitted
-          ? 'bg-[#0D9488]/10 dark:bg-[#0D9488]/15 border-[#0D9488]/40 dark:border-[#0D9488]/40'
+          ? 'bg-[#4D52B4]/10 dark:bg-[#4D52B4]/15 border-[#4D52B4]/40 dark:border-[#4D52B4]/40'
           : isSlipped
           ? 'bg-[#E0922D]/10 dark:bg-[#E0922D]/15 border-[#E0922D]/40 dark:border-[#E0922D]/40'
           : 'bg-[var(--app-card)] border-[var(--app-border)]/80'
@@ -127,7 +127,7 @@ export const MealCard: React.FC<MealCardProps> = ({
             </h3>
 
             {isIslamic && isFastingActive && (
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-peacock-blue/10 dark:bg-peacock-blue/20 text-peacock-indigo-dark dark:text-peacock-teal-light border border-peacock-blue/30">
                 صيام إسلامي
               </span>
             )}
@@ -166,8 +166,8 @@ export const MealCard: React.FC<MealCardProps> = ({
             onClick={handleSetCommitted}
             className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors flex items-center gap-1 cursor-pointer ${
               isCommitted
-                ? 'bg-[#0D9488] text-white'
-                : 'bg-[var(--app-card-muted)] text-[var(--app-text-primary)] hover:bg-[#0D9488]/10 hover:text-[#0D9488]'
+                ? 'bg-[#4D52B4] text-white'
+                : 'bg-[var(--app-card-muted)] text-[var(--app-text-primary)] hover:bg-[#4D52B4]/10 hover:text-[#4D52B4]'
             }`}
           >
             <Check className="w-4 h-4" />
@@ -221,7 +221,7 @@ export const MealCard: React.FC<MealCardProps> = ({
               onClick={handleToggleProtein}
               className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
                 currentLog.protein
-                  ? 'bg-[#0D9488] text-white'
+                  ? 'bg-[#4D52B4] text-white'
                   : 'bg-[var(--app-card-muted)] text-[var(--app-text-secondary)] hover:bg-[var(--app-card-muted)]'
               }`}
             >
@@ -233,7 +233,7 @@ export const MealCard: React.FC<MealCardProps> = ({
               onClick={handleToggleVeggies}
               className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
                 currentLog.veggies
-                  ? 'bg-[#0D9488] text-white'
+                  ? 'bg-[#4D52B4] text-white'
                   : 'bg-[var(--app-card-muted)] text-[var(--app-text-secondary)] hover:bg-[var(--app-card-muted)]'
               }`}
             >
@@ -255,10 +255,10 @@ export const MealCard: React.FC<MealCardProps> = ({
               setShowSmartSubs(!showSmartSubs);
               setShowAlts(false);
             }}
-            className="px-2.5 py-1 rounded-xl text-xs font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 hover:bg-teal-100 dark:hover:bg-teal-900/50 border border-teal-200 dark:border-teal-800/80 transition-colors flex items-center gap-1 cursor-pointer"
+            className="px-2.5 py-1 rounded-xl text-xs font-bold text-peacock-indigo dark:text-peacock-teal-light bg-peacock-mist dark:bg-peacock-ink-deep/50 hover:bg-peacock-pale dark:hover:bg-peacock-ink/50 border border-peacock-sage dark:border-peacock-indigo-deep/80 transition-colors flex items-center gap-1 cursor-pointer"
             title="بنك البدائل الذكي للصيام والوجبات النباتية"
           >
-            <Sparkles className="w-3.5 h-3.5 text-teal-500" />
+            <Sparkles className="w-3.5 h-3.5 text-peacock-blue" />
             <span>{showSmartSubs ? 'إغلاق البدائل' : 'بنك البدائل الذكي'}</span>
           </button>
 
@@ -280,10 +280,10 @@ export const MealCard: React.FC<MealCardProps> = ({
 
       {/* Smart Substitutions Bank Drawer */}
       {showSmartSubs && (
-        <div className="mt-3 p-3.5 rounded-2xl bg-teal-50/50 dark:bg-slate-900 border border-teal-200 dark:border-teal-900/60 space-y-3 animate-in slide-in-from-top duration-150">
-          <div className="flex items-center justify-between border-b border-teal-200/60 dark:border-teal-900/40 pb-2">
+        <div className="mt-3 p-3.5 rounded-2xl bg-peacock-mist/50 dark:bg-slate-900 border border-peacock-sage dark:border-peacock-ink/60 space-y-3 animate-in slide-in-from-top duration-150">
+          <div className="flex items-center justify-between border-b border-peacock-sage/60 dark:border-peacock-ink/40 pb-2">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              <Sparkles className="w-4 h-4 text-peacock-indigo dark:text-peacock-teal" />
               <span className="text-xs font-black text-slate-800 dark:text-slate-100">
                 بنك البدائل الذكي (بدائل نباتية وصيامية متوازنة الماكروز)
               </span>
@@ -297,7 +297,7 @@ export const MealCard: React.FC<MealCardProps> = ({
                     detail: undefined,
                   });
                 }}
-                className="text-[12px] font-bold text-teal-700 dark:text-teal-400 hover:underline cursor-pointer"
+                className="text-[12px] font-bold text-peacock-indigo dark:text-peacock-teal hover:underline cursor-pointer"
               >
                 الرجوع للوجبة الأصلية
               </button>
@@ -307,20 +307,20 @@ export const MealCard: React.FC<MealCardProps> = ({
           {/* Quick Detected Matches for this meal */}
           {hasSmartSubs && (
             <div className="space-y-2">
-              <span className="text-[11px] font-bold text-teal-800 dark:text-teal-300 block">
+              <span className="text-[11px] font-bold text-peacock-indigo-deep dark:text-peacock-teal-light block">
                 ⚡ بدائل مقترحة تلقائياً لمكونات هذه الوجبة:
               </span>
               <div className="grid grid-cols-1 gap-2">
                 {detectedSubs.map((sub) => (
                   <div 
                     key={sub.id}
-                    className="p-2.5 rounded-xl bg-white dark:bg-slate-800/90 border border-teal-100 dark:border-teal-900/50 space-y-2 text-xs"
+                    className="p-2.5 rounded-xl bg-white dark:bg-slate-800/90 border border-peacock-pale dark:border-peacock-ink/50 space-y-2 text-xs"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-black text-slate-700 dark:text-slate-200">
                         بديل: {sub.original}
                       </span>
-                      <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300">
+                      <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-peacock-mist dark:bg-peacock-ink-deep/60 text-peacock-indigo dark:text-peacock-teal-light">
                         ~{sub.proteinGrams}g بروتين
                       </span>
                     </div>
@@ -334,7 +334,7 @@ export const MealCard: React.FC<MealCardProps> = ({
                       <button
                         type="button"
                         onClick={() => handleApplySmartSub(sub, false)}
-                        className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 py-1 rounded-lg text-xs font-bold bg-peacock-indigo hover:bg-peacock-indigo-dark text-white transition-colors flex items-center gap-1 cursor-pointer"
                       >
                         <Leaf className="w-3 h-3" />
                         <span>نباتي صيامي: {sub.plantAlternative.slice(0, 30)}...</span>
@@ -369,13 +369,13 @@ export const MealCard: React.FC<MealCardProps> = ({
                   key={item.id}
                   type="button"
                   onClick={() => handleApplySmartSub(item, allowFish)}
-                  className="text-right p-2 rounded-xl bg-white dark:bg-slate-800/80 hover:border-teal-400 border border-slate-200 dark:border-slate-700 text-xs transition-colors cursor-pointer space-y-1"
+                  className="text-right p-2 rounded-xl bg-white dark:bg-slate-800/80 hover:border-peacock-teal border border-slate-200 dark:border-slate-700 text-xs transition-colors cursor-pointer space-y-1"
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-slate-800 dark:text-slate-100">
                       {item.original}
                     </span>
-                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-[10px] font-bold text-peacock-indigo dark:text-peacock-teal">
                       {item.proteinGrams}g بروتين
                     </span>
                   </div>
@@ -418,7 +418,7 @@ export const MealCard: React.FC<MealCardProps> = ({
                 onClick={() => handleSelectAlternative(alt)}
                 className={`w-full text-right p-2.5 rounded-xl text-xs font-medium border transition-colors flex items-center justify-between cursor-pointer ${
                   currentLog.detail === alt && isAlternative
-                    ? 'bg-[#0D9488]/15 dark:bg-[#0D9488]/25 text-[#0D9488] dark:text-[#2DD4BF] border-[#0D9488]/40'
+                    ? 'bg-[#4D52B4]/15 dark:bg-[#4D52B4]/25 text-[#4D52B4] dark:text-[#70D6C5] border-[#4D52B4]/40'
                     : 'bg-[var(--app-card)] hover:bg-[var(--app-card-muted)] text-[var(--app-text-primary)] border-[var(--app-border)]/60'
                 }`}
               >

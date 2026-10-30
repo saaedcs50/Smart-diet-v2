@@ -64,9 +64,9 @@ export const NextMealSpotlight: React.FC<NextMealSpotlightProps> = ({
 
   if (allMealsLogged) {
     return (
-      <div className="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-300/60 dark:border-emerald-800/60 rounded-3xl p-4 sm:p-5 flex items-center justify-between gap-3 transition-all">
+      <div className="bg-gradient-to-br from-peacock-blue/10 via-peacock-blue/5 to-transparent border border-peacock-teal-light/60 dark:border-peacock-indigo-deep/60 rounded-3xl p-4 sm:p-5 flex items-center justify-between gap-3 transition-all">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20">
+          <div className="w-10 h-10 rounded-2xl bg-peacock-blue text-white flex items-center justify-center shrink-0 shadow-sm shadow-peacock-blue/20">
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
@@ -83,7 +83,7 @@ export const NextMealSpotlight: React.FC<NextMealSpotlightProps> = ({
   }
 
   return (
-    <div className="bg-gradient-to-br from-white via-rose-50/20 to-teal-50/20 dark:from-slate-900 dark:via-rose-950/10 dark:to-teal-950/10 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-5 shadow-sm transition-all space-y-3.5">
+    <div className="bg-gradient-to-br from-white via-rose-50/20 to-peacock-mist/20 dark:from-slate-900 dark:via-rose-950/10 dark:to-peacock-ink-deep/10 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-5 shadow-sm transition-all space-y-3.5">
       {/* Header Badge */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
@@ -102,7 +102,7 @@ export const NextMealSpotlight: React.FC<NextMealSpotlightProps> = ({
           <button
             type="button"
             onClick={() => setShowAlts(!showAlts)}
-            className="text-xs font-bold text-teal-600 dark:text-teal-400 hover:text-teal-700 flex items-center gap-1 cursor-pointer"
+            className="text-xs font-bold text-peacock-indigo dark:text-peacock-teal hover:text-peacock-indigo flex items-center gap-1 cursor-pointer"
           >
             <span>البدائل</span>
             {showAlts ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -125,7 +125,7 @@ export const NextMealSpotlight: React.FC<NextMealSpotlightProps> = ({
         <button
           type="button"
           onClick={() => handleCommitMeal(targetMeal.id)}
-          className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-teal-500/20 flex items-center justify-center gap-2 cursor-pointer shrink-0"
+          className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-peacock-blue to-peacock-indigo hover:from-peacock-indigo hover:to-peacock-indigo text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-peacock-blue/20 flex items-center justify-center gap-2 cursor-pointer shrink-0"
         >
           <Check className="w-4 h-4" />
           <span>تسجيل الوجبة</span>
@@ -144,10 +144,10 @@ export const NextMealSpotlight: React.FC<NextMealSpotlightProps> = ({
                 key={idx}
                 type="button"
                 onClick={() => handleSelectAlternative(targetMeal.id, alt)}
-                className="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 hover:bg-teal-50 dark:hover:bg-teal-950/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-teal-300 text-right transition-all cursor-pointer flex items-center justify-between gap-2"
+                className="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 hover:bg-peacock-mist dark:hover:bg-peacock-ink-deep/40 border border-slate-200/80 dark:border-slate-700/80 hover:border-peacock-teal-light text-right transition-all cursor-pointer flex items-center justify-between gap-2"
               >
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{alt}</span>
-                <span className="text-[11px] font-bold text-teal-600 shrink-0">اختيار ←</span>
+                <span className="text-[11px] font-bold text-peacock-indigo shrink-0">اختيار ←</span>
               </button>
             ))}
           </div>

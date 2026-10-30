@@ -169,7 +169,7 @@ export function calculateBMI(weightKg: number, heightCm: number): { bmi: number;
  color = 'text-blue-500';
  } else if (bmi >= 18.5 && bmi < 25) {
  categoryAr = 'وزن طبيعي وبصير صحي (Normal)';
- color = 'text-emerald-500';
+ color = 'text-peacock-blue';
  } else if (bmi >= 25 && bmi < 30) {
  categoryAr = 'زيادة وزن (Overweight)';
  color = 'text-amber-500';

@@ -17,6 +17,10 @@ export type BrandConfig = {
   themeColor: string;
   /** لون التمييز (أزرار رئيسية / CTA) */
   accentColor: string;
+  /** لون وظيفي ثالث (تقدم/رسوم/تمييز هادئ) */
+  tertiaryColor: string;
+  /** لون أسطح مميزة فاتحة (كروت تنبيه/شارات) */
+  tintColor: string;
   backgroundColor: string;
   whatsapp: string;
   logoPath: string;
@@ -36,6 +40,8 @@ export const BRAND: BrandConfig = {
   description: raw.description || '',
   themeColor: (raw.themeColor || '').trim() || '#5B2482',
   accentColor: (raw.accentColor || '').trim() || '#E21B6D',
+  tertiaryColor: (raw.tertiaryColor || '').trim() || '#70D6C5',
+  tintColor: (raw.tintColor || '').trim() || '#CAE5BC',
   backgroundColor: (raw.backgroundColor || '').trim() || '#F8F7F9',
   whatsapp: raw.whatsapp || '',
   logoPath: raw.logoPath || '/icon.svg',
@@ -144,12 +150,15 @@ export function applyBrandTheme(brand: BrandConfig = BRAND): void {
   const secondary = brand.themeColor || '#5B2482';
   const hero = brand.accentColor || '#E21B6D';
   const pageBg = brand.backgroundColor || '#F8F7F9';
+  const tertiary = brand.tertiaryColor || '#70D6C5';
+  const tint = brand.tintColor || '#CAE5BC';
+  const tertiaryHover = adjustColor(tertiary, -18);
   const heroHover = adjustColor(hero, -20);
   const secondaryHover = adjustColor(secondary, -25);
   const muted = mixWithWhite(secondary, 0.88);
   const border = mixWithWhite(secondary, 0.55);
   const textPrimary = mixWithBlack(secondary, 0.55);
-  const textSecondary = mixWithBlack(secondary, 0.25);
+  const textSecondary = mixWithBlack(secondary, 0.38); // 0.38 لضمان تباين 4.5:1 على الخلفيات الفاتحة
 
   const root = document.documentElement;
 
@@ -157,7 +166,7 @@ export function applyBrandTheme(brand: BrandConfig = BRAND): void {
   const allVarKeys = [
     '--app-bg', '--app-card', '--app-card-muted', '--app-border',
     '--app-text-primary', '--app-text-secondary', '--app-hero', '--app-hero-hover',
-    '--app-secondary', '--app-secondary-hover', '--app-gold', '--app-gold-light',
+    '--app-secondary', '--app-secondary-hover', '--app-tertiary', '--app-tertiary-hover', '--app-tint', '--app-gold', '--app-gold-light',
     '--color-brand-primary-text', '--color-brand-secondary-text', '--color-brand-bg',
     '--color-brand-card', '--color-brand-muted', '--color-brand-border',
     '--color-brand-hero', '--color-brand-hero-hover', '--color-brand-secondary',
@@ -178,6 +187,8 @@ export function applyBrandTheme(brand: BrandConfig = BRAND): void {
   const darkHeroHover = mixWithWhite(hero, 0.2);
   const darkSecondary = mixWithWhite(secondary, 0.3);
   const darkSecondaryHover = mixWithWhite(secondary, 0.45);
+  const darkTertiaryHover = mixWithWhite(tertiary, 0.18);
+  const darkTint = '#353E3D'; // sage ممزوج مع خلفية الداكن
 
   let themeStyle = document.getElementById('brand-theme-vars') as HTMLStyleElement | null;
   if (!themeStyle) {
@@ -198,6 +209,9 @@ export function applyBrandTheme(brand: BrandConfig = BRAND): void {
   --app-hero-hover: ${heroHover};
   --app-secondary: ${secondary};
   --app-secondary-hover: ${secondaryHover};
+  --app-tertiary: ${tertiary};
+  --app-tertiary-hover: ${tertiaryHover};
+  --app-tint: ${tint};
   --app-gold: #E0922D;
   --app-gold-light: #F2C66D;
 
@@ -227,6 +241,9 @@ export function applyBrandTheme(brand: BrandConfig = BRAND): void {
   --app-hero-hover: ${darkHeroHover};
   --app-secondary: ${darkSecondary};
   --app-secondary-hover: ${darkSecondaryHover};
+  --app-tertiary: ${tertiary};
+  --app-tertiary-hover: ${darkTertiaryHover};
+  --app-tint: ${darkTint};
   --app-gold: #F2C66D;
   --app-gold-light: #FFE3A8;
 

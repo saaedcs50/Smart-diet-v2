@@ -122,7 +122,7 @@ export const LabChart: React.FC<LabChartProps> = ({ entries, meta, height = 180 
  width={width - paddingX * 2 + 20}
  height={Math.max(4, bandBottom - bandTop)}
  fill="currentColor"
- className="text-emerald-500/10 dark:text-emerald-400/10"
+ className="text-peacock-blue/10 dark:text-peacock-teal/10"
  rx="4"
  />
  {hasMaxRange && (
@@ -132,7 +132,7 @@ export const LabChart: React.FC<LabChartProps> = ({ entries, meta, height = 180 
  x2={width - paddingX + 10}
  y2={bandTop}
  stroke="currentColor"
- className="text-emerald-500/40 dark:text-emerald-400/30 stroke-dasharray-[3_3]"
+ className="text-peacock-blue/40 dark:text-peacock-teal/30 stroke-dasharray-[3_3]"
  strokeWidth="1"
  />
  )}
@@ -143,14 +143,14 @@ export const LabChart: React.FC<LabChartProps> = ({ entries, meta, height = 180 
  x2={width - paddingX + 10}
  y2={bandBottom}
  stroke="currentColor"
- className="text-emerald-500/40 dark:text-emerald-400/30 stroke-dasharray-[3_3]"
+ className="text-peacock-blue/40 dark:text-peacock-teal/30 stroke-dasharray-[3_3]"
  strokeWidth="1"
  />
  )}
  <text
  x={width - paddingX + 6}
  y={(bandTop + bandBottom) / 2 + 3}
- className="text-[12px] font-bold fill-emerald-600 dark:fill-emerald-400"
+ className="text-[12px] font-bold fill-peacock-indigo dark:fill-peacock-teal"
  textAnchor="start"
  >
  نطاق إرشادي

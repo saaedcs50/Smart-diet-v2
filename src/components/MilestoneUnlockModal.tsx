@@ -37,7 +37,7 @@ export const MilestoneUnlockModal: React.FC<MilestoneUnlockModalProps> = ({
               onClose();
               onShare();
             }}
-            className="w-full py-3 rounded-2xl bg-violet-500 hover:bg-violet-600 text-white font-black text-sm flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3 rounded-2xl bg-peacock-blue hover:bg-peacock-indigo text-white font-black text-sm flex items-center justify-center gap-2 cursor-pointer"
           >
             <Share2 className="w-4 h-4" />
             شارك إنجازك كصورة

@@ -286,7 +286,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  onFocus={(e) => e.target.select()}
  onChange={(e) => setBodyFat(e.target.value === ''? '': parseFloat(e.target.value))}
  placeholder="0"
- className="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1 text-xs text-emerald-400 font-black text-center focus:border-emerald-500 focus:outline-none"
+ className="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1 text-xs text-peacock-teal font-black text-center focus:border-peacock-blue focus:outline-none"
  />
  </div>
  </div>
@@ -309,11 +309,11 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  onClick={() => setActiveTab('body_comp')}
  className={`py-3 px-3 border-b-2 font-bold text-xs flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
  activeTab === 'body_comp'
-? 'border-emerald-500 text-emerald-400 bg-slate-800/50'
+? 'border-peacock-blue text-peacock-teal bg-slate-800/50'
 : 'border-transparent text-slate-400 hover:text-slate-200'
  }`}
  >
- <Ruler className="w-4 h-4 text-emerald-400" />
+ <Ruler className="w-4 h-4 text-peacock-teal" />
  <span>تركيبة الجسم والدهون</span>
  </button>
 
@@ -321,7 +321,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  onClick={() => setActiveTab('macros_fluid')}
  className={`py-3 px-3 border-b-2 font-bold text-xs flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
  activeTab === 'macros_fluid'
-? 'border-purple-500 text-purple-400 bg-slate-800/50'
+? 'border-peacock-blue text-peacock-teal bg-slate-800/50'
 : 'border-transparent text-slate-400 hover:text-slate-200'
  }`}
  >
@@ -413,7 +413,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  >
  <div className="flex items-center justify-between mb-1">
  <span className="font-black text-xs text-white">2. Harris-Benedict (المعدلة)</span>
- <span className="text-xs font-mono font-black text-purple-400">{bmrResults.harrisBenedict} ك.س</span>
+ <span className="text-xs font-mono font-black text-peacock-teal">{bmrResults.harrisBenedict} ك.س</span>
  </div>
  <p className="text-[12px] text-slate-400">معادلة كلاسيكية مجربة تعتمد على العمر والطول والوزن.</p>
  </div>
@@ -431,7 +431,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  >
  <div className="flex items-center justify-between mb-1">
  <span className="font-black text-xs text-white">3. Katch-McArdle (كتلة الدهون)</span>
- <span className="text-xs font-mono font-black text-emerald-400">
+ <span className="text-xs font-mono font-black text-peacock-teal">
  {bmrResults.katchMcArdle? `${bmrResults.katchMcArdle} ك.س`: 'تحتاج نسبة دهون'}
  </span>
  </div>
@@ -511,15 +511,15 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  {/* US Navy Tape Method Section */}
  <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 space-y-3">
  <div className="flex items-center justify-between">
- <h4 className="font-bold text-xs text-emerald-300 flex items-center gap-1.5">
- <Ruler className="w-4 h-4 text-emerald-400" />
+ <h4 className="font-bold text-xs text-peacock-teal-light flex items-center gap-1.5">
+ <Ruler className="w-4 h-4 text-peacock-teal" />
  <span>حاسبة نسبة الدهون بطريقة الشريط القياسية (US Navy Method):</span>
  </h4>
  {calculatedNavyBf && (
  <button
  type="button"
  onClick={handleApplyNavyBfToAll}
- className="text-[12px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+ className="text-[12px] bg-peacock-indigo hover:bg-peacock-blue text-white font-bold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
  >
  <Circle className="w-3 h-3" />
  <span>اعتماد هذه النسبة ({calculatedNavyBf}%)</span>
@@ -536,7 +536,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  onFocus={(e) => e.target.select()}
  onChange={(e) => setNeckCm(e.target.value === ''? '': parseFloat(e.target.value))}
  placeholder="0"
- className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-bold text-center focus:border-emerald-500 focus:outline-none"
+ className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-bold text-center focus:border-peacock-blue focus:outline-none"
  />
  </div>
 
@@ -548,7 +548,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  onFocus={(e) => e.target.select()}
  onChange={(e) => setWaistCm(e.target.value === ''? '': parseFloat(e.target.value))}
  placeholder="0"
- className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-bold text-center focus:border-emerald-500 focus:outline-none"
+ className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-bold text-center focus:border-peacock-blue focus:outline-none"
  />
  </div>
 
@@ -561,7 +561,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  onFocus={(e) => e.target.select()}
  onChange={(e) => setHipCm(e.target.value === ''? '': parseFloat(e.target.value))}
  placeholder="0"
- className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-bold text-center focus:border-emerald-500 focus:outline-none"
+ className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white font-bold text-center focus:border-peacock-blue focus:outline-none"
  />
  </div>
  ): (
@@ -577,9 +577,9 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  </div>
 
  {calculatedNavyBf? (
- <div className="p-3 bg-emerald-950/60 border border-emerald-800/80 rounded-xl flex items-center justify-between text-xs">
+ <div className="p-3 bg-peacock-ink-deep/60 border border-peacock-indigo-deep/80 rounded-xl flex items-center justify-between text-xs">
  <span className="text-slate-300">نسبة الدهون المحسوبة (Navy BF%):</span>
- <span className="font-black font-mono text-emerald-400 text-base">{calculatedNavyBf}%</span>
+ <span className="font-black font-mono text-peacock-teal text-base">{calculatedNavyBf}%</span>
  </div>
  ): (
  <p className="text-[12px] text-amber-400 italic">الرجاء إدخال القياسات الدقيقة لظهور النتيجة.</p>
@@ -611,13 +611,13 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
 
  <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-3.5 space-y-2 text-xs">
  <h5 className="font-bold text-white flex items-center gap-1.5">
- <ShieldAlert className="w-4 h-4 text-purple-400" />
+ <ShieldAlert className="w-4 h-4 text-peacock-teal" />
  <span>الوزن المعدل للسمنة (Adjusted Body Weight):</span>
  </h5>
  <p className="text-[12px] text-slate-400">مستخدم لحساب جرعات العلاج والسعرات الحادة لمرضى السمنة المفرطة.</p>
  <div className="p-2 bg-slate-900 rounded-xl flex justify-between items-center text-xs">
  <span className="text-slate-300">الوزن المعدل (ABW):</span>
- <b className="font-mono text-purple-400 text-sm">{abwResult} كجم</b>
+ <b className="font-mono text-peacock-teal text-sm">{abwResult} كجم</b>
  </div>
  </div>
  </div>
@@ -625,7 +625,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  {/* BMI & WHtR Health Risk Matrix */}
  <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-3.5 space-y-2 text-xs">
  <h5 className="font-bold text-white flex items-center gap-1.5">
- <Heart className="w-4 h-4 text-rose-400" />
+ <Heart className="w-4 h-4 text-peacock-teal" />
  <span>مؤشر كتلة الجسم ونسبة الخصر بالطول (BMI & WHtR):</span>
  </h5>
 
@@ -656,8 +656,8 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  {/* Macro Engine Choice */}
  <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 space-y-3 text-xs">
  <div className="flex items-center justify-between">
- <h4 className="font-bold text-xs text-purple-300 flex items-center gap-1.5">
- <Dumbbell className="w-4 h-4 text-purple-400" />
+ <h4 className="font-bold text-xs text-peacock-teal-light flex items-center gap-1.5">
+ <Dumbbell className="w-4 h-4 text-peacock-teal" />
  <span>طريقة توزيع الماكروز وتغذية الرياضيين:</span>
  </h4>
 
@@ -666,7 +666,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  type="button"
  onClick={() => setMacroMode('g_per_kg')}
  className={`px-3 py-1 rounded-lg font-bold text-[12px] transition-all cursor-pointer ${
- macroMode === 'g_per_kg'? 'bg-purple-600 text-white': 'text-slate-400 hover:text-white'
+ macroMode === 'g_per_kg'? 'bg-peacock-indigo text-white': 'text-slate-400 hover:text-white'
  }`}
  >
  بناءً على الوزن (g/kg)
@@ -675,7 +675,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  type="button"
  onClick={() => setMacroMode('percent')}
  className={`px-3 py-1 rounded-lg font-bold text-[12px] transition-all cursor-pointer ${
- macroMode === 'percent'? 'bg-purple-600 text-white': 'text-slate-400 hover:text-white'
+ macroMode === 'percent'? 'bg-peacock-indigo text-white': 'text-slate-400 hover:text-white'
  }`}
  >
  نسب مئوية (%)
@@ -694,7 +694,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  onFocus={(e) => e.target.select()}
  onChange={(e) => setProteinGPerKg(e.target.value === ''? '': parseFloat(e.target.value))}
  placeholder="0"
- className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-emerald-400 font-bold font-mono text-center"
+ className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-peacock-teal font-bold font-mono text-center"
  />
  </div>
  <div>
@@ -706,7 +706,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  onFocus={(e) => e.target.select()}
  onChange={(e) => setFatGPerKg(e.target.value === ''? '': parseFloat(e.target.value))}
  placeholder="0"
- className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-rose-400 font-bold font-mono text-center"
+ className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-peacock-teal-light font-bold font-mono text-center"
  />
  </div>
  </div>
@@ -731,7 +731,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  onFocus={(e) => e.target.select()}
  onChange={(e) => setProteinPercent(e.target.value === ''? '': parseInt(e.target.value, 10))}
  placeholder="0"
- className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-emerald-400 font-bold font-mono text-center"
+ className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-peacock-teal font-bold font-mono text-center"
  />
  </div>
  <div>
@@ -742,7 +742,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  onFocus={(e) => e.target.select()}
  onChange={(e) => setFatPercent(e.target.value === ''? '': parseInt(e.target.value, 10))}
  placeholder="0"
- className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-rose-400 font-bold font-mono text-center"
+ className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-peacock-teal-light font-bold font-mono text-center"
  />
  </div>
  </div>
@@ -754,13 +754,13 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  <span className="text-[12px] text-cyan-300 block font-bold">كاربوهيدرات</span>
  <b className="font-mono text-cyan-400 text-lg">{finalCarbGrams}g</b>
  </div>
- <div className="p-2.5 rounded-xl bg-slate-900 border border-emerald-800/60 text-center">
- <span className="text-[12px] text-emerald-300 block font-bold">بروتين</span>
- <b className="font-mono text-emerald-400 text-lg">{finalProteinGrams}g</b>
+ <div className="p-2.5 rounded-xl bg-slate-900 border border-peacock-indigo-deep/60 text-center">
+ <span className="text-[12px] text-peacock-teal-light block font-bold">بروتين</span>
+ <b className="font-mono text-peacock-teal text-lg">{finalProteinGrams}g</b>
  </div>
- <div className="p-2.5 rounded-xl bg-slate-900 border border-rose-800/60 text-center">
- <span className="text-[12px] text-rose-300 block font-bold">دهون صحية</span>
- <b className="font-mono text-rose-400 text-lg">{finalFatGrams}g</b>
+ <div className="p-2.5 rounded-xl bg-slate-900 border border-peacock-ink-deep/60 text-center">
+ <span className="text-[12px] text-peacock-teal-light block font-bold">دهون صحية</span>
+ <b className="font-mono text-peacock-teal-light text-lg">{finalFatGrams}g</b>
  </div>
  </div>
  </div>
@@ -805,7 +805,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  </li>
  <li className="flex justify-between border-b border-slate-700/60 pb-1">
  <span>بعد التمرين (بروتين سريع):</span>
- <b className="text-emerald-300">{periWorkoutInfo.postWorkoutProteinGrams}</b>
+ <b className="text-peacock-teal-light">{periWorkoutInfo.postWorkoutProteinGrams}</b>
  </li>
  <li className="flex justify-between">
  <span>بعد التمرين (استرجاع الجلايكوجين):</span>
@@ -856,7 +856,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
 
  <div className="flex justify-between items-center text-xs">
  <span>معدل التغيير الأسبوعي المتوقع:</span>
- <b className="text-emerald-400 font-mono">{timelineResult.weeklyRateKg} كجم / أسبوع</b>
+ <b className="text-peacock-teal font-mono">{timelineResult.weeklyRateKg} كجم / أسبوع</b>
  </div>
  </div>
 
@@ -864,13 +864,13 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  <div
  className={`p-3 rounded-xl border text-xs leading-relaxed ${
  timelineResult.isSafe
-? 'bg-emerald-950/70 border-emerald-600/80 text-emerald-300'
+? 'bg-peacock-ink-deep/70 border-peacock-indigo/80 text-peacock-teal-light'
 : 'bg-rose-950/70 border-rose-600/80 text-rose-300'
  }`}
  >
  <div className="flex items-center gap-1.5 font-bold mb-1">
  {timelineResult.isSafe? (
- <Award className="w-4 h-4 text-emerald-400" />
+ <Award className="w-4 h-4 text-peacock-teal" />
  ): (
  <ShieldAlert className="w-4 h-4 text-rose-400" />
  )}
@@ -888,7 +888,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  <div className="text-xs text-slate-400">
  الهدف المستهدف: <b className="text-amber-400 font-mono text-sm">{targetCalories}</b> ك.س |
  كارب: <b className="text-cyan-400 font-mono">{finalCarbGrams}g</b> |
- بروتين: <b className="text-emerald-400 font-mono">{finalProteinGrams}g</b> |
+ بروتين: <b className="text-peacock-teal font-mono">{finalProteinGrams}g</b> |
  دهون: <b className="text-rose-400 font-mono">{finalFatGrams}g</b>
  </div>
 
@@ -901,7 +901,7 @@ export const ClinicalCalculatorSuiteModal: React.FC<ClinicalCalculatorSuiteModal
  </button>
  <button
  onClick={handleApplySuiteToPlan}
- className="px-5 py-2.5 rounded-xl text-xs font-black text-white bg-emerald-600 hover:bg-emerald-500 transition-all flex items-center gap-1.5 cursor-pointer"
+ className="px-5 py-2.5 rounded-xl text-xs font-black text-white bg-peacock-indigo hover:bg-peacock-blue transition-all flex items-center gap-1.5 cursor-pointer"
  >
  <Circle className="w-4 h-4" />
  <span>تطبيق الحسابات مباشرة على مسودة الخطة </span>

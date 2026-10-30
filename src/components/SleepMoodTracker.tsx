@@ -106,7 +106,7 @@ export const SleepMoodTracker: React.FC<SleepMoodTrackerProps> = ({ plan, day, o
  <span
  className={`text-[12px] font-bold px-2.5 py-1 rounded-xl shrink-0 ${
  currentSleepHours >= 7 && currentSleepHours <= 9
-? 'bg-[#0D9488]/10 text-[#0D9488] dark:bg-[#0D9488]/20 dark:text-[#2DD4BF]'
+? 'bg-[#4D52B4]/10 text-[#4D52B4] dark:bg-[#4D52B4]/20 dark:text-[#70D6C5]'
 : currentSleepHours >= 6
 ? 'bg-[var(--app-secondary)]/10 text-[var(--app-secondary)] dark:bg-[var(--app-secondary)]/20 dark:text-[var(--app-secondary)]'
 : 'bg-[#E0922D]/10 text-[#E0922D] dark:bg-[#E0922D]/20 dark:text-[#F2C66D]'
@@ -256,7 +256,7 @@ export const SleepMoodTracker: React.FC<SleepMoodTrackerProps> = ({ plan, day, o
  المزاج ومستوى الطاقة اليوم:
  </label>
  {day.mood && (
- <span className="text-[12px] font-bold text-[#0D9488] dark:text-[#2DD4BF]">
+ <span className="text-[12px] font-bold text-[#4D52B4] dark:text-[#70D6C5]">
  {moods.find((m) => m.val === day.mood)?.label}
  </span>
  )}
@@ -271,7 +271,7 @@ export const SleepMoodTracker: React.FC<SleepMoodTrackerProps> = ({ plan, day, o
  onClick={() => onUpdateDay({...day, mood: isSelected? null: m.val })}
  className={`py-2 rounded-2xl flex flex-col items-center gap-1 transition-all border cursor-pointer ${
  isSelected
-? 'bg-[#0D9488] text-white border-[#0D9488] scale-105'
+? 'bg-[#4D52B4] text-white border-[#4D52B4] scale-105'
 : 'bg-[var(--app-card-muted)] border-[var(--app-border)]/70 hover:bg-[var(--app-card-muted)] text-[var(--app-text-primary)]'
  }`}
  >
@@ -289,7 +289,7 @@ export const SleepMoodTracker: React.FC<SleepMoodTrackerProps> = ({ plan, day, o
  <div className={`space-y-2.5 ${(showSleep || showMood) ? 'pt-3.5 border-t border-[var(--app-border)]/50': ''}`}>
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2">
- <div className="w-8 h-8 rounded-xl text-[#0D9488] dark:text-[#2DD4BF] flex items-center justify-center font-bold text-sm">
+ <div className="w-8 h-8 rounded-xl text-[#4D52B4] dark:text-[#70D6C5] flex items-center justify-center font-bold text-sm">
  <Activity className="w-4 h-4" />
  </div>
  <div>
@@ -324,7 +324,7 @@ export const SleepMoodTracker: React.FC<SleepMoodTrackerProps> = ({ plan, day, o
  onClick={() => onUpdateDay({...day, exercise: mins })}
  className={`py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
  day.exercise === mins
-? 'bg-[#0D9488] text-white'
+? 'bg-[#4D52B4] text-white'
 : 'bg-[var(--app-card-muted)] text-[var(--app-text-secondary)] hover:bg-[var(--app-card-muted)]'
  }`}
  >
