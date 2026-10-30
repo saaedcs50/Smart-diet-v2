@@ -1,6 +1,10 @@
 import express, { Router, Request, Response } from 'express';
 import crypto from 'crypto';
 import { brandCopy } from '../config/brand';
+import {
+  getCoachGuardStore,
+  GuardUnavailableError,
+} from './coachGuardStore';
 
 export const apiRouter = Router();
 
@@ -55,44 +59,6 @@ const pinsEqual = (a: string, b: string): boolean => {
   return crypto.timingSafeEqual(ha, hb);
 };
 
-// ============================================================================
-// حماية بسيطة ضد محاولات تخمين الـ PIN (Rate Limiting في الذاكرة)
-// ============================================================================
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_MS = 5 * 60 * 1000; // 5 دقائق — تتضاعف مع تكرار القفل (حتى 60 دقيقة)
-const MAX_LOCKOUT_MS = 60 * 60 * 1000;
-const attemptsByIp = new Map<string, { count: number; lockedUntil: number; lockouts: number }>();
-
-const isLockedOut = (ip: string): boolean => {
-  const entry = attemptsByIp.get(ip);
-  if (!entry) return false;
-  if (entry.lockedUntil && entry.lockedUntil > Date.now()) return true;
-  if (entry.lockedUntil && entry.lockedUntil <= Date.now()) {
-    entry.lockedUntil = 0;
-    entry.count = 0;
-  }
-  return false;
-};
-
-const registerFailedAttempt = (ip: string) => {
-  const entry = attemptsByIp.get(ip) || { count: 0, lockedUntil: 0, lockouts: 0 };
-  entry.count += 1;
-  if (entry.count >= MAX_ATTEMPTS) {
-    const duration = Math.min(LOCKOUT_MS * 2 ** entry.lockouts, MAX_LOCKOUT_MS);
-    entry.lockedUntil = Date.now() + duration;
-    entry.lockouts += 1;
-    entry.count = 0;
-  }
-  attemptsByIp.set(ip, entry);
-};
-
-const clearAttempts = (ip: string) => {
-  attemptsByIp.delete(ip);
-};
-
-// In-Memory Revocation List (for explicit DELETE /api/coach-session within current instance)
-const revokedTokens = new Set<string>();
-
 // Generate a cryptographically signed HMAC token (Stateless & Vercel-compatible)
 export function createSignedCoachToken(): { token: string; expiresAt: number } {
   const expiresAt = Date.now() + 60 * 60 * 1000; // 60 minutes
@@ -103,10 +69,10 @@ export function createSignedCoachToken(): { token: string; expiresAt: number } {
   return { token, expiresAt };
 }
 
-// Verify HMAC signed token
-export function verifySignedCoachToken(token: string): boolean {
+// Verify HMAC signed token (async: revocation lives in the guard store)
+export async function verifySignedCoachToken(token: string): Promise<boolean> {
   if (!token || typeof token !== 'string') return false;
-  if (revokedTokens.has(token)) return false;
+  if (await getCoachGuardStore().isRevoked(token)) return false;
 
   const parts = token.split('.');
   if (parts.length !== 3) return false;
@@ -126,6 +92,25 @@ export function verifySignedCoachToken(token: string): boolean {
   } catch {
     return false;
   }
+}
+
+// استخراج انتهاء الرمز من حمولته لحساب TTL الإبطال
+function tokenExpiresAt(token: string): number {
+  const first = token.split('.')[0];
+  const parsed = parseInt(first, 10);
+  if (!first || isNaN(parsed) || parsed <= Date.now()) {
+    return Date.now() + 60 * 60 * 1000;
+  }
+  return parsed;
+}
+
+// رد موحد لأخطاء المعالج: فشل المخزن الدائم = 503 عربي واضح، لا 500 فارغ
+function guardFailure(res: Response, err: unknown): Response {
+  if (err instanceof GuardUnavailableError) {
+    return res.status(503).json({ ok: false, error: err.message });
+  }
+  console.error('coach-session error', err);
+  return res.status(500).json({ ok: false, error: 'خطأ داخلي في الخادم. حاول مرة أخرى.' });
 }
 
 // فحص إعدادات الأمان عند بدء التشغيل.
@@ -150,48 +135,56 @@ const handleHealth = (_req: Request, res: Response) => {
   res.json({ status: 'ok' });
 };
 
-// 2. Create Session
-const handleCreateSession = (req: Request, res: Response) => {
+// 2. Create Session (مُصدَّر للاختبارات)
+export const handleCreateSession = async (req: Request, res: Response) => {
   const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const store = getCoachGuardStore();
 
-  if (isLockedOut(ip)) {
-    return res.status(429).json({
-      ok: false,
-      error: 'تم إيقاف المحاولات مؤقتًا بسبب محاولات دخول متكررة خاطئة. حاول مرة أخرى بعد بضع دقائق.',
+  try {
+    if (await store.isLockedOut(ip)) {
+      return res.status(429).json({
+        ok: false,
+        error: 'تم إيقاف المحاولات مؤقتًا بسبب محاولات دخول متكررة خاطئة. حاول مرة أخرى بعد بضع دقائق.',
+      });
+    }
+
+    const reqPin = String(req.body?.pin || '').trim();
+    const serverPin = String(getCoachPin()).trim();
+
+    if (!reqPin || !pinsEqual(reqPin, serverPin)) {
+      await store.recordFailedAttempt(ip);
+      return res.status(403).json({
+        ok: false,
+        error: brandCopy.pinWrong,
+      });
+    }
+
+    await store.clearAttempts(ip);
+    const { token, expiresAt } = createSignedCoachToken();
+    return res.json({
+      ok: true,
+      token,
+      expiresAt,
     });
+  } catch (err) {
+    return guardFailure(res, err);
   }
-
-  const reqPin = String(req.body?.pin || '').trim();
-  const serverPin = String(getCoachPin()).trim();
-
-  if (!reqPin || !pinsEqual(reqPin, serverPin)) {
-    registerFailedAttempt(ip);
-    return res.status(403).json({
-      ok: false,
-      error: brandCopy.pinWrong,
-    });
-  }
-
-  clearAttempts(ip);
-  const { token, expiresAt } = createSignedCoachToken();
-  return res.json({
-    ok: true,
-    token,
-    expiresAt,
-  });
 };
 
 // 3. Delete Session
-const handleDeleteSession = (req: Request, res: Response) => {
+const handleDeleteSession = async (req: Request, res: Response) => {
   const headerToken = req.headers['x-coach-session'] as string;
   const bodyToken = req.body?.token as string;
   const token = headerToken || bodyToken;
 
-  if (token) {
-    revokedTokens.add(token);
+  try {
+    if (token) {
+      await getCoachGuardStore().revokeToken(token, tokenExpiresAt(token));
+    }
+    return res.json({ ok: true });
+  } catch (err) {
+    return guardFailure(res, err);
   }
-
-  return res.json({ ok: true });
 };
 
 // Register routes both with and without /api prefix to support all proxy/rewrite configurations

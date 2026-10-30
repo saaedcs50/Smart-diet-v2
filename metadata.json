@@ -2,5 +2,5 @@
   "name": "منصة التغذية والصحة",
   "description": "منصة متكاملة لمتابعة التغذية والنظام الصحي - النسخة القياسية للعيادات (White-Label)",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

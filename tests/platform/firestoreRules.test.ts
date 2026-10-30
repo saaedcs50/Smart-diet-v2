@@ -42,7 +42,7 @@ describe('firestore.rules content', () => {
   });
 
   it('مرضى: عزل بالعيادة عبر مستند المريض', () => {
-    expect(rules).toContain('match /patients/{pid}/{doc=**}');
+    expect(rules).toContain('match /patients/{pid}/{subcollection}/{doc=**}');
     expect(rules).toContain('patientClinicId(pid) == clinicId()');
     expect(rules).toContain("request.auth.uid == pid");
   });
@@ -61,6 +61,24 @@ describe('firestore.rules content', () => {
     expect(rules).toContain(
       'allow read: if isStaff() && resource.data.clinicId == clinicId();',
     );
+  });
+
+  it('مرضى: إنشاء المريض لسجله مقيد به وبعيادته وحقول محدودة (لا wildcard)', () => {
+    // كتلة مستند المريض نفسه فقط — لا الممرر العام /patients/{pid}/{subcollection}/{doc=**}
+    const parentBlock = rules.match(/match \/patients\/\{pid\} \{[^}]*\}/);
+    expect(parentBlock).not.toBeNull();
+    const block = parentBlock![0];
+    expect(block).toContain(
+      'allow create: if isPatient() && request.auth.uid == pid',
+    );
+    expect(block).toContain('request.resource.data.clinicId == clinicId()');
+    expect(block).toContain(
+      'request.resource.data.profile.clientName is string',
+    );
+    expect(block).toContain("hasOnly(['clinicId', 'profile'])");
+    expect(block).toContain("hasOnly(['clinicId', 'profile', 'invitedBy'])");
+    // لا إنشاء من الطاقم على مستند المريض
+    expect(block).not.toContain('allow create: if isStaff()');
   });
 
   it('يصرّح بحالة النشر الحقيقية: Firestore منشور على التجريبي، والدور من المستند', () => {
@@ -83,6 +101,39 @@ describe('firestore.rules content', () => {
     expect(rules).toContain("request.resource.data.status == 'pending'");
     expect(rules).toContain("affectedKeys().hasOnly(['status'])");
     expect(rules).toContain('allow delete: if false;');
+  });
+
+  it('الدعوات: التحديث فرعان مستقلان بأقواس (استهلاك/إعادة فتح)', () => {
+    const invBlock = rules.match(/match \/invitations\/\{invId\} \{[^}]*\}/);
+    expect(invBlock).not.toBeNull();
+    const block = invBlock![0];
+    // فرع المدعو: pending -> consumed ببريده فقط
+    expect(block).toContain('request.auth.token.email == resource.data.email');
+    // فرع الطاقم: consumed -> pending لعيادته فقط
+    expect(block).toContain('isStaff()');
+    expect(block).toContain('resource.data.clinicId == clinicId()');
+    // الإنشاء: معرّف المستند هو البريد نفسه
+    expect(block).toContain('invId == request.resource.data.email');
+  });
+
+  it('الموافقات: الممرر العام لا يتجاوز قاعدة الموافقات للطاقم', () => {
+    expect(rules).toContain('function isConsentSubpath(firstSegment)');
+    expect(rules).toContain("firstSegment == 'consents'");
+    const wildBlock = rules.match(
+      /match \/patients\/\{pid\}\/\{subcollection\}\/\{doc=\*\*\} \{[^}]*\}/,
+    );
+    expect(wildBlock).not.toBeNull();
+    const block = wildBlock![0];
+    expect(block).toContain('!isConsentSubpath(subcollection)');
+    // كتابة المريض نفسه غير مقيدة بالاستثناء
+    expect(block).toContain(
+      'allow read, write: if isPatient() && request.auth.uid == pid;',
+    );
+    // قاعدة الموافقات الأضيق ما زالت: كتابة المريض وحده
+    expect(rules).toContain('match /patients/{pid}/consents/{type}');
+    expect(rules).toContain(
+      'allow write: if isPatient() && request.auth.uid == pid;',
+    );
   });
 
   it('دوال الدور محمية بوجود المستند حتى لا يخطئ تقييم مدعو بلا ملف', () => {

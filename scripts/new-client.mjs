@@ -51,9 +51,13 @@ for (const field of requiredFields) {
 }
 
 const sessionSecret = crypto.randomBytes(32).toString('hex');
-const coachPin =
-  (pinArg && pinArg.split('=')[1].trim()) ||
-  String(crypto.randomInt(10000, 99999));
+// رمز صريح: 5 أرقام على الأقل مقبولة، الأقصر مرفوض. التوليد التلقائي: 8 أرقام.
+const pinArgRaw = pinArg ? pinArg.split('=')[1].trim() : '';
+if (pinArg && pinArgRaw.length < 5) {
+  console.error('❌ رمز PIN قصير: لازم 5 أرقام على الأقل.');
+  process.exit(1);
+}
+const coachPin = pinArgRaw || String(crypto.randomInt(10000000, 99999999));
 
 const brandOutput = {
   appName: clientConfig.appName,
@@ -68,6 +72,9 @@ const brandOutput = {
   themeColor: clientConfig.themeColor || '#5B2482',
   accentColor: clientConfig.accentColor || '#E21B6D',
   backgroundColor: clientConfig.backgroundColor || '#F8F7F9',
+  // ملفات العملاء القديمة قد تفتقد الحقلين الجديدين — التعبئة بقيم Peacock
+  tertiaryColor: clientConfig.tertiaryColor || '#70D6C5',
+  tintColor: clientConfig.tintColor || '#CAE5BC',
   whatsapp: clientConfig.whatsapp || '',
   logoPath: clientConfig.logoPath || '/icon.svg',
 };

@@ -24,7 +24,7 @@ import { BottomNav } from './components/BottomNav';
 import { TodayTab } from './components/TodayTab';
 import { BodyTab } from './components/BodyTab';
 import { PinModal } from './components/PinModal';
-import { unlockCoachSession, logoutCoachSession, isCoachSessionUnlocked, setCoachCustomPin, markCoachSessionUnlocked } from './utils/coachAuth';
+import { unlockCoachSession, logoutCoachSession, isCoachSessionUnlocked, setCoachCustomPin, markCoachSessionUnlocked, hasCoachPin, COACH_LOCAL_ONLY } from './utils/coachAuth';
 import {
   createCoachServerSession,
   saveCoachServerToken,
@@ -145,6 +145,11 @@ export default function App() {
     }
 
     // 2) لا خادم متاح (استضافة ثابتة/أوفلاين): الفتح المحلي بالهاش المخزَّن
+    // فقط — لا يُنشأ رمز جديد من هنا أبدًا. بلا هاش وبلا وضع محلي خالص:
+    // فشل صريح ولا يُحفظ شيء.
+    if (!hasCoachPin() && !COACH_LOCAL_ONLY) {
+      return 'تعذّر الوصول إلى خادم العيادة ولا يوجد رمز محلي مُعدّ على هذا الجهاز — لم يُنشأ أي رمز.';
+    }
     const res = await unlockCoachSession(trimmed);
     if (res.ok === true) {
       setCoachSessionUnlocked(true);
