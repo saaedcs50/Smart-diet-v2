@@ -4,7 +4,7 @@
 // PIN لا يُخزَّن هنا أبدًا: المصدر الوحيد: COACH_PIN في بيئة السيرفر
 // ============================================================================
 
-import brandData from './brand.json';
+import brandData from './brand.json' with { type: 'json' };
 
 export type BrandConfig = {
   appName: string;
