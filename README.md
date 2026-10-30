@@ -29,7 +29,7 @@
 
 - Node.js 20+ (أو 18+)
 - حساب [Vercel](https://vercel.com) (موصى به) أو أي استضافة Node تدعم serverless
-- مفتاح Gemini اختياري لو هتفعّل ميزات الذكاء الاصطناعي لاحقًا (`GEMINI_API_KEY`)
+- لا تضبط `GEMINI_API_KEY` لهذا التطبيق: غير موصول بأي استدعاء في `src`
 
 ```bash
 npm install
@@ -119,11 +119,15 @@ node scripts/new-client.mjs dr-mona --build
 | `specialistShort` | لقب قصير | `الأخصائية` / `الأخصائي` |
 | `specialistTo` | للجرّ | `للأخصائية` / `للأخصائي` |
 | `description` | وصف الميتا / المتجر | جملة قصيرة |
-| `themeColor` | اللون الأساسي (أزرار ثانوية / روابط) | `#0d9488` |
-| `accentColor` | لون التمييز (CTA رئيسي) | `#f59e0b` |
-| `backgroundColor` | خلفية الوضع الفاتح | `#f8fafc` |
+| `themeColor` | اللون الأساسي (أزرار ثانوية / روابط) | `#4E9CE8` |
+| `accentColor` | لون التمييز (CTA رئيسي) | `#4D52B4` |
+| `backgroundColor` | خلفية الوضع الفاتح | `#E1EDD4` |
+| `tertiaryColor` | لون وظيفي (تقدم / ماء / رسوم) | `#70D6C5` |
+| `tintColor` | أسطح مميزة (تنبيهات / شارات) | `#CAE5BC` |
 | `whatsapp` | رقم العيادة الدولي | `2010xxxxxxxx` |
 | `logoPath` | مسار الشعار من `public/` — يُستخدم في PWA والتاب والإشعارات | `/brands/dr-mona.png` |
+
+`scripts/apply-brand.mjs` يكتب الهوية في `index.html` و`public/manifest.json` و`public/sw.js` — لا تعدّل ناتجه يدويًا.
 
 **لا يوجد `defaultAdminPin` في الهوية.** PIN من `COACH_PIN` في بيئة الاستضافة فقط.
 
@@ -154,6 +158,8 @@ node scripts/new-client.mjs dr-mona --build
 - `themeColor` → `--app-secondary` + `--app-secondary-hover`
 - `accentColor` → `--app-hero` + `--app-hero-hover`
 - `backgroundColor` → `--app-bg`
+- `tertiaryColor` → `--app-tertiary` + `--app-tertiary-hover`
+- `tintColor` → `--app-tint`
 - الحدود والكروت والنصوص: `--app-border` / `--app-card` / `--app-card-muted` / `--app-text-*`
 - الوضع الليلي يُشتق تلقائيًا من نفس الألوان
 
@@ -180,12 +186,15 @@ node scripts/new-client.mjs dr-mona --build
 | فتح اللوحة (أوفلاين بعد أول نجاح) | مقارنة هاش SHA-256 محفوظ محليًا — **ليس الرقم نفسه** |
 | توقيع الجلسة | **`SESSION_SECRET`** |
 | الذكاء الاصطناعي | يحتاج جلسة سيرفر حقيقية — الوضع الأوفلاين يفتح الواجهة فقط |
+| حدّ المحاولات الدائم | `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (اختياري) |
 
 - لا يُحفظ PIN داخل `brand.json` ولا داخل خطة العميل
 - بعد أول دخول ناجح عبر السيرفر يمكن فتح اللوحة بنفس الرمز لو السيرفر وقع
 - أول دخول على جهاز جديد يحتاج إنترنت
 - تغيير PIN = تغيير `COACH_PIN` في الاستضافة ثم دخول أونلاين مرة لتحديث الهاش
 - توليد نسخة: `node scripts/new-client.mjs <slug> --pin=48291 --build`
+- حدّ المحاولات: 5 محاولات خاطئة ثم قفل 5 دقائق يتضاعف حتى 60 دقيقة. بدون متغيري Upstash يعمل الحد في ذاكرة كل نسخة فقط — غير فعّال عبر نسخ Vercel المتعددة. عند فشل Upstash المضبوط يرد السيرفر 503 عربي واضح بدل 500 فارغ.
+- لوحة الأخصائي على الجهاز ليست حدًا أمنيًا ضد مالك المتصفح نفسه — من يملك المتصفح يستطيع قراءة التخزين المحلي. وهي أيضًا ليست حماية ضد XSS: أي سكربت خبيث يعمل داخل الصفحة يرى ما يراه التطبيق.
 
 ---
 
@@ -199,7 +208,7 @@ node scripts/new-client.mjs dr-mona --build
 ```text
 COACH_PIN=*****
 SESSION_SECRET=*****
-GEMINI_API_KEY=*****          # اختياري
+# لا تضبط GEMINI_API_KEY — غير موصول بأي استدعاء في src
 ```
 
 3. قبل الـ build تأكد أن `src/config/brand.json` يخص هذه العيادة  

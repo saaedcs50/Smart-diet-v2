@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { brandCopy } from '../config/brand';
 import { BrandLogo } from './BrandLogo';
 import { BottomSheetModal } from './BottomSheetModal';
-import { getLockoutRemainingSeconds, hasCoachPin, setupCoachPin } from '../utils/coachAuth';
+import { COACH_LOCAL_ONLY, getLockoutRemainingSeconds, hasCoachPin, setupCoachPin } from '../utils/coachAuth';
 import { createCoachServerSession, saveCoachServerToken } from '../utils/coachServer';
 import { Lock, Timer, Loader2, KeyRound } from 'lucide-react';
 
@@ -56,6 +56,14 @@ export const PinModal: React.FC<PinModalProps> = ({ onSuccess, onClose }) => {
         }
         if (server.status === 'ok') {
           saveCoachServerToken(server.token);
+        }
+        // تعذّر الوصول للخادم أثناء الإعداد الأول: لا يُنشأ رمز محلي إلا في
+        // وضع الاستضافة الثابتة (VITE_COACH_LOCAL_ONLY=true) — وإلا لا يُحفظ شيء
+        if (server.status === 'unreachable' && !COACH_LOCAL_ONLY) {
+          setError('تعذّر التحقق من خادم العيادة — لم يُحفظ أي رمز محلي. تحقق من الاتصال وإعداد الخادم ثم حاول مرة أخرى.');
+          setEnteredPin('');
+          setConfirmPin('');
+          return;
         }
         const setup = await setupCoachPin(trimmed, confirmPin.trim());
         if (setup.ok === false) {

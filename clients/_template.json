@@ -8,9 +8,11 @@
   "specialistShort": "الأخصائي",
   "specialistTo": "للأخصائي",
   "description": "وصف قصير للتطبيق يظهر في الميتاداتا",
-  "themeColor": "#0d9488",
-  "accentColor": "#f59e0b",
-  "backgroundColor": "#f8fafc",
+  "themeColor": "#4E9CE8",
+  "accentColor": "#4D52B4",
+  "backgroundColor": "#E1EDD4",
   "whatsapp": "",
-  "logoPath": "/brands/slug.png"
+  "logoPath": "/brands/slug.png",
+  "tertiaryColor": "#70D6C5",
+  "tintColor": "#CAE5BC"
 }

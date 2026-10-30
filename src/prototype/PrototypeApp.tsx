@@ -81,7 +81,7 @@ function WeightChart({ detail }: { detail: DemoPatientDetail }) {
         <TrendingDown className="w-4 h-4 text-brand-hero" />
         <span>الوزن المتوقع مقابل الفعلي (عرض تجريبي)</span>
       </div>
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full" dir="ltr" role="img" aria-label="منحنى وزن تجريبي">
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full" role="img" aria-label="منحنى وزن تجريبي">
         <line x1={pad} x2={w - pad} y1={y(detail.targetWeight)} y2={y(detail.targetWeight)} stroke="#c4b5fd" strokeDasharray="5 5" />
         {points.map((p, i) => (
           <g key={p.date}>

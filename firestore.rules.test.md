@@ -6,8 +6,11 @@
 > أي تعديل لاحق على `firestore.rules` يحتاج إعادة نشر عبر Firebase CLI
 > بتسجيل دخول (`firebase deploy --only firestore:rules` من مجلد المشروع
 > بعد `firebase login` و`firebase use smart-diet-platform-trial`).
-> الحالات أدناه تُنفذ في Rules Playground أو محاكي Firestore
-> (Emulator Suite) قبل أي نشر، ببيانات تجريبية فقط وبلا أي مستخدم حقيقي.
+> التقييم الآلي: `npm run test:rules` يشغّل محاكي Firestore (المنفذ 8089)
+> ثم `tests/platform/firestoreEmulator.test.ts` — ببيانات تجريبية فقط
+> وبلا أي مستخدم حقيقي. النشر على المشروع التجريبي ما زال نشرًا يدويًا
+> منفصلًا (`firebase deploy --only firestore:rules --project
+> smart-diet-platform-trial`).
 
 ## إعداد الاختبار (بيانات تجريبية)
 

@@ -109,6 +109,7 @@ export interface MealItem {
   calories?: number;
   proteinGrams?: number;
   exchanges?: Record<string, number>;
+  time?: string;
 }
 
 export interface CheckItem {
@@ -216,6 +217,7 @@ export interface IntermittentFastingConfig {
   targetHours: number;            // 16, 18, 20, 14, 12
   eatingWindowStart?: string;     // e.g. "12:00"
   eatingWindowEnd?: string;       // e.g. "20:00"
+  fastingHours?: number;
 }
 
 export interface FastingPlanConfig {
@@ -280,6 +282,11 @@ export interface PlanConfig {
   enableFastingTimer?: boolean;
   fastingTargetHours?: number;
   visibleSections?: SectionVisibility;
+  // حقول اختيارية تُستخدم فعليًا في الواجهة (كانت تُقرأ دون تعريف)
+  goal?: string;
+  notes?: string;
+  waterGoalMl?: number;
+  waterTargetLiters?: number;
 }
 
 export interface MealLogState {

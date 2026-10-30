@@ -6,6 +6,8 @@ import { apiRouter, validateSecurityConfig } from './src/server/api';
 import { BRAND } from './src/config/brand';
 
 const app = express();
+// خلف بروكسي واحد (Vercel/الاستضافة): req.ip الحقيقي — القيمة رقم لا true أبدًا
+app.set('trust proxy', 1);
 const PORT = 3000;
 
 app.use(express.json({ limit: '200kb' }));

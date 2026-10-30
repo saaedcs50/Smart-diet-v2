@@ -84,6 +84,59 @@ describe('coachAuth — first-time setup', () => {
   });
 });
 
+describe('coachAuth — structured unlock proof', () => {
+  function sessionUnlockKey(): string {
+    const keys = [...session._map.keys()].filter((k) => k.includes('coach_unlocked'));
+    expect(keys.length).toBe(1);
+    return keys[0];
+  }
+
+  it('stores a structured proof with version, expiry and tag — not the literal true', async () => {
+    await setupCoachPin('56789', '56789');
+    const res = await unlockCoachSession('56789');
+    expect(res.ok).toBe(true);
+    const raw = session._map.get(sessionUnlockKey());
+    expect(raw).not.toBe('true');
+    const proof = JSON.parse(raw as string);
+    expect(proof.v).toBe(1);
+    expect(proof.exp).toBeGreaterThan(Date.now());
+    expect(proof.exp).toBeLessThanOrEqual(Date.now() + 60 * 60 * 1000);
+    expect(typeof proof.tag).toBe('string');
+    expect(proof.tag.length).toBeGreaterThan(0);
+    expect(isCoachSessionUnlocked()).toBe(true);
+  });
+
+  it('the literal true is no longer accepted as unlocked', async () => {
+    await setupCoachPin('56789', '56789');
+    await unlockCoachSession('56789');
+    session._map.set(sessionUnlockKey(), 'true');
+    expect(isCoachSessionUnlocked()).toBe(false);
+  });
+
+  it('an expired proof is rejected', async () => {
+    await setupCoachPin('56789', '56789');
+    await unlockCoachSession('56789');
+    const key = sessionUnlockKey();
+    const proof = JSON.parse(session._map.get(key) as string);
+    proof.exp = Date.now() - 1000;
+    session._map.set(key, JSON.stringify(proof));
+    expect(isCoachSessionUnlocked()).toBe(false);
+  });
+
+  it('a proof bound to an old PIN hash is rejected after the PIN changes', async () => {
+    await setupCoachPin('56789', '56789');
+    await unlockCoachSession('56789');
+    const key = sessionUnlockKey();
+    const raw = session._map.get(key) as string;
+    // تغيير الرمز يبدّل الهاش المخزَّن فيبطل الدليل القديم
+    await setupCoachPin('56789', '56789').catch(() => {});
+    const { setCoachCustomPin } = await import('../src/utils/coachAuth');
+    await setCoachCustomPin('99999');
+    session._map.set(key, raw);
+    expect(isCoachSessionUnlocked()).toBe(false);
+  });
+});
+
 describe('coachAuth — wrong PIN handling and lockout', () => {
   it('wrong PIN decrements remaining attempts', async () => {
     await setupCoachPin('56789', '56789');

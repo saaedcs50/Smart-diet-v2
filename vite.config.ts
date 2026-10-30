@@ -18,6 +18,9 @@ export default defineConfig(() => {
           manualChunks: {
             'vendor-react': ['react', 'react-dom'],
             'vendor-motion': ['motion'],
+            // المسارات الفرعية الفعلية المستوردة (الحزمة 'firebase' نفسها بلا نقطة دخول)
+            'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+            'vendor-pdf': ['jspdf', 'html2canvas'],
           },
         },
       },
@@ -28,6 +31,15 @@ export default defineConfig(() => {
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
+    },
+    // اختبار المحاكي يحتاج Firestore Emulator — يُستبعد من التشغيل الافتراضي
+    // ويُشغَّل عبر npm run test:rules فقط
+    test: {
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        'tests/platform/firestoreEmulator.test.ts',
+      ],
     },
   };
 });

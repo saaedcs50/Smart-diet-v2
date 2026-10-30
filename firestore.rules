@@ -5,7 +5,10 @@
 // smart-diet-platform-trial في 2026-10-24 (من وحدة التحكم/CLI، لا من بيئة
 // البناء هذه). قواعد Storage ما زالت غير منشورة — معلقة على قرار ترقية
 // Blaze للمشروع التجريبي. أي تعديل لاحق على هذا الملف يحتاج إعادة نشر
-// (انظر firestore.rules.test.md).
+// يدوي (انظر firestore.rules.test.md) — التعديلات الحالية في هذا الملف
+// بانتظار ذلك النشر.
+// إنشاء مستند المريض: مسموح للمريض نفسه فقط أثناء التسجيل بالدعوة
+// ولعيادته نفسها حصرًا (انظر allow create في match /patients/{pid}).
 //
 // انحراف موثق عن دراسة §٥ (مقصود، كما في المرحلة الأولى):
 // دراسة §٥ تفترض أن الدور والعيادة يأتيان من claims مخصصة في ID token.
@@ -61,6 +64,14 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/patients/$(pid)).data.clinicId;
     }
 
+    // هل أول مقطع تحت المريض هو consents؟ تُستخدم لمنع كتابة الطاقم
+    // على الموافقات عبر الممرر العام، لأن القواعد OR فيتجاوز allow write
+    // العام قاعدة الموافقات الأضيق.
+    // (المقطع يُمرر كمعامل لأن الدوال لا ترى متغيرات الـ match خارج نطاق تعريفها.)
+    function isConsentSubpath(firstSegment) {
+      return firstSegment == 'consents';
+    }
+
     // --- الدعوات ------------------------------------------------------------
     // معرّف المستند = بريد المدعو المطبّع (صغير الحروف). بريد الـ Auth
     // token هو ما يُقارن به، لذلك يجب أن يسجّل المدعو بالبريد المطبّع
@@ -110,35 +121,74 @@ service cloud.firestore {
       allow read: if signedIn() && (request.auth.token.email == resource.data.email
         || (isStaff() && resource.data.clinicId == clinicId()));
       allow create: if (isAdmin() && request.resource.data.clinicId == clinicId()
-                     && request.resource.data.status == 'pending')
+                     && request.resource.data.status == 'pending'
+                     && invId == request.resource.data.email)
                     || (isCoach() && request.resource.data.clinicId == clinicId()
                      && request.resource.data.role == 'patient'
-                     && request.resource.data.status == 'pending');
-      allow update: if signedIn() && resource.data.status == 'pending'
-                    && request.resource.data.status == 'consumed'
-                    && request.auth.token.email == resource.data.email
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-                    || isStaff() && resource.data.clinicId == clinicId()
-                    && resource.data.status == 'consumed'
-                    && request.resource.data.status == 'pending'
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+                     && request.resource.data.status == 'pending'
+                     && invId == request.resource.data.email);
+      // فرعان مستقلان بأقواس: استهلاك المدعو لدعوته، وإعادة فتح الطاقم.
+      // المدعو لا يستطيع إعادة الفتح، والطاقم لا يغير الدور أو العيادة
+      // أو البريد في التحديث (الحالة فقط في الحالتين).
+      allow update: if (
+                      signedIn()
+                      && resource.data.status == 'pending'
+                      && request.resource.data.status == 'consumed'
+                      && request.auth.token.email == resource.data.email
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+                    ) || (
+                      isStaff()
+                      && resource.data.clinicId == clinicId()
+                      && resource.data.status == 'consumed'
+                      && request.resource.data.status == 'pending'
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+                    );
       allow delete: if false;
     }
 
     // المريض وكل ما تحته: سقف واحد يغطي plan وdayLogs وكل المجموعات الفرعية.
-    match /patients/{pid}/{doc=**} {
+    // ملاحظة حرجة: الممرر العام {doc=**} يطابق صفر مقطع أيضًا فيطابق مستند
+    // المريض نفسه — لذلك النمط هنا {subcollection}/{doc=**} يتطلب مقطعًا
+    // واحدًا على الأقل فيستبعد المستند الأب، وقواعده الخاصة في
+    // match /patients/{pid} أدناه (الإنشاء المقيد للمريض نفسه).
+    // استثناء: الموافقات (consents) — كتابة المريض وحده؛ كتابة الطاقم
+    // عليها مرفوضة هنا حتى لا يتجاوز الممرر العام قاعدة الموافقات الأضيق.
+    // مسارات الكود الحالية: plan وplanHistory وdayLogs وshoppingLists
+    // وmilestones وseasonal وintakes وactiveFasting وnotificationSettings
+    // وphotos — كلها غير consents فتبقى مسموحة للطاقم.
+    match /patients/{pid}/{subcollection}/{doc=**} {
       allow read, write: if isPatient() && request.auth.uid == pid;
       allow read: if isStaff() && patientClinicId(pid) == clinicId();
-      allow write: if isCoach() && patientClinicId(pid) == clinicId();
-      allow write: if isAdmin() && patientClinicId(pid) == clinicId();
+      allow write: if isCoach() && patientClinicId(pid) == clinicId()
+                   && !isConsentSubpath(subcollection);
+      allow write: if isAdmin() && patientClinicId(pid) == clinicId()
+                   && !isConsentSubpath(subcollection);
     }
     // مستند المريض نفسه: قراءة بقاعدة resource.data (لا get()) حتى
     // تُقبل استعلامات القائمة — قاعدة تعتمد على get() لا يمكن إثباتها
     // من قيود الاستعلام، فكانت القائمة مرفوضة رغم فراغ العيادة.
     // التعديل ما زال لا يسمح بتغيير clinicId.
+    // الإنشاء: المريض نفسه فقط أثناء التسجيل بالدعوة (registerWithInvitation
+    // ينشئ users/{uid} أولًا فيتحقق isPatient())، ولعيادته نفسها فقط،
+    // وبحقول محدودة: clinicId وprofile وinvitedBy الاختياري. أي مفتاح
+    // آخر (مثل plan) مرفوض. لا يوجد مسار في الكود ينشئ سجل مريض من
+    // الطاقم، لذلك لا allow create للطاقم هنا. أي تعديل لاحق على هذا
+    // الملف يحتاج نشرًا يدويًا للقواعد (بانتظار ذلك النشر في هذه المرحلة).
     match /patients/{pid} {
       allow read: if isPatient() && request.auth.uid == pid;
       allow read: if isStaff() && resource.data.clinicId == clinicId();
+      allow create: if isPatient() && request.auth.uid == pid
+                    && clinicId() is string
+                    && request.resource.data.clinicId == clinicId()
+                    && request.resource.data.profile is map
+                    && request.resource.data.profile.clientName is string
+                    && request.resource.data.profile.clientName.size() > 0
+                    && request.resource.data.profile.clientName.size() < 200
+                    && (request.resource.data.keys().hasOnly(['clinicId', 'profile'])
+                        || (request.resource.data.keys().hasOnly(['clinicId', 'profile', 'invitedBy'])
+                            && request.resource.data.invitedBy is string
+                            && request.resource.data.invitedBy.size() > 0
+                            && request.resource.data.invitedBy.size() < 200));
       allow update: if isStaff() && clinicId() == resource.data.clinicId
                     && request.resource.data.clinicId == resource.data.clinicId;
     }

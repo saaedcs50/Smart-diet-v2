@@ -4,6 +4,24 @@ import { StorageKeys, brandStorageSlug } from './storageKeys';
 // أول استخدام: يُنشأ الرمز محليًا (إعداد أول مرة) أو يُتحقق منه عبر الخادم، ويُخزَّن هاشه المُملَّح فقط.
 export const MIN_PIN_LENGTH = 4; // حد القبول الأدنى عند التخزين (توافقًا مع رموز خادم قائمة)
 export const MIN_NEW_PIN_LENGTH = 5; // حد إنشاء رمز محلي جديد
+
+// علَم بناء واحد: الوضع المحلي الخالص (استضافة ثابتة بلا API) يُفعَّل فقط
+// عندما تكون القيمة حرفيًا 'true'. بدونه لا يُنشأ رمز محلي عند تعذّر
+// الوصول للخادم — يجب التحقق من الخادم أولًا.
+// قراءة علَم البناء بنفس نمط platformMode.ts (import.meta أولًا ثم process)
+function readBuildFlag(name: string): string | undefined {
+  const metaEnv = (
+    import.meta as unknown as { env?: Record<string, string | undefined> }
+  ).env?.[name];
+  if (metaEnv !== undefined) return metaEnv;
+  return (
+    globalThis as unknown as {
+      process?: { env?: Record<string, string | undefined> };
+    }
+  ).process?.env?.[name];
+}
+
+export const COACH_LOCAL_ONLY = readBuildFlag('VITE_COACH_LOCAL_ONLY') === 'true';
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 const HASH_V2_PREFIX = 'v2$';
@@ -69,20 +87,67 @@ export function getRemainingAttempts(): number {
   return Math.max(0, MAX_ATTEMPTS - state.attempts);
 }
 
-export function isCoachSessionUnlocked(): boolean {
+const PROOF_VERSION = 1;
+const PROOF_TTL_MS = 60 * 60 * 1000; // الجلسة المحلية 60 دقيقة كحد أقصى
+
+interface UnlockProof {
+  v: number;
+  exp: number;
+  tag: string;
+  bound: string;
+}
+
+function randomTagHex(): string {
   try {
-    return sessionStorage.getItem(unlockKey()) === 'true';
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
   } catch {
-    return false;
+    return `${Date.now()}-${Math.random()}`;
   }
 }
 
-/** تعليم الجلسة كمفتوحة (يستخدمه مسار الخادم بعد تحقق ناجح) */
+/**
+ * تعليم الجلسة كمفتوحة بدليل منظم: نسخة + انتهاء (≤ 60 دقيقة) + وسم عشوائي
+ * مربوط بهاش الـ PIN المخزَّن عبر hashesEqual (تغيير الرمز يُبطل الدليل القديم).
+ * ملاحظة صريحة: من يستطيع قراءة هاش الـ PIN من التخزين المحلي يستطيع تزوير
+ * هذا الدليل — ليس سر خادم ولا حدًا أمنيًا ضد مالك المتصفح.
+ * (يستخدمه مسار الخادم بعد تحقق ناجح، والفتح المحلي بعد تحقق الهاش)
+ */
 export function markCoachSessionUnlocked(): void {
   try {
-    sessionStorage.setItem(unlockKey(), 'true');
+    const storedHash = localStorage.getItem(pinHashKey());
+    if (!storedHash) return;
+    const proof: UnlockProof = {
+      v: PROOF_VERSION,
+      exp: Date.now() + PROOF_TTL_MS,
+      tag: randomTagHex(),
+      bound: storedHash,
+    };
+    sessionStorage.setItem(unlockKey(), JSON.stringify(proof));
   } catch {
     // ignore
+  }
+}
+
+export function isCoachSessionUnlocked(): boolean {
+  try {
+    const raw = sessionStorage.getItem(unlockKey());
+    if (!raw) return false;
+    // القيمة الحرفية 'true' القديمة لم تعد نجاحًا
+    if (raw === 'true') return false;
+    const proof = JSON.parse(raw) as Partial<UnlockProof>;
+    if (proof.v !== PROOF_VERSION) return false;
+    if (typeof proof.exp !== 'number' || proof.exp <= Date.now()) return false;
+    if (typeof proof.tag !== 'string' || !proof.tag) return false;
+    if (typeof proof.bound !== 'string' || !proof.bound) return false;
+    const storedHash = localStorage.getItem(pinHashKey());
+    if (!storedHash) return false;
+    return hashesEqual(proof.bound, storedHash);
+  } catch {
+    return false;
   }
 }
 
@@ -97,25 +162,16 @@ export type CoachUnlockResult =
       needsSetup?: boolean;
     };
 
+// لا يوجد بديل ضعيف: غياب crypto.subtle خطأ واضح ولا يُكتب شيء
 async function sha256Hex(text: string): Promise<string> {
-  try {
-    if (typeof crypto !== 'undefined' && crypto.subtle) {
-      const data = new TextEncoder().encode(text);
-      const buf = await crypto.subtle.digest('SHA-256', data);
-      return Array.from(new Uint8Array(buf))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-    }
-  } catch {
-    // fallback below
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    throw new Error('التشفير (crypto.subtle) غير متاح في هذا المتصفح — لا يمكن التحقق من الرمز أو حفظه.');
   }
-  // simple fallback hash
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    hash = (hash << 5) - hash + text.charCodeAt(i);
-    hash |= 0;
-  }
-  return `h_${hash}`;
+  const data = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 function pinHashPayload(pin: string): string {
@@ -190,8 +246,14 @@ export async function setupCoachPin(
   try {
     await storePinHash(pin);
     return { ok: true };
-  } catch {
-    return { ok: false, error: 'تعذّر حفظ الرمز. حاول مرة أخرى.' };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error && err.message
+          ? err.message
+          : 'تعذّر حفظ الرمز. حاول مرة أخرى.',
+    };
   }
 }
 
@@ -262,7 +324,19 @@ export async function unlockCoachSession(pin: string): Promise<CoachUnlockResult
   }
 
   // 2. التحقق من الهاش المخزَّن فقط (v2 مُملَّح، أو v1 قديم يُرقّى عند النجاح)
-  const isCorrect = await verifyPin(trimmed);
+  // غياب crypto.subtle يفشل برسالة واضحة ولا يكتب شيئًا
+  let isCorrect: boolean;
+  try {
+    isCorrect = await verifyPin(trimmed);
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error && err.message
+          ? err.message
+          : 'تعذّر التحقق من الرمز.',
+    };
+  }
 
   // 3. في حالة النجاح
   if (isCorrect) {
