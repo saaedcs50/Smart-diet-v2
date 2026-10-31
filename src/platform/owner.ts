@@ -92,13 +92,26 @@ export async function unsuspendClinic(clinicId: string): Promise<void> {
 // --- الاشتراكات --------------------------------------------------------------
 
 /** يحسب تاريخ الانتهاء من الخطة. الدائم: null (لا ينتهي). */
+// SDV2-BUG-001: استخدام addMonthsLocked بدل setMonth لتجنب قفزة نهاية الشهر.
 export function expiryForPlan(
   plan: SubscriptionPlan,
   from: Date = new Date(),
 ): Date | null {
   if (plan === 'permanent') return null;
+  return addMonthsLocked(from, plan === 'annual' ? 12 : 1);
+}
+
+/**
+ * يجمع أشهرًا على تاريخ مع تثبيت اليوم على آخر يوم صالح في الشهر المستهدف.
+ * يمنع قفزة setMonth (مثل 31 يناير + شهر = 3 مارس بدل 28 فبراير).
+ */
+export function addMonthsLocked(from: Date, months: number): Date {
   const d = new Date(from);
-  d.setMonth(d.getMonth() + (plan === 'annual' ? 12 : 1));
+  const day = d.getDate();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + months);
+  const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  d.setDate(Math.min(day, lastDay));
   return d;
 }
 
@@ -281,5 +294,23 @@ export async function savePaymentMethods(
     },
     { onConflict: 'key' },
   );
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * ربط UID المالك بالعيادة بعد إتمام تسجيله عبر الدعوة.
+ * SDV2-OWNER-001: يصلح مشكلة owner_uid الفارغ الدائم.
+ * يُستدعى بعد نجاح تسجيل المالك المدعو.
+ */
+export async function linkClinicOwner(
+  clinicId: string,
+  ownerUid: string,
+): Promise<void> {
+  const sb = getSupabase();
+  const { error } = await sb
+    .from('clinics')
+    .update({ owner_uid: ownerUid })
+    .eq('id', clinicId)
+    .eq('owner_uid', '');
   if (error) throw new Error(error.message);
 }
