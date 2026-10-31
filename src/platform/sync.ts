@@ -212,7 +212,7 @@ export async function migrateLocalToCloud(
 // مؤشر حالة المزامنة (محلي فقط — لا بيانات صحية، مجرد أعداد وتوقيت)
 // ---------------------------------------------------------------------------
 
-export type SyncState = 'idle' | 'syncing' | 'success' | 'error';
+export type SyncState = 'idle' | 'syncing' | 'success' | 'partial' | 'error';
 
 export interface SyncStatus {
   state: SyncState;
@@ -220,6 +220,8 @@ export interface SyncStatus {
   dayLogCount: number;
   planWritten: boolean;
   error: string | null;
+  // SDV2-P1-2: الأقسام غير المدعومة التي بقيت محلية فقط (تُعرض للمستخدم عند partial)
+  unsupportedSections: string[];
 }
 
 type MinimalStore = {
@@ -244,6 +246,7 @@ export function loadSyncStatus(store?: MinimalStore): SyncStatus {
     dayLogCount: 0,
     planWritten: false,
     error: null,
+    unsupportedSections: [],
   };
   const resolved = resolveStore(store);
   if (!resolved) return fallback;
@@ -251,7 +254,7 @@ export function loadSyncStatus(store?: MinimalStore): SyncStatus {
     const value = resolved.getItem('sd_platform_sync_status');
     if (!value) return fallback;
     const parsed = JSON.parse(value) as Partial<SyncStatus>;
-    if (parsed.state !== 'idle' && parsed.state !== 'syncing' && parsed.state !== 'success' && parsed.state !== 'error') {
+    if (parsed.state !== 'idle' && parsed.state !== 'syncing' && parsed.state !== 'success' && parsed.state !== 'partial' && parsed.state !== 'error') {
       return fallback;
     }
     return {
@@ -260,6 +263,7 @@ export function loadSyncStatus(store?: MinimalStore): SyncStatus {
       dayLogCount: typeof parsed.dayLogCount === 'number' ? parsed.dayLogCount : 0,
       planWritten: parsed.planWritten === true,
       error: typeof parsed.error === 'string' ? parsed.error : null,
+      unsupportedSections: Array.isArray(parsed.unsupportedSections) ? parsed.unsupportedSections.filter((s): s is string => typeof s === 'string') : [],
     };
   } catch {
     return fallback;
