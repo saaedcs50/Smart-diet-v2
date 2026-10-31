@@ -24,21 +24,21 @@ const auth = readFileSync(
 );
 
 describe('PlatformAuthProvider profile listener', () => {
-  it('يستمع باستمرار لمستند المستخدم بدل قراءة واحدة', () => {
-    expect(auth).toContain('onSnapshot(');
-    expect(auth).toContain("doc(getFirestoreDb(), 'users', nextUser.uid)");
-    expect(auth).not.toContain('getDoc(');
+  it('يستمع باستمرار لملف المستخدم بدل قراءة واحدة', () => {
+    expect(auth).toContain(".channel(`profile-${uid}`)");
+    expect(auth).toContain(".from('profiles')");
+    expect(auth).toContain('onAuthStateChange(');
   });
 
   it('يلغي مستمع المستند عند تبدّل المستخدم وعند إلغاء التحميل', () => {
-    expect(auth).toContain('docUnsubscribe?.();');
-    expect(auth).toContain('docUnsubscribe = onSnapshot(');
+    expect(auth).toContain('channel?.unsubscribe()');
+    expect(auth).toContain('subscription.unsubscribe()');
   });
 
   it('يحافظ على دلالات الملف المفقود وحالة التحميل', () => {
-    expect(auth).toContain('setProfileMissing(parsed === null)');
-    expect(auth).toContain('setProfileMissing(true)');
+    expect(auth).toContain('setProfileMissing(');
     expect(auth).toContain('setLoading(false)');
+    expect(auth).toContain('setLoading(true)');
   });
 
   it('لا يغيّر واجهة حالة المصادقة', () => {

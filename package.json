@@ -19,6 +19,7 @@
     "test:rules": "env -u https_proxy -u HTTPS_PROXY -u http_proxy -u HTTP_PROXY -u all_proxy -u ALL_PROXY -u NODE_USE_ENV_PROXY JAVA_TOOL_OPTIONS=\"-Djava.net.preferIPv4Stack=true\" firebase emulators:exec --only firestore --project demo-test \"npx vitest run --config vitest.rules.config.ts\""
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "dotenv": "^17.2.3",

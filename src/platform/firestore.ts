@@ -1,40 +1,17 @@
 // ============================================================================
-// طبقة بيانات Firestore — المرحلة الأولى من بناء المنصة
+// طبقة بيانات المنصة — ترحيل 2026-10-31: Firestore ← Supabase (Postgres)
 // ----------------------------------------------------------------------------
-// مطابقة لنموذج البيانات في دراسة التصميم §٣، بلا أي تغيير في الأنواع
-// الحالية نفسها (PlanConfig وDayLog وكل أنواع الدفعات ١–٣ تُستخدم كما هي).
-// ما يُضاف هنا فقط هو:
-//   - مسارات المستندات والمجموعات الفرعية،
-//   - تحويل من/إلى Firestore (إزالة undefined الذي يرفضه Firestore، وحذف
-//     حقل adminPin القديم نهائيًا من أي خطة تُزامن — لا يُرفع أي أثر PIN
-//     إلى السحابة أبدًا)،
-//   - حقولا مزامنة فقط: updatedAt (طابع خادم) وupdatedBy (uid المحرِّر).
-// - مستند المريض `patients/{uid}` يحمل `clinicId` نفسه (uid الحساب = uid
-//   المريض، بلا معرّف منفصل) حتى تعمل قواعد العزل على مستوى المستند.
-// - الصور: metadata فقط هنا؛ رفع الملفات إلى Cloud Storage خطوة لاحقة
-//   (لا يوجد رفع Storage في هذه المرحلة).
-// - لا تستدعي أي دالة هنا تلقائيًا: وضع المنصة معطّل افتراضيًا
-//   (platformMode.ts) ولا يوجد ربط له في App.tsx في هذه المرحلة.
+// مطابقة لنموذج البيانات، بلا أي تغيير في الأنواع نفسها (PlanConfig وDayLog
+// وكل أنواع الدفعات تُستخدم كما هي). ما يتغير هو مصدر البيانات فقط:
+//   - جداول Supabase بدل مجموعات Firestore (snake_case في القاعدة،
+//     camelCase في الواجهات — التحويل هنا).
+//   - الطوابع الزمنية ISO strings بدل FieldValue.
+//   - حقولا مزامنة: updatedAt (ISO) وupdatedBy (uid المحرِّر).
+// - مستند المريض patients: id = auth.uid()، clinic_id للعزل.
+// - لا تستدعي أي دالة هنا تلقائيًا: وضع المنصة معطّل افتراضيًا.
 // ============================================================================
 
-import {
-  addDoc,
-  collection,
-  deleteField,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  where,
-  type CollectionReference,
-  type DocumentData,
-  type DocumentReference,
-  type FieldValue,
-} from 'firebase/firestore';
-import { getFirestoreDb } from './firebase';
+import { getSupabase } from './supabase';
 import type {
   ActiveFastingSession,
   DayLog,
@@ -47,7 +24,7 @@ import type { SeasonalActivation } from '../utils/seasonalTemplate';
 import type { ShoppingListState } from '../utils/shoppingList';
 
 export type PlatformRole = 'patient' | 'coach' | 'admin' | 'owner';
-// owner = صاحب المنصة (سعيد) — يُنشأ من الكونسول فقط، clinicId = 'platform'.
+// owner = صاحب المنصة (سعيد) — clinicId = 'platform'.
 // admin = صاحب العيادة، coach = الدكتور، patient = المريض.
 
 export interface PlatformUserProfile {
@@ -59,18 +36,17 @@ export interface PlatformUserProfile {
   disabled: boolean;
 }
 
-// مستند سجل الحساب users/{uid} — مصدر الدور في هذه المرحلة (انظر auth.tsx
-// لملاحظة التقوية اللاحقة إلى claims).
+// ملف المستخدم profiles — مصدر الدور (انظر auth.tsx).
 export interface UserDoc {
   role: PlatformRole;
   clinicId: string;
   displayName: string | null;
   email: string | null;
   disabled?: boolean;
-  createdAt?: FieldValue;
+  createdAt?: string;
 }
 
-// مستند العيادة clinics/{clinicId} — حقول الهوية من BrandConfig الحالي
+// مستند العيادة clinics — حقول الهوية من BrandConfig الحالي
 // (clients/white-label.json) + حقولا المنصة الجديدة فقط.
 export interface ClinicDoc {
   appName: string;
@@ -89,24 +65,21 @@ export interface ClinicDoc {
   logoPath: string;
   status: 'active' | 'suspended';
   planTier?: string;
-  createdAt?: FieldValue;
+  createdAt?: string;
 }
 
-// مستند المريض patients/{uid}: الخطة حقل داخله، والسجلات مجموعات فرعية.
-// invitedBy هو uid من دعا المريض (طبيب أو أدمن) — يُخزَّن عند التسجيل
-// بالدعوة، ويُستخدم لربط المريض بطبيبه في لوحة الطاقم المتقدمة. غيابه
-// يعني أن المريض غير معيّن لطبيب بعد (مرضى تجريبيون قدامى أو مدعوون
-// من أدمن).
+// سجل المريض patients: الخطة حقل داخله (JSONB).
+// invitedBy هو uid من دعا المريض (طبيب أو أدمن).
 export interface PatientDoc {
   clinicId: string;
   profile: { clientName: string };
   plan?: PlanConfig;
   invitedBy?: string;
-  updatedAt?: FieldValue;
+  updatedAt?: string;
   updatedBy?: string;
 }
 
-// اشتراك العيادة clinicSubscriptions/{clinicId} — الوثيقة الوحيدة للاشتراك
+// اشتراك العيادة clinic_subscriptions — الوثيقة الوحيدة للاشتراك
 // في نموذج B2B (لا اشتراك للمريض ولا للدكتور).
 export type SubscriptionPlan = 'permanent' | 'monthly' | 'annual';
 export type SubscriptionStatus = 'active' | 'grace' | 'expired';
@@ -115,38 +88,37 @@ export interface PaymentRecord {
   amount: number;
   currency: 'EGP';
   reference: string;
-  submittedAt?: FieldValue;
+  submittedAt?: string;
   submittedBy?: string;
-  reviewedAt?: FieldValue | null;
+  reviewedAt?: string | null;
   reviewedBy?: string | null;
   note?: string;
 }
 export interface ClinicSubscriptionDoc {
   plan: SubscriptionPlan;
   status: SubscriptionStatus;
-  startAt?: FieldValue;
-  expiresAt?: FieldValue | null; // null للدائم
-  graceEndsAt?: FieldValue | null;
+  startAt?: string;
+  expiresAt?: string | null; // null للدائم
+  graceEndsAt?: string | null;
   payments: PaymentRecord[];
-  updatedAt?: FieldValue;
+  updatedAt?: string;
 }
 
-// إعدادات المنصة platformConfig/paymentMethods — بيانات الدفع اليدوي.
+// إعدادات المنصة platform_config (key='paymentMethods') — بيانات الدفع اليدوي.
 export interface PlatformPaymentMethods {
   instapay: { label: string; value: string };
   vodafoneCash: { label: string; value: string };
-  updatedAt?: FieldValue;
+  updatedAt?: string;
 }
 
-// مستند العيادة في نموذج B2B — clinics/{clinicId}.
-// (يختلف عن ClinicDoc القديم الخاص بوضع العيادة الواحدة.)
+// سجل العيادة في نموذج B2B — clinics.
 export interface B2BClinicDoc {
   name: string;
   ownerUid: string; // فارغ حتى يسجل صاحب العيادة بالدعوة
   ownerName: string;
   ownerPhone: string;
   status: 'active' | 'suspended';
-  createdAt?: FieldValue;
+  createdAt?: string;
 }
 
 export interface MilestonesDoc {
@@ -162,15 +134,14 @@ export interface ConsentDoc {
   version: string;
 }
 
-// metadata صورة فقط — الملف نفسه في Cloud Storage (لاحقًا).
+// metadata صورة فقط.
 export interface PhotoMeta {
   date: string;
   note?: string;
   storagePath: string;
 }
 
-// سجل تدقيق بلا بيانات صحية — كتابة خادم فقط حسب القواعد (لا توجد دالة
-// كتابة له هنا عمدًا).
+// سجل تدقيق بلا بيانات صحية.
 export interface ClinicAuditEvent {
   type: string;
   actorUid: string;
@@ -178,98 +149,79 @@ export interface ClinicAuditEvent {
 }
 
 // ---------------------------------------------------------------------------
-// بناة المسارات
+// بناة المسارات — للتوافق مع الاختبارات؛ يعيدون مسارًا نصيًا بلا Firebase.
 // ---------------------------------------------------------------------------
 
-export function clinicRef(
-  clinicId: string,
-): DocumentReference<DocumentData> {
-  return doc(getFirestoreDb(), 'clinics', clinicId);
+export interface PathRef {
+  path: string;
 }
 
-export function userRef(uid: string): DocumentReference<DocumentData> {
-  return doc(getFirestoreDb(), 'users', uid);
+function pathRef(path: string): PathRef {
+  return { path };
 }
 
-export function patientRef(uid: string): DocumentReference<DocumentData> {
-  return doc(getFirestoreDb(), 'patients', uid);
+export function clinicRef(clinicId: string): PathRef {
+  return pathRef(`clinics/${clinicId}`);
 }
 
-export function dayLogRef(
-  uid: string,
-  date: string,
-): DocumentReference<DocumentData> {
-  return doc(getFirestoreDb(), 'patients', uid, 'dayLogs', date);
+export function userRef(uid: string): PathRef {
+  return pathRef(`users/${uid}`);
 }
 
-export function dayLogsCollection(
-  uid: string,
-): CollectionReference<DocumentData> {
-  return collection(getFirestoreDb(), 'patients', uid, 'dayLogs');
+export function patientRef(uid: string): PathRef {
+  return pathRef(`patients/${uid}`);
 }
 
-export function planHistoryCollection(
-  uid: string,
-): CollectionReference<DocumentData> {
-  return collection(getFirestoreDb(), 'patients', uid, 'planHistory');
+export function dayLogRef(uid: string, date: string): PathRef {
+  return pathRef(`patients/${uid}/dayLogs/${date}`);
 }
 
-export function shoppingListRef(
-  uid: string,
-  weekStartISO: string,
-): DocumentReference<DocumentData> {
-  return doc(getFirestoreDb(), 'patients', uid, 'shoppingLists', weekStartISO);
+export function dayLogsCollection(uid: string): PathRef {
+  return pathRef(`patients/${uid}/dayLogs`);
 }
 
-export function milestonesRef(uid: string): DocumentReference<DocumentData> {
-  return doc(getFirestoreDb(), 'patients', uid, 'milestones', 'state');
+export function planHistoryCollection(uid: string): PathRef {
+  return pathRef(`patients/${uid}/planHistory`);
 }
 
-export function seasonalRef(uid: string): DocumentReference<DocumentData> {
-  return doc(getFirestoreDb(), 'patients', uid, 'seasonal', 'state');
+export function shoppingListRef(uid: string, weekStartISO: string): PathRef {
+  return pathRef(`patients/${uid}/shoppingLists/${weekStartISO}`);
 }
 
-export function intakeRef(
-  uid: string,
-  intakeId: string,
-): DocumentReference<DocumentData> {
-  return doc(getFirestoreDb(), 'patients', uid, 'intakes', intakeId);
+export function milestonesRef(uid: string): PathRef {
+  return pathRef(`patients/${uid}/milestones/state`);
 }
 
-export function consentRef(
-  uid: string,
-  type: string,
-): DocumentReference<DocumentData> {
-  return doc(getFirestoreDb(), 'patients', uid, 'consents', type);
+export function seasonalRef(uid: string): PathRef {
+  return pathRef(`patients/${uid}/seasonal/state`);
 }
 
-export function activeFastingRef(
-  uid: string,
-): DocumentReference<DocumentData> {
-  return doc(getFirestoreDb(), 'patients', uid, 'activeFasting', 'state');
+export function intakeRef(uid: string, intakeId: string): PathRef {
+  return pathRef(`patients/${uid}/intakes/${intakeId}`);
 }
 
-export function notificationSettingsRef(
-  uid: string,
-): DocumentReference<DocumentData> {
-  return doc(getFirestoreDb(), 'patients', uid, 'notificationSettings', 'state');
+export function consentRef(uid: string, type: string): PathRef {
+  return pathRef(`patients/${uid}/consents/${type}`);
 }
 
-export function photoRef(
-  uid: string,
-  photoId: string,
-): DocumentReference<DocumentData> {
-  return doc(getFirestoreDb(), 'patients', uid, 'photos', photoId);
+export function activeFastingRef(uid: string): PathRef {
+  return pathRef(`patients/${uid}/activeFasting/state`);
 }
 
-export function clinicAuditCollection(
-  clinicId: string,
-): CollectionReference<DocumentData> {
-  return collection(getFirestoreDb(), 'clinicAudit', clinicId, 'events');
+export function notificationSettingsRef(uid: string): PathRef {
+  return pathRef(`patients/${uid}/notificationSettings/state`);
+}
+
+export function photoRef(uid: string, photoId: string): PathRef {
+  return pathRef(`patients/${uid}/photos/${photoId}`);
+}
+
+export function clinicAuditCollection(clinicId: string): PathRef {
+  return pathRef(`clinicAudit/${clinicId}/events`);
 }
 
 // ---------------------------------------------------------------------------
-// التحويل من/إلى Firestore (دوال خالصة — قابلة للاختبار بلا شبكة)
+// التحويل (دوال خالصة — قابلة للاختبار بلا شبكة)
 // ---------------------------------------------------------------------------
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -278,8 +230,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return proto === Object.prototype || proto === null;
 }
 
-// Firestore يرفض undefined في أي موضع: يُحذف recursively مع الحفاظ على
-// المصفوفات والكائنات العادية. الطوابع والتواريخ تُمرَّر كما هي.
+// إزالة undefined recursively مع الحفاظ على المصفوفات والكائنات العادية.
 export function stripUndefinedDeep<T>(value: T): T {
   if (Array.isArray(value)) {
     return value.map((item) => stripUndefinedDeep(item)) as T;
@@ -295,7 +246,7 @@ export function stripUndefinedDeep<T>(value: T): T {
 }
 
 export interface SyncMeta {
-  updatedAt: FieldValue;
+  updatedAt: string;
   updatedBy: string;
 }
 
@@ -305,13 +256,12 @@ export function withSyncMeta<T extends object>(
 ): T & SyncMeta {
   return {
     ...stripUndefinedDeep(data),
-    updatedAt: serverTimestamp(),
+    updatedAt: new Date().toISOString(),
     updatedBy: editorUid,
   };
 }
 
-// الخطة المُزامنة: adminPin القديم يُحذف دائمًا قبل الرفع (حقل إرثي مُفرَّغ
-// عند التحميل محليًا أصلًا، ولا مكان له في السحابة).
+// الخطة المُزامنة: adminPin القديم يُحذف دائمًا قبل الرفع.
 export function planToFirestore(
   plan: PlanConfig,
   editorUid: string,
@@ -328,8 +278,7 @@ export function dayLogToFirestore(
   return withSyncMeta(dayLog, editorUid);
 }
 
-// قراءة دفاعية خفيفة: ترفض ما ليس كائنًا أو ما يفتقد الحقول الجوهرية،
-// وتعيد النوع الحالي كما هو بلا تحويل موازٍ.
+// قراءة دفاعية خفيفة: ترفض ما ليس كائنًا أو ما يفتقد الحقول الجوهرية.
 export function planFromFirestore(data: unknown): PlanConfig | null {
   if (!isPlainObject(data)) return null;
   if (typeof data.clientName !== 'string') return null;
@@ -344,18 +293,39 @@ export function dayLogFromFirestore(data: unknown): DayLog | null {
   return data as unknown as DayLog;
 }
 
+// تحويل صف patients (snake_case) إلى PatientDoc
+function rowToPatientDoc(row: Record<string, unknown>): PatientDoc {
+  const doc: PatientDoc = {
+    clinicId: row.clinic_id as string,
+    profile: (row.profile as { clientName: string }) ?? { clientName: '' },
+  };
+  if (row.plan != null) doc.plan = row.plan as PlanConfig;
+  if (row.invited_by != null) doc.invitedBy = row.invited_by as string;
+  return doc;
+}
+
 // ---------------------------------------------------------------------------
 // عمليات القراءة والكتابة (لا تُستدعى إلا في وضع المنصة المُفعَّل)
 // ---------------------------------------------------------------------------
 
 export async function getClinic(clinicId: string): Promise<ClinicDoc | null> {
-  const snap = await getDoc(clinicRef(clinicId));
-  return snap.exists() ? (snap.data() as ClinicDoc) : null;
+  const { data, error } = await getSupabase()
+    .from('clinics')
+    .select()
+    .eq('id', clinicId)
+    .single();
+  if (error || !data) return null;
+  return data as unknown as ClinicDoc;
 }
 
 export async function getPatient(uid: string): Promise<PatientDoc | null> {
-  const snap = await getDoc(patientRef(uid));
-  return snap.exists() ? (snap.data() as PatientDoc) : null;
+  const { data, error } = await getSupabase()
+    .from('patients')
+    .select()
+    .eq('id', uid)
+    .single();
+  if (error || !data) return null;
+  return rowToPatientDoc(data as Record<string, unknown>);
 }
 
 export async function getPatientPlan(
@@ -366,26 +336,23 @@ export async function getPatientPlan(
   return planFromFirestore(patient.plan);
 }
 
-// إنشاء/تأكيد مستند المريض (clinicId + الاسم المعروض) بلا خطة بعد.
-// invitedBy اختياري: يُمرَّر عند التسجيل بالدعوة (uid الداعي)، ويُحفظ
-// فقط عند توفره — Firestore يرفض undefined، فلا يُكتب الحقل أبدًا بقيمة
-// فارغة. ملاحظة: setDoc مع merge لا يمسح invitedBy موجودًا عند غياب
-// المعامل (لا يُمرَّر حقل أصلًا)، فتعيين الطبيب يتم عبر assignPatientCoach.
+// إنشاء/تأكيد سجل المريض (clinicId + الاسم المعروض) بلا خطة بعد.
 export async function ensurePatientDoc(
   uid: string,
   clinicId: string,
   clientName: string,
   invitedBy?: string,
 ): Promise<void> {
-  await setDoc(
-    patientRef(uid),
+  const { error } = await getSupabase().from('patients').upsert(
     {
-      clinicId,
+      id: uid,
+      clinic_id: clinicId,
       profile: { clientName },
-      ...(invitedBy ? { invitedBy } : {}),
+      ...(invitedBy ? { invited_by: invitedBy } : {}),
     },
-    { merge: true },
+    { onConflict: 'id' },
   );
+  if (error) throw new Error(error.message);
 }
 
 export async function savePatientPlan(
@@ -393,27 +360,20 @@ export async function savePatientPlan(
   plan: PlanConfig,
   editorUid: string,
 ): Promise<void> {
-  await setDoc(
-    patientRef(uid),
-    { plan: planToFirestore(plan, editorUid) },
-    { merge: true },
-  );
+  const { error } = await getSupabase()
+    .from('patients')
+    .update({ plan: planToFirestore(plan, editorUid) })
+    .eq('id', uid);
+  if (error) throw new Error(error.message);
 }
 
-// حفظ خطة مع لقطة من الخطة السابقة في planHistory (أثر تدقيقي، دراسة §٣).
+// حفظ خطة مع لقطة من الخطة السابقة — plan_history غير موجود في السكيما
+// الحالية، فيُحفظ بدون أثر تدقيقي (موثق كقيد ترحيل).
 export async function savePatientPlanWithHistory(
   uid: string,
   plan: PlanConfig,
   editorUid: string,
 ): Promise<void> {
-  const previous = await getPatientPlan(uid);
-  if (previous) {
-    await addDoc(planHistoryCollection(uid), {
-      plan: stripUndefinedDeep(previous),
-      savedAt: serverTimestamp(),
-      savedBy: editorUid,
-    });
-  }
   await savePatientPlan(uid, plan, editorUid);
 }
 
@@ -421,151 +381,158 @@ export async function getDayLog(
   uid: string,
   date: string,
 ): Promise<DayLog | null> {
-  const snap = await getDoc(dayLogRef(uid, date));
-  if (!snap.exists()) return null;
-  return dayLogFromFirestore(snap.data());
+  const { data, error } = await getSupabase()
+    .from('day_logs')
+    .select('log')
+    .eq('patient_id', uid)
+    .eq('log_date', date)
+    .single();
+  if (error || !data) return null;
+  return dayLogFromFirestore((data as { log: unknown }).log);
 }
 
-// مستند اليوم هو وحدة التعارض (دراسة §٧): يُستبدل كاملًا عند الحفظ.
 export async function saveDayLog(
   uid: string,
   date: string,
   dayLog: DayLog,
   editorUid: string,
 ): Promise<void> {
-  await setDoc(dayLogRef(uid, date), dayLogToFirestore(dayLog, editorUid));
+  const { error } = await getSupabase().from('day_logs').upsert(
+    {
+      patient_id: uid,
+      log_date: date,
+      log: dayLogToFirestore(dayLog, editorUid),
+    },
+    { onConflict: 'patient_id,log_date' },
+  );
+  if (error) throw new Error(error.message);
 }
 
 export async function listDayLogs(uid: string): Promise<DayLog[]> {
-  const snap = await getDocs(dayLogsCollection(uid));
+  const { data, error } = await getSupabase()
+    .from('day_logs')
+    .select('log')
+    .eq('patient_id', uid);
+  if (error || !data) return [];
   const out: DayLog[] = [];
-  for (const d of snap.docs) {
-    const parsed = dayLogFromFirestore(d.data());
+  for (const row of data as Array<{ log: unknown }>) {
+    const parsed = dayLogFromFirestore(row.log);
     if (parsed) out.push(parsed);
   }
   return out;
 }
 
-// سجلات الأيام مع تواريخها (معرّف المستند = تاريخ اليوم) — تحتاجها
-// واجهة المنصة لعرض السجلات مرتبة، بينما listDayLogs الأصلية تُسقط
-// التواريخ.
+// سجلات الأيام مع تواريخها — تحتاجها واجهة المنصة لعرض السجلات مرتبة.
 export async function listDayLogEntries(
   uid: string,
 ): Promise<Array<{ date: string; log: DayLog }>> {
-  const snap = await getDocs(dayLogsCollection(uid));
+  const { data, error } = await getSupabase()
+    .from('day_logs')
+    .select('log_date, log')
+    .eq('patient_id', uid)
+    .order('log_date', { ascending: false });
+  if (error || !data) return [];
   const out: Array<{ date: string; log: DayLog }> = [];
-  for (const d of snap.docs) {
-    const parsed = dayLogFromFirestore(d.data());
-    if (parsed) out.push({ date: d.id, log: parsed });
+  for (const row of data as Array<{ log_date: string; log: unknown }>) {
+    const parsed = dayLogFromFirestore(row.log);
+    if (parsed) out.push({ date: row.log_date, log: parsed });
   }
-  out.sort((a, b) => (a.date < b.date ? 1 : -1));
   return out;
 }
 
-// للطاقم فقط (القواعد ترفض غير طاقم العيادة): مرضى عيادة واحدة.
+// للطاقم فقط (سياسات RLS ترفض غير طاقم العيادة): مرضى عيادة واحدة.
 export async function listClinicPatients(
   clinicId: string,
 ): Promise<PatientDoc[]> {
-  const snap = await getDocs(
-    query(
-      collection(getFirestoreDb(), 'patients'),
-      where('clinicId', '==', clinicId),
-    ),
-  );
-  return snap.docs.map((d) => d.data() as PatientDoc);
+  const { data, error } = await getSupabase()
+    .from('patients')
+    .select()
+    .eq('clinic_id', clinicId);
+  if (error || !data) return [];
+  return (data as Array<Record<string, unknown>>).map(rowToPatientDoc);
 }
 
-// مثل listClinicPatients لكن مع uid كل مريض (معرّف المستند) — تحتاجه
-// واجهة المنصة للتنقل إلى صفحة المريض.
+// مثل listClinicPatients لكن مع uid كل مريض.
 export async function listClinicPatientEntries(
   clinicId: string,
 ): Promise<Array<{ uid: string; doc: PatientDoc }>> {
-  const snap = await getDocs(
-    query(
-      collection(getFirestoreDb(), 'patients'),
-      where('clinicId', '==', clinicId),
-    ),
-  );
-  return snap.docs.map((d) => ({ uid: d.id, doc: d.data() as PatientDoc }));
+  const { data, error } = await getSupabase()
+    .from('patients')
+    .select()
+    .eq('clinic_id', clinicId);
+  if (error || !data) return [];
+  return (data as Array<Record<string, unknown>>).map((row) => ({
+    uid: row.id as string,
+    doc: rowToPatientDoc(row),
+  }));
 }
 
 // ---------------------------------------------------------------------------
-// لوحة الطاقم المتقدمة: أطباء العيادة وربط المرضى بهم (واجهة فقط)
+// لوحة الطاقم المتقدمة: أطباء العيادة وربط المرضى بهم
 // ---------------------------------------------------------------------------
-// تنبيه نطاق صريح: الربط هنا على مستوى الواجهة فقط (حقل invitedBy في
-// مستند المريض). قراءة الطاقم على مستوى العيادة تبقى كما هي اليوم —
-// طبيب يستطيع فتح صفحة مريض لطبيب آخر برابط مباشر، تمامًا كما اليوم.
-// عزل صارم لكل طبيب على مستوى القواعد سيكسر استعلامات المجموعات
-// الفرعية، ولم يُنفَّذ عمدًا.
 
-// مدخل طاقم: uid الحساب + مستند المستخدم كما هو.
 export interface StaffEntry {
   uid: string;
   doc: UserDoc;
 }
 
-// أطباء العيادة فقط (role === 'coach') — الاستعلام على clinicId فقط بلا
-// فهرس مركّب، والترشيح للدور يتم هنا بعد القراءة. يعتمد على قاعدة
-// قراءة مستخدمي العيادة نفسها التي تعتمد عليها قائمة المرضى.
+function rowToUserDoc(row: Record<string, unknown>): UserDoc {
+  return {
+    role: row.role as UserDoc['role'],
+    clinicId: row.clinic_id as string,
+    displayName: (row.display_name as string) ?? null,
+    email: (row.email as string) ?? null,
+    disabled: (row.disabled as boolean) ?? false,
+  };
+}
+
+// أطباء العيادة فقط (role === 'coach').
 export async function listClinicStaffEntries(
   clinicId: string,
 ): Promise<StaffEntry[]> {
-  const snap = await getDocs(
-    query(
-      collection(getFirestoreDb(), 'users'),
-      where('clinicId', '==', clinicId),
-    ),
-  );
-  const out: StaffEntry[] = [];
-  for (const d of snap.docs) {
-    const doc = d.data() as UserDoc;
-    if (doc.role === 'coach') out.push({ uid: d.id, doc });
-  }
-  return out;
+  const { data, error } = await getSupabase()
+    .from('profiles')
+    .select()
+    .eq('clinic_id', clinicId)
+    .eq('role', 'coach');
+  if (error || !data) return [];
+  return (data as Array<Record<string, unknown>>).map((row) => ({
+    uid: row.id as string,
+    doc: rowToUserDoc(row),
+  }));
 }
 
-// مرضى طبيب واحد: من دعاهم هو (invitedBy == uid الطبيب). المدعوون من
-// أدمن أو المرضى القدامى بلا invitedBy لا يظهرون هنا — بل في «بلا طبيب».
-// تحذير قواعد (درس PR #6 يتكرر هنا): استعلام القائمة يُرفض بقاعدة
-// resource.data.clinicId == عيادة القارئ ما لم يُقيَّد الاستعلام نفسه
-// على clinicId — استعلام بـ invitedBy وحده مرفوض بـ «Missing or
-// insufficient permissions» حتى لو كل النتائج من نفس العيادة، لأن
-// القواعد لا تستطيع إثبات ذلك من قيود الاستعلام. لذلك يُقيَّد
-// الاستعلام على الحقلين معًا (مساواة فقط، بلا فهرس مركّب).
+// مرضى طبيب واحد: من دعاهم هو (invited_by == uid الطبيب).
 export async function listDoctorPatients(
   clinicId: string,
   coachUid: string,
 ): Promise<Array<{ uid: string; doc: PatientDoc }>> {
-  const snap = await getDocs(
-    query(
-      collection(getFirestoreDb(), 'patients'),
-      where('clinicId', '==', clinicId),
-      where('invitedBy', '==', coachUid),
-    ),
-  );
-  return snap.docs.map((d) => ({ uid: d.id, doc: d.data() as PatientDoc }));
+  const { data, error } = await getSupabase()
+    .from('patients')
+    .select()
+    .eq('clinic_id', clinicId)
+    .eq('invited_by', coachUid);
+  if (error || !data) return [];
+  return (data as Array<Record<string, unknown>>).map((row) => ({
+    uid: row.id as string,
+    doc: rowToPatientDoc(row),
+  }));
 }
 
-// تعيين/إلغاء تعيين طبيب لمريض: كتابة invitedBy فقط — clinicId لا يُمس
-// أبدًا، فيبقى التحديث مقبولًا بقواعد الطاقم الحالية بلا أي تغيير فيها.
-// null تعني إلغاء التعيين (حذف الحقل بـ deleteField).
+// تعيين/إلغاء تعيين طبيب لمريض: كتابة invited_by فقط.
+// null تعني إلغاء التعيين (NULL في القاعدة).
 export async function assignPatientCoach(
   uid: string,
   coachUid: string | null,
 ): Promise<void> {
-  await updateDoc(
-    patientRef(uid),
-    coachUid === null
-      ? { invitedBy: deleteField() }
-      : { invitedBy: coachUid },
-  );
+  const { error } = await getSupabase()
+    .from('patients')
+    .update({ invited_by: coachUid })
+    .eq('id', uid);
+  if (error) throw new Error(error.message);
 }
 
 // ملخص أطباء العيادة — دالة خالصة بلا شبكة (قابلة للاختبار مباشرة).
-// المريض يُحسب لطبيب فقط عندما يكون invitedBy مساويًا تمامًا لـ uid
-// الطبيب؛ أي مريض آخر — بلا invitedBy، أو مدعو من أدمن/غير طبيب
-// بالعيادة — يُحسب «بلا طبيب معيّن». الاسم المعروض: displayName ثم
-// البريد ثم «طبيب بلا اسم».
 export interface DoctorSummary {
   uid: string;
   displayName: string;
@@ -596,16 +563,22 @@ export function summarizeDoctors(
   return { perDoctor, unassignedCount };
 }
 
+// ---------------------------------------------------------------------------
+// دوال المجموعات الفرعية القديمة — بلا جداول في سكيما Supabase الحالية.
+// تُرمى أخطاء واضحة حتى يُتخذ قرار بشأنها (إضافة جداول أو إسقاط المزايا).
+// ---------------------------------------------------------------------------
+
+const NOT_MIGRATED =
+  'غير متاح في سكيما Supabase الحالية — يتطلب جدولًا جديدًا';
+
 export async function saveShoppingList(
   uid: string,
   weekStartISO: string,
   state: ShoppingListState,
   editorUid: string,
 ): Promise<void> {
-  await setDoc(
-    shoppingListRef(uid, weekStartISO),
-    withSyncMeta(state, editorUid),
-  );
+  void uid; void weekStartISO; void state; void editorUid;
+  throw new Error(`saveShoppingList: ${NOT_MIGRATED}`);
 }
 
 export async function saveMilestones(
@@ -613,7 +586,8 @@ export async function saveMilestones(
   state: MilestonesDoc,
   editorUid: string,
 ): Promise<void> {
-  await setDoc(milestonesRef(uid), withSyncMeta(state, editorUid));
+  void uid; void state; void editorUid;
+  throw new Error(`saveMilestones: ${NOT_MIGRATED}`);
 }
 
 export async function saveSeasonal(
@@ -621,10 +595,8 @@ export async function saveSeasonal(
   state: SeasonalActivation | null,
   editorUid: string,
 ): Promise<void> {
-  await setDoc(
-    seasonalRef(uid),
-    withSyncMeta({ value: state }, editorUid),
-  );
+  void uid; void state; void editorUid;
+  throw new Error(`saveSeasonal: ${NOT_MIGRATED}`);
 }
 
 export async function saveIntake(
@@ -633,7 +605,8 @@ export async function saveIntake(
   record: IntakeDraftRecord,
   editorUid: string,
 ): Promise<void> {
-  await setDoc(intakeRef(uid, intakeId), withSyncMeta(record, editorUid));
+  void uid; void intakeId; void record; void editorUid;
+  throw new Error(`saveIntake: ${NOT_MIGRATED}`);
 }
 
 export async function saveConsent(
@@ -642,7 +615,8 @@ export async function saveConsent(
   consent: ConsentDoc,
   editorUid: string,
 ): Promise<void> {
-  await setDoc(consentRef(uid, type), withSyncMeta(consent, editorUid));
+  void uid; void type; void consent; void editorUid;
+  throw new Error(`saveConsent: ${NOT_MIGRATED}`);
 }
 
 export async function saveActiveFasting(
@@ -650,7 +624,8 @@ export async function saveActiveFasting(
   session: ActiveFastingSession,
   editorUid: string,
 ): Promise<void> {
-  await setDoc(activeFastingRef(uid), withSyncMeta(session, editorUid));
+  void uid; void session; void editorUid;
+  throw new Error(`saveActiveFasting: ${NOT_MIGRATED}`);
 }
 
 export async function saveNotificationSettings(
@@ -658,10 +633,8 @@ export async function saveNotificationSettings(
   settings: NotificationSettings,
   editorUid: string,
 ): Promise<void> {
-  await setDoc(
-    notificationSettingsRef(uid),
-    withSyncMeta(settings, editorUid),
-  );
+  void uid; void settings; void editorUid;
+  throw new Error(`saveNotificationSettings: ${NOT_MIGRATED}`);
 }
 
 export async function savePhotoMeta(
@@ -670,5 +643,6 @@ export async function savePhotoMeta(
   meta: PhotoMeta,
   editorUid: string,
 ): Promise<void> {
-  await setDoc(photoRef(uid, photoId), withSyncMeta(meta, editorUid));
+  void uid; void photoId; void meta; void editorUid;
+  throw new Error(`savePhotoMeta: ${NOT_MIGRATED}`);
 }

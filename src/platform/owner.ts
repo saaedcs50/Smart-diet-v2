@@ -1,25 +1,15 @@
 // ============================================================================
 // عمليات صاحب المنصة (/owner) — المرحلة الثالثة من بناء B2B
 // ----------------------------------------------------------------------------
-// كل الدوال هنا لصاحب المنصة (role='owner') فقط — القواعد تفرض ذلك.
+// كل الدوال هنا لصاحب المنصة (role='owner') فقط — سياسات RLS تفرض ذلك.
 // تشمل: إدارة العيادات والاشتراكات، مراجعة طلبات التفعيل، دعوة أصحاب
 // العيادات، وإعدادات الدفع اليدوي.
+// - ترحيل 2026-10-31: Firestore ← Supabase
 // ============================================================================
 
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  type FieldValue,
-} from 'firebase/firestore';
-import { getFirestoreDb } from './firebase';
+import { getSupabase } from './supabase';
 import { createInvitation } from './invitations';
 import type {
-  B2BClinicDoc,
   ClinicSubscriptionDoc,
   PaymentRecord,
   PlatformPaymentMethods,
@@ -46,23 +36,37 @@ export interface PendingActivation {
 // --- العيادات ---------------------------------------------------------------
 
 export async function listAllClinics(): Promise<ClinicSummary[]> {
-  const db = getFirestoreDb();
-  const snap = await getDocs(collection(db, 'clinics'));
+  const sb = getSupabase();
+  const { data: clinics, error } = await sb.from('clinics').select();
+  if (error) throw new Error(error.message);
   const out: ClinicSummary[] = [];
-  for (const d of snap.docs) {
-    const data = d.data() as Partial<B2BClinicDoc>;
-    // نتجاوز مستندات وضع العيادة الواحدة القديم (ليس لها ownerUid نصي)
-    if (typeof data.ownerUid !== 'string') continue;
-    const subSnap = await getDoc(doc(db, 'clinicSubscriptions', d.id));
+  for (const c of (clinics as Array<Record<string, unknown>>) ?? []) {
+    const data = c as Partial<Record<string, unknown>>;
+    // نتجاوز المستندات بلا ownerUid نصي
+    if (typeof data.owner_uid !== 'string') continue;
+    const { data: sub } = await sb
+      .from('clinic_subscriptions')
+      .select()
+      .eq('clinic_id', c.id)
+      .single();
+    const subRow = sub as Record<string, unknown> | null;
     out.push({
-      id: d.id,
-      name: typeof data.name === 'string' ? data.name : d.id,
-      ownerUid: data.ownerUid,
-      ownerName: typeof data.ownerName === 'string' ? data.ownerName : '',
-      ownerPhone: typeof data.ownerPhone === 'string' ? data.ownerPhone : '',
+      id: c.id as string,
+      name: typeof data.name === 'string' ? data.name : (c.id as string),
+      ownerUid: data.owner_uid as string,
+      ownerName: typeof data.owner_name === 'string' ? data.owner_name : '',
+      ownerPhone: typeof data.owner_phone === 'string' ? data.owner_phone : '',
       status: data.status === 'suspended' ? 'suspended' : 'active',
-      subscription: subSnap.exists()
-        ? (subSnap.data() as ClinicSubscriptionDoc)
+      subscription: subRow
+        ? {
+            plan: subRow.plan as SubscriptionPlan,
+            status: subRow.status as ClinicSubscriptionDoc['status'],
+            startAt: (subRow.start_at as string) ?? undefined,
+            expiresAt: (subRow.expires_at as string) ?? null,
+            graceEndsAt: (subRow.grace_ends_at as string) ?? null,
+            payments: (subRow.payments as PaymentRecord[]) ?? [],
+            updatedAt: (subRow.updated_at as string) ?? undefined,
+          }
         : null,
     });
   }
@@ -70,15 +74,19 @@ export async function listAllClinics(): Promise<ClinicSummary[]> {
 }
 
 export async function suspendClinic(clinicId: string): Promise<void> {
-  await updateDoc(doc(getFirestoreDb(), 'clinics', clinicId), {
-    status: 'suspended',
-  });
+  const { error } = await getSupabase()
+    .from('clinics')
+    .update({ status: 'suspended' })
+    .eq('id', clinicId);
+  if (error) throw new Error(error.message);
 }
 
 export async function unsuspendClinic(clinicId: string): Promise<void> {
-  await updateDoc(doc(getFirestoreDb(), 'clinics', clinicId), {
-    status: 'active',
-  });
+  const { error } = await getSupabase()
+    .from('clinics')
+    .update({ status: 'active' })
+    .eq('id', clinicId);
+  if (error) throw new Error(error.message);
 }
 
 // --- الاشتراكات --------------------------------------------------------------
@@ -104,16 +112,19 @@ export async function activateSubscription(input: {
   reviewedBy: string;
   paymentIndex?: number;
 }): Promise<void> {
-  const db = getFirestoreDb();
-  const ref = doc(db, 'clinicSubscriptions', input.clinicId);
-  const snap = await getDoc(ref);
-  const now = new Date();
-  const expiresAt = expiryForPlan(input.plan, now);
+  const sb = getSupabase();
+  const { data } = await sb
+    .from('clinic_subscriptions')
+    .select('payments')
+    .eq('clinic_id', input.clinicId)
+    .single();
+  const now = new Date().toISOString();
+  const expiresAt = expiryForPlan(input.plan, new Date());
 
   let payments: PaymentRecord[] = [];
-  if (snap.exists()) {
-    const data = snap.data() as Partial<ClinicSubscriptionDoc>;
-    if (Array.isArray(data.payments)) payments = [...data.payments];
+  if (data) {
+    const existing = (data as { payments: unknown }).payments;
+    if (Array.isArray(existing)) payments = [...(existing as PaymentRecord[])];
   }
   if (
     typeof input.paymentIndex === 'number' &&
@@ -121,24 +132,25 @@ export async function activateSubscription(input: {
   ) {
     payments[input.paymentIndex] = {
       ...payments[input.paymentIndex],
-      reviewedAt: serverTimestamp() as FieldValue,
+      reviewedAt: now,
       reviewedBy: input.reviewedBy,
     };
   }
 
-  await setDoc(
-    ref,
+  const { error } = await sb.from('clinic_subscriptions').upsert(
     {
+      clinic_id: input.clinicId,
       plan: input.plan,
       status: 'active',
-      startAt: serverTimestamp(),
-      expiresAt,
-      graceEndsAt: null,
+      start_at: now,
+      expires_at: expiresAt ? expiresAt.toISOString() : null,
+      grace_ends_at: null,
       payments,
-      updatedAt: serverTimestamp(),
+      updated_at: now,
     },
-    { merge: true },
+    { onConflict: 'clinic_id' },
   );
+  if (error) throw new Error(error.message);
 }
 
 /** رفض طلب تفعيل معلق (يُعلَّم كمراجَع مرفوض بملاحظة). */
@@ -148,21 +160,31 @@ export async function rejectActivation(input: {
   reviewedBy: string;
   note: string;
 }): Promise<void> {
-  const db = getFirestoreDb();
-  const ref = doc(db, 'clinicSubscriptions', input.clinicId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) throw new Error('لا يوجد اشتراك لهذه العيادة');
-  const data = snap.data() as ClinicSubscriptionDoc;
-  const payments = Array.isArray(data.payments) ? [...data.payments] : [];
+  const sb = getSupabase();
+  const { data, error } = await sb
+    .from('clinic_subscriptions')
+    .select('payments')
+    .eq('clinic_id', input.clinicId)
+    .single();
+  if (error || !data) throw new Error('لا يوجد اشتراك لهذه العيادة');
+  const existing = (data as { payments: unknown }).payments;
+  const payments = Array.isArray(existing)
+    ? [...(existing as PaymentRecord[])]
+    : [];
   const p = payments[input.paymentIndex];
   if (!p) throw new Error('طلب الدفع غير موجود');
+  const now = new Date().toISOString();
   payments[input.paymentIndex] = {
     ...p,
-    reviewedAt: serverTimestamp() as FieldValue,
+    reviewedAt: now,
     reviewedBy: input.reviewedBy,
     note: `مرفوض: ${input.note}`,
   };
-  await updateDoc(ref, { payments, updatedAt: serverTimestamp() });
+  const { error: updateError } = await sb
+    .from('clinic_subscriptions')
+    .update({ payments, updated_at: now })
+    .eq('clinic_id', input.clinicId);
+  if (updateError) throw new Error(updateError.message);
 }
 
 /** طلبات التفعيل المعلقة: مدفوعات بلا مراجعة في كل العيادات. */
@@ -189,7 +211,6 @@ export async function listPendingActivations(): Promise<PendingActivation[]> {
 
 /**
  * إنشاء عيادة جديدة ودعوة صاحبها.
- * ينشئ clinics/{id} ثم دعوة admin للبريد — القواعد تسمح لصاحب المنصة بكليهما.
  */
 export async function createClinicWithOwner(input: {
   name: string;
@@ -198,19 +219,21 @@ export async function createClinicWithOwner(input: {
   ownerPhone: string;
   createdBy: string;
 }): Promise<string> {
-  const db = getFirestoreDb();
+  const sb = getSupabase();
   const email = input.ownerEmail.trim().toLowerCase();
   if (!email || !email.includes('@')) throw new Error('بريد غير صالح');
   const clinicId = `clinic-${Date.now().toString(36)}`;
+  const now = new Date().toISOString();
 
-  await setDoc(doc(db, 'clinics', clinicId), {
+  const { error: clinicError } = await sb.from('clinics').insert({
+    id: clinicId,
     name: input.name.trim(),
-    ownerUid: '',
-    ownerName: input.ownerName.trim(),
-    ownerPhone: input.ownerPhone.trim(),
+    owner_uid: '',
+    owner_name: input.ownerName.trim(),
+    owner_phone: input.ownerPhone.trim(),
     status: 'active',
-    createdAt: serverTimestamp(),
-  } satisfies B2BClinicDoc);
+  });
+  if (clinicError) throw new Error(clinicError.message);
 
   await createInvitation({
     email,
@@ -220,15 +243,17 @@ export async function createClinicWithOwner(input: {
   });
 
   // اشتراك مبدئي: بلا خطة (يحتاج تفعيلًا بعد الدفع)
-  await setDoc(doc(db, 'clinicSubscriptions', clinicId), {
+  const { error: subError } = await sb.from('clinic_subscriptions').insert({
+    clinic_id: clinicId,
     plan: 'monthly',
     status: 'expired',
-    startAt: serverTimestamp(),
-    expiresAt: null,
-    graceEndsAt: null,
+    start_at: now,
+    expires_at: null,
+    grace_ends_at: null,
     payments: [],
-    updatedAt: serverTimestamp(),
-  } satisfies ClinicSubscriptionDoc);
+    updated_at: now,
+  });
+  if (subError) throw new Error(subError.message);
 
   return clinicId;
 }
@@ -236,18 +261,25 @@ export async function createClinicWithOwner(input: {
 // --- إعدادات الدفع ------------------------------------------------------------
 
 export async function getPaymentMethods(): Promise<PlatformPaymentMethods | null> {
-  const snap = await getDoc(
-    doc(getFirestoreDb(), 'platformConfig', 'paymentMethods'),
-  );
-  return snap.exists() ? (snap.data() as PlatformPaymentMethods) : null;
+  const { data, error } = await getSupabase()
+    .from('platform_config')
+    .select('value')
+    .eq('key', 'paymentMethods')
+    .single();
+  if (error || !data) return null;
+  return (data as { value: PlatformPaymentMethods }).value ?? null;
 }
 
 export async function savePaymentMethods(
   methods: Omit<PlatformPaymentMethods, 'updatedAt'>,
 ): Promise<void> {
-  await setDoc(
-    doc(getFirestoreDb(), 'platformConfig', 'paymentMethods'),
-    { ...methods, updatedAt: serverTimestamp() },
-    { merge: true },
+  const { error } = await getSupabase().from('platform_config').upsert(
+    {
+      key: 'paymentMethods',
+      value: { ...methods, updatedAt: new Date().toISOString() },
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'key' },
   );
+  if (error) throw new Error(error.message);
 }

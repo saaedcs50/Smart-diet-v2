@@ -1,16 +1,13 @@
 // ============================================================================
 // FCM — تسجيل توكن الجهاز للمريض (المرحلة السادسة من B2B)
 // ----------------------------------------------------------------------------
-// - يطلب إذن الإشعارات ويسجل توكن FCM في
-//   patients/{uid}/notificationSettings/fcmTokens {tokens: [...]}
-// - مفتاح VAPID من VITE_FCM_VAPID_KEY (يُضبط لاحقًا من Firebase Console)
-// - إرسال الإشعار نفسه يتم عبر الـ Worker (POST /notify) — لا إرسال من العميل
+// - يطلب إذن الإشعارات ويسجل توكن FCM في جدول fcm_tokens
+// - مفتاح VAPID من VITE_FCM_VAPID_KEY
+// - إرسال الإشعار نفسه يتم عبر Edge Function (POST /notify) — لا إرسال من العميل
+// - ترحيل 2026-10-31: Firestore ← Supabase (fcm_tokens)
 // ============================================================================
 
-import { getToken, onMessage, type MessagePayload } from 'firebase/messaging';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { getFirebaseMessaging } from './firebase';
-import { getFirestoreDb } from './firebase';
+import { getSupabase } from './supabase';
 
 const VAPID_KEY = (() => {
   const metaEnv = (import.meta as unknown as {
@@ -25,37 +22,55 @@ const VAPID_KEY = (() => {
 })();
 
 export function isFcmConfigured(): boolean {
-  return !!VAPID_KEY && !!getFirebaseMessaging();
+  return !!VAPID_KEY;
 }
 
 /**
  * تسجيل توكن الجهاز للمريض. يُستدعى بعد تسجيل الدخول (للمريض فقط).
  * يعيد التوكن أو null إذا تعذّر.
+ * يستخدم Web Push API الأصلي (بلا Firebase Messaging).
  */
 export async function registerFcmToken(patientUid: string): Promise<string | null> {
   try {
-    const messaging = getFirebaseMessaging();
-    if (!messaging || !VAPID_KEY) return null;
+    if (!VAPID_KEY) return null;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
 
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return null;
 
-    const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+    const registration = await navigator.serviceWorker.ready;
+    // مفتاح VAPID بصيغة base64url ← Uint8Array
+    const vapidBytes = Uint8Array.from(
+      atob(VAPID_KEY.replace(/-/g, '+').replace(/_/g, '/')),
+      (c) => c.charCodeAt(0),
+    );
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: vapidBytes.buffer as ArrayBuffer,
+    });
+    const token = subscription.endpoint;
     if (!token) return null;
 
     // حفظ التوكن (دمج مع الموجودة بلا تكرار)
-    const db = getFirestoreDb();
-    const ref = doc(db, 'patients', patientUid, 'notificationSettings', 'fcmTokens');
-    const snap = await getDoc(ref);
-    const existing = snap.exists()
-      ? ((snap.data().tokens as string[] | undefined) ?? [])
+    const sb = getSupabase();
+    const { data } = await sb
+      .from('fcm_tokens')
+      .select('tokens')
+      .eq('patient_id', patientUid)
+      .single();
+    const existing: string[] = data
+      ? ((data as { tokens: string[] }).tokens ?? [])
       : [];
     if (!existing.includes(token)) {
-      await setDoc(
-        ref,
-        { tokens: [...existing, token], updatedAt: serverTimestamp() },
-        { merge: true },
+      const { error } = await sb.from('fcm_tokens').upsert(
+        {
+          patient_id: patientUid,
+          tokens: [...existing, token],
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'patient_id' },
       );
+      if (error) throw new Error(error.message);
     }
     return token;
   } catch {
@@ -63,30 +78,37 @@ export async function registerFcmToken(patientUid: string): Promise<string | nul
   }
 }
 
-/** استقبال إشعار أثناء فتح التطبيق (foreground). */
+/** استقبال إشعار أثناء فتح التطبيق (foreground) — عبر Service Worker. */
 export function onForegroundMessage(
-  cb: (payload: MessagePayload) => void,
+  cb: (payload: { title?: string; body?: string }) => void,
 ): (() => void) | null {
-  const messaging = getFirebaseMessaging();
-  if (!messaging) return null;
-  return onMessage(messaging, cb);
+  if (!('serviceWorker' in navigator)) return null;
+  const handler = (event: MessageEvent) => {
+    const data = event.data as { title?: string; body?: string } | undefined;
+    if (data && (data.title || data.body)) cb(data);
+  };
+  navigator.serviceWorker.addEventListener('message', handler);
+  return () => navigator.serviceWorker.removeEventListener('message', handler);
 }
 
-const WORKER_URL = (() => {
+const FUNCTIONS_URL = (() => {
   const metaEnv = (import.meta as unknown as {
     env?: Record<string, string | undefined>;
-  }).env?.VITE_FCM_WORKER_URL;
-  if (metaEnv !== undefined) return metaEnv;
-  return (
-    globalThis as unknown as {
-      process?: { env?: Record<string, string | undefined> };
-    }
-  ).process?.env?.VITE_FCM_WORKER_URL;
+  }).env?.VITE_SUPABASE_URL;
+  const base =
+    metaEnv !== undefined
+      ? metaEnv
+      : (
+          globalThis as unknown as {
+            process?: { env?: Record<string, string | undefined> };
+          }
+        ).process?.env?.VITE_SUPABASE_URL;
+  return base ? `${base}/functions/v1/notify` : undefined;
 })();
 
 /**
- * إشعار المريض من الدكتور عبر الـ Worker.
- * يتطلب ID token للمتصل (يُمرر في Authorization).
+ * إشعار المريض من الدكتور عبر Edge Function.
+ * يتطلب access token للمتصل (يُمرر في Authorization).
  */
 export async function notifyPatient(
   patientUid: string,
@@ -94,8 +116,8 @@ export async function notifyPatient(
   body: string,
   idToken: string,
 ): Promise<{ ok: boolean; sent: number }> {
-  if (!WORKER_URL) throw new Error('رابط الـ Worker غير مضبوط');
-  const res = await fetch(`${WORKER_URL}/notify`, {
+  if (!FUNCTIONS_URL) throw new Error('رابط Edge Function غير مضبوط');
+  const res = await fetch(FUNCTIONS_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
