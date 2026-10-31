@@ -55,6 +55,7 @@ import {
 import type { DayLog, PlanConfig } from '../types';
 import { SubscriptionGate } from './subscription/SubscriptionGate';
 import { SubscriptionCard } from './subscription/SubscriptionCard';
+import { AdherenceSection } from './adherence/AdherenceSection';
 
 type Route =
   | { view: 'login' }
@@ -458,10 +459,12 @@ function SyncSection({ patientUid }: { patientUid: string }) {
 function PatientDetail({
   patientUid,
   viewerClinicId,
+  viewerUid,
   isStaffView,
 }: {
   patientUid: string;
   viewerClinicId: string;
+  viewerUid: string;
   isStaffView: boolean;
 }) {
   const [doc, setDoc] = useState<PatientDoc | null>(null);
@@ -552,6 +555,11 @@ function PatientDetail({
           </ul>
         )}
       </Card>
+      <AdherenceSection
+        patientUid={patientUid}
+        uid={viewerUid}
+        isStaffView={isStaffView}
+      />
       {!isStaffView && <SyncSection patientUid={patientUid} />}
       {isStaffView && (
         <p className="text-xs text-slate-500">
@@ -868,6 +876,7 @@ function PlatformShell() {
                 <PatientDetail
                   patientUid={route.patientUid}
                   viewerClinicId={profile.clinicId}
+                  viewerUid={profile.uid}
                   isStaffView={profile.role !== 'patient'}
                 />
               )}
@@ -878,6 +887,7 @@ function PlatformShell() {
             <PatientDetail
               patientUid={profile.uid}
               viewerClinicId={profile.clinicId}
+              viewerUid={profile.uid}
               isStaffView={false}
             />
           )}
