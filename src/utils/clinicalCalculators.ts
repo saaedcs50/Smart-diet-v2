@@ -205,11 +205,16 @@ export function calculateWHtR(waistCm: number, heightCm: number): { ratio: numbe
  */
 
 // Daily Fluid Intake Calculator (Holliday-Segar + Activity)
+// تحذير (SDV2-CLIN-002): هذا تقدير عام وليس توصية طبية.
+// لا يأخذ في الاعتبار: العمر، الجنس، الحمل/الرضاعة، أمراض الكلى/القلب،
+// أو الحالات التي تتطلب تقييد السوائل. استشر مختصًا للحالات الخاصة.
 export function calculateDailyFluid(weightKg: number, activityHoursPerWeek: number = 3): {
  baseLiters: number;
  sportsLiters: number;
  totalLiters: number;
  glassesCount: number;
+ isEstimate: true;
+ warningAr: string;
 } {
  let baseMl: number;
  if (weightKg <= 10) {
@@ -233,7 +238,14 @@ export function calculateDailyFluid(weightKg: number, activityHoursPerWeek: numb
  const totalLiters = Math.round((totalMl / 1000) * 10) / 10;
  const glassesCount = Math.ceil((totalMl / 250)); // 250ml glass
 
- return { baseLiters, sportsLiters, totalLiters, glassesCount };
+ return {
+   baseLiters,
+   sportsLiters,
+   totalLiters,
+   glassesCount,
+   isEstimate: true,
+   warningAr: 'تقدير عام وليس توصية طبية — استشر مختصًا في حالات الحمل أو أمراض الكلى/القلب أو تقييد السوائل',
+ };
 }
 
 // Peri-Workout Carbohydrate & Protein Recommendation
@@ -255,13 +267,38 @@ export function calculateTargetTimeline(
  dailyDeficitSurplusKcal: number // positive for surplus (gain), negative for deficit (loss)
 ) {
  const weightDiffKg = targetWeightKg - currentWeightKg;
- if (weightDiffKg === 0 || dailyDeficitSurplusKcal === 0) {
+ // SDV2-BUG-002: الحالات غير القابلة للتقدير — لا نعيد صفرًا مضللًا.
+ if (weightDiffKg === 0) {
  return {
  weeks: 0,
  months: 0,
  weeklyRateKg: 0,
  isSafe: true,
+ estimable: true,
  messageAr: 'الوزن الحالي متطابق مع الوزن المستهدف.',
+ };
+ }
+ if (dailyDeficitSurplusKcal === 0) {
+ return {
+ weeks: 0,
+ months: 0,
+ weeklyRateKg: 0,
+ isSafe: false,
+ estimable: false,
+ messageAr: 'لا يمكن التقدير: العجز/الفائض اليومي صفر والوزن المستهدف مختلف. حدد عجزًا أو فائضًا غير صفري.',
+ };
+ }
+ // التحقق من اتساق الاتجاه: عجز مع هدف نزول، أو فائض مع هدف زيادة
+ const isLoss = weightDiffKg < 0;
+ const isDeficit = dailyDeficitSurplusKcal < 0;
+ if (isLoss !== isDeficit) {
+ return {
+ weeks: 0,
+ months: 0,
+ weeklyRateKg: 0,
+ isSafe: false,
+ estimable: false,
+ messageAr: 'اتجاه السعرات لا يتسق مع اتجاه الوزن المستهدف (عجز للنزول، فائض للزيادة).',
  };
  }
 
@@ -277,7 +314,6 @@ export function calculateTargetTimeline(
  const maxSafeWeeklyLoss = Math.round((currentWeightKg * 0.01) * 100) / 100;
  const minSafeWeeklyLoss = Math.round((currentWeightKg * 0.005) * 100) / 100;
 
- const isLoss = weightDiffKg < 0;
  const isSafe = isLoss? weeklyRateKg <= maxSafeWeeklyLoss: weeklyRateKg <= 1.0;
 
  let messageAr: string;
