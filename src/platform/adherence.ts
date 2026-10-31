@@ -2,26 +2,15 @@
 // نظام الالتزام — طبقة البيانات (المرحلة الخامسة من B2B)
 // ----------------------------------------------------------------------------
 // - الإعداد: الدكتور المعالج يضبط 4 محاور + وزن لكل محور (المجموع 100)
-//   في patients/{pid}/adherence/config
-// - الدرجات: إدخال 0–100 لكل محور في المتابعة
-//   في patients/{pid}/adherenceScores/{id}
+//   في adherence_configs
+// - الدرجات: إدخال 0–100 لكل محور في المتابعة في adherence_scores
 // - النسبة = Σ(درجة × وزن) / 100 — محسوبة داخل التطبيق (قرار #8)
 // - النطاقات (قرار #9): ممتاز 75–100، متوسط 50–75، ضعيف تحت 50
 // - نزول الوزن: رقم/منحنى بلا عتبات ثابتة (تقييم الدكتور لكل حالة)
+// - ترحيل 2026-10-31: Firestore ← Supabase
 // ============================================================================
 
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  type FieldValue,
-} from 'firebase/firestore';
-import { getFirestoreDb } from './firebase';
+import { getSupabase } from './supabase';
 
 export interface AdherenceAxis {
   name: string;
@@ -31,7 +20,7 @@ export interface AdherenceAxis {
 export interface AdherenceConfig {
   axes: AdherenceAxis[]; // 4 محاور
   updatedBy: string;
-  updatedAt?: FieldValue;
+  updatedAt?: string;
 }
 
 export interface AdherenceScore {
@@ -39,7 +28,7 @@ export interface AdherenceScore {
   scores: number[]; // درجة 0–100 لكل محور بالترتيب
   overall: number; // النسبة المحسوبة
   enteredBy: string;
-  enteredAt?: FieldValue;
+  enteredAt?: string;
   note?: string;
 }
 
@@ -83,10 +72,18 @@ export const BAND_COLORS = {
 export async function getAdherenceConfig(
   patientUid: string,
 ): Promise<AdherenceConfig | null> {
-  const snap = await getDoc(
-    doc(getFirestoreDb(), 'patients', patientUid, 'adherence', 'config'),
-  );
-  return snap.exists() ? (snap.data() as AdherenceConfig) : null;
+  const { data, error } = await getSupabase()
+    .from('adherence_configs')
+    .select('axes, updated_by, updated_at')
+    .eq('patient_id', patientUid)
+    .single();
+  if (error || !data) return null;
+  const row = data as { axes: AdherenceAxis[]; updated_by: string; updated_at: string };
+  return {
+    axes: row.axes,
+    updatedBy: row.updated_by,
+    updatedAt: row.updated_at,
+  };
 }
 
 export async function saveAdherenceConfig(
@@ -102,25 +99,40 @@ export async function saveAdherenceConfig(
   const sum = weights.reduce((s, w) => s + w, 0);
   if (sum !== 100) throw new Error(`مجموع الأوزان يجب أن يكون 100 (الحالي: ${sum})`);
 
-  await setDoc(
-    doc(getFirestoreDb(), 'patients', patientUid, 'adherence', 'config'),
-    {
-      axes: axes.map((a, i) => ({ name: names[i], weight: weights[i] })),
-      updatedBy,
-      updatedAt: serverTimestamp(),
-    } satisfies AdherenceConfig,
-  );
+  const { error } = await getSupabase()
+    .from('adherence_configs')
+    .upsert(
+      {
+        patient_id: patientUid,
+        axes: axes.map((a, i) => ({ name: names[i], weight: weights[i] })),
+        updated_by: updatedBy,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'patient_id' },
+    );
+  if (error) throw new Error(error.message);
 }
 
 export async function listAdherenceScores(
   patientUid: string,
 ): Promise<Array<{ id: string; score: AdherenceScore }>> {
-  const q = query(
-    collection(getFirestoreDb(), 'patients', patientUid, 'adherenceScores'),
-    orderBy('date', 'desc'),
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, score: d.data() as AdherenceScore }));
+  const { data, error } = await getSupabase()
+    .from('adherence_scores')
+    .select('id, score_date, scores, overall, entered_by, note, created_at')
+    .eq('patient_id', patientUid)
+    .order('score_date', { ascending: false });
+  if (error || !data) return [];
+  return (data as Array<Record<string, unknown>>).map((row) => ({
+    id: String(row.id),
+    score: {
+      date: row.score_date as string,
+      scores: row.scores as number[],
+      overall: Number(row.overall),
+      enteredBy: row.entered_by as string,
+      enteredAt: row.created_at as string,
+      note: (row.note as string) ?? '',
+    },
+  }));
 }
 
 export async function addAdherenceScore(
@@ -138,16 +150,13 @@ export async function addAdherenceScore(
   });
   const overall = calcOverall(scores, axes);
 
-  const id = `${input.date}-${Date.now().toString(36)}`;
-  await setDoc(
-    doc(getFirestoreDb(), 'patients', patientUid, 'adherenceScores', id),
-    {
-      date: input.date,
-      scores,
-      overall,
-      enteredBy: input.enteredBy,
-      enteredAt: serverTimestamp(),
-      note: (input.note ?? '').trim(),
-    } satisfies AdherenceScore,
-  );
+  const { error } = await getSupabase().from('adherence_scores').insert({
+    patient_id: patientUid,
+    score_date: input.date,
+    scores,
+    overall,
+    entered_by: input.enteredBy,
+    note: (input.note ?? '').trim(),
+  });
+  if (error) throw new Error(error.message);
 }
