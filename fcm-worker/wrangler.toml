@@ -1,0 +1,8 @@
+# FCM Worker — إشعارات تعديلات خطة الدكتور
+name = "smart-diet-fcm"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# تُضبط كـ secrets (لا تضع القيم هنا):
+#   FCM_SERVICE_ACCOUNT — JSON حساب الخدمة
+#   FIREBASE_PROJECT_ID — مثال: smart-diet-platform-trial

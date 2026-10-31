@@ -21,6 +21,7 @@
 
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
+import { getMessaging, type Messaging } from 'firebase/messaging';
 import {
   getFirestore,
   initializeFirestore,
@@ -110,6 +111,20 @@ export function getFirebaseStorage(): FirebaseStorage {
 // في بيئة بلا IndexedDB (مثل اختبارات Node) يُستخدم Firestore العادي بدل
 // أن يفشل الاستدعاء — السلوك في المتصفح لا يتغير.
 let cachedFirestore: Firestore | null = null;
+
+let cachedMessaging: Messaging | null = null;
+
+/** Messaging للـ FCM — يعيد null في بيئة بلا دعم (اختبارات Node). */
+export function getFirebaseMessaging(): Messaging | null {
+  try {
+    requireConfigured();
+    if (cachedMessaging) return cachedMessaging;
+    cachedMessaging = getMessaging(getFirebaseApp());
+    return cachedMessaging;
+  } catch {
+    return null;
+  }
+}
 
 export function getFirestoreDb(): Firestore {
   requireConfigured();

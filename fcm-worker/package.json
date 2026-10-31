@@ -1,0 +1,1 @@
+{"name":"smart-diet-fcm-worker","private":true,"scripts":{"deploy":"wrangler deploy"},"version":"1.0.0"}
