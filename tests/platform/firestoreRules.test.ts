@@ -26,9 +26,12 @@ describe('firestore.rules content', () => {
     expect(rules).toContain('allow read, write: if false;');
   });
 
-  it('عيادات: قراءة للأعضاء وتعديل للأدمن فقط', () => {
+  it('عيادات: قراءة للأعضاء، إنشاء/تعديل كامل لصاحب المنصة، والأدمن لا يغيّر status ولا ownerUid', () => {
     expect(rules).toContain('match /clinics/{cid}');
-    expect(rules).toContain('allow update: if isAdmin() && clinicId() == cid;');
+    expect(rules).toContain('allow create: if isPlatformOwner();');
+    expect(rules).toContain('allow update: if isPlatformOwner()');
+    expect(rules).toContain("request.resource.data.get('status', null)");
+    expect(rules).toContain("request.resource.data.get('ownerUid', null)");
   });
 
   it('حسابات: الدور والعيادة لا يتغيران بالتعديل', () => {
@@ -47,19 +50,26 @@ describe('firestore.rules content', () => {
     expect(rules).toContain("request.auth.uid == pid");
   });
 
-  it('تدقيق: كتابة مرفوضة من العميل وقراءة للأدمن فقط', () => {
+  it('تدقيق: كتابة مرفوضة من العميل وقراءة للأدمن وصاحب المنصة', () => {
     expect(rules).toContain('match /clinicAudit/{cid}/events/{eid}');
-    expect(rules).toContain('allow read: if isAdmin() && clinicId() == cid;');
+    expect(rules).toContain('(isAdmin() && clinicId() == cid) || isPlatformOwner()');
     expect(rules).toContain('allow write: if false;');
   });
 
   it('مرضى: قائمة العيادة مقبولة عبر resource.data في مستند المريض نفسه', () => {
     expect(rules).toContain('match /patients/{pid}');
     expect(rules).toContain(
-      'allow read: if isPatient() && request.auth.uid == pid;',
+      'allow read: if isPatient() && request.auth.uid == pid',
+    );
+    // الأدمن: كل مرضى عيادته — الدكتور: مرضاه فقط (invitedBy)
+    expect(rules).toContain(
+      'allow read: if isAdmin() && resource.data.clinicId == clinicId()',
     );
     expect(rules).toContain(
-      'allow read: if isStaff() && resource.data.clinicId == clinicId();',
+      'allow read: if isCoach() && resource.data.clinicId == clinicId()',
+    );
+    expect(rules).toContain(
+      'resource.data.invitedBy == request.auth.uid',
     );
   });
 
@@ -81,8 +91,8 @@ describe('firestore.rules content', () => {
     expect(block).not.toContain('allow create: if isStaff()');
   });
 
-  it('يصرّح بحالة النشر الحقيقية: Firestore منشور على التجريبي، والدور من المستند', () => {
-    expect(rules).toContain('نُشرت');
+  it('يصرّح بحالة النشر الحقيقية: القواعد الجديدة بانتظار النشر اليدوي', () => {
+    expect(rules).toContain('بانتظار النشر اليدوي');
     expect(rules).toContain('smart-diet-platform-trial');
     expect(rules).not.toContain('لم يُنشر');
     expect(rules).toContain('users/{uid}');
@@ -125,14 +135,31 @@ describe('firestore.rules content', () => {
     expect(wildBlock).not.toBeNull();
     const block = wildBlock![0];
     expect(block).toContain('!isConsentSubpath(subcollection)');
-    // كتابة المريض نفسه غير مقيدة بالاستثناء
+    // قراءة/كتابة المريض نفسه — باشتراك ساري (بوابة B2B)
     expect(block).toContain(
-      'allow read, write: if isPatient() && request.auth.uid == pid;',
+      'allow read, write: if isPatient() && request.auth.uid == pid',
     );
-    // قاعدة الموافقات الأضيق ما زالت: كتابة المريض وحده
+    expect(block).toContain('clinicSubActive(clinicId())');
+    // قاعدة الموافقات الأضيق ما زالت: كتابة المريض وحده (باشتراك ساري)
     expect(rules).toContain('match /patients/{pid}/consents/{type}');
     expect(rules).toContain(
-      'allow write: if isPatient() && request.auth.uid == pid;',
+      'allow write: if isPatient() && request.auth.uid == pid',
+    );
+  });
+
+  it('B2B: بوابة الاشتراك ودور صاحب المنصة موجودان', () => {
+    expect(rules).toContain('function isPlatformOwner()');
+    expect(rules).toContain("role() == 'owner'");
+    expect(rules).toContain('function clinicSubActive(cid)');
+    expect(rules).toContain('match /clinicSubscriptions/{sid}');
+    expect(rules).toContain('match /platformConfig/{doc}');
+    expect(rules).toContain('allow write: if isPlatformOwner();');
+  });
+
+  it('B2B: أدوار الدعوات — المنصة تدعو admin، والأدمن لا يدعو admin', () => {
+    expect(rules).toContain("request.resource.data.role == 'admin'");
+    expect(rules).toContain(
+      "request.resource.data.role == 'coach'\n                         || request.resource.data.role == 'patient'",
     );
   });
 

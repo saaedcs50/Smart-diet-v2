@@ -62,6 +62,7 @@ async function seedBase(): Promise<void> {
     await setDoc(doc(db, 'patients/patient-9'), {
       clinicId: 'clinic-a',
       profile: { clientName: 'Nine' },
+      invitedBy: 'coach-1',
     });
     await setDoc(doc(db, 'patients/patient-9/consents/privacy'), {
       granted: true,
@@ -79,6 +80,76 @@ async function seedBase(): Promise<void> {
       clinicId: 'clinic-a',
       createdBy: 'admin-1',
       status: 'consumed',
+    });
+    // --- بذر B2B (المرحلة الثالثة) ---
+    // اشتراكات: نشط لـ a وb، منتهٍ، وسماح — لاختبار بوابة الاشتراك.
+    await setDoc(doc(db, 'clinicSubscriptions/clinic-a'), {
+      plan: 'annual',
+      status: 'active',
+      payments: [],
+    });
+    await setDoc(doc(db, 'clinicSubscriptions/clinic-b'), {
+      plan: 'annual',
+      status: 'active',
+      payments: [],
+    });
+    await setDoc(doc(db, 'clinicSubscriptions/clinic-expired'), {
+      plan: 'annual',
+      status: 'expired',
+      payments: [],
+    });
+    await setDoc(doc(db, 'clinicSubscriptions/clinic-grace'), {
+      plan: 'annual',
+      status: 'grace',
+      payments: [],
+    });
+    // صاحب المنصة + عيادة منتهية/سماح بمستخدمين.
+    await setDoc(doc(db, 'users/owner-1'), {
+      role: 'owner',
+      clinicId: 'platform',
+      email: 'owner@example.com',
+    });
+    await setDoc(doc(db, 'users/admin-exp'), {
+      role: 'admin',
+      clinicId: 'clinic-expired',
+      email: 'adminexp@example.com',
+    });
+    await setDoc(doc(db, 'users/coach-exp'), {
+      role: 'coach',
+      clinicId: 'clinic-expired',
+      email: 'coachexp@example.com',
+    });
+    await setDoc(doc(db, 'users/patient-exp'), {
+      role: 'patient',
+      clinicId: 'clinic-expired',
+      email: 'pexp@example.com',
+    });
+    await setDoc(doc(db, 'users/coach-grace'), {
+      role: 'coach',
+      clinicId: 'clinic-grace',
+      email: 'coachgrace@example.com',
+    });
+    await setDoc(doc(db, 'patients/patient-exp'), {
+      clinicId: 'clinic-expired',
+      profile: { clientName: 'Expired' },
+      invitedBy: 'coach-exp',
+    });
+    // مرضى لنطاق الدكتور: واحد لدعوة coach-1 وآخر لدعوة admin-1.
+    await setDoc(doc(db, 'patients/patient-coach1'), {
+      clinicId: 'clinic-a',
+      profile: { clientName: 'CoachOne' },
+      invitedBy: 'coach-1',
+    });
+    await setDoc(doc(db, 'patients/patient-admin1'), {
+      clinicId: 'clinic-a',
+      profile: { clientName: 'AdminOne' },
+      invitedBy: 'admin-1',
+    });
+    // عيادة وسجل اشتراك لاختبار دعوة صاحب العيادة.
+    await setDoc(doc(db, 'clinics/clinic-new'), {
+      name: 'New Clinic',
+      ownerUid: 'admin-new',
+      status: 'active',
     });
   });
 }
@@ -269,5 +340,190 @@ describe('emulator — sanity', () => {
     const db = dbAs('admin-1');
     const snap = await getDoc(doc(db, 'users/admin-1'));
     expect(snap.exists()).toBe(true);
+  });
+});
+
+// --- المرحلة الثالثة: بوابة الاشتراك B2B ---
+describe('emulator — subscription gate (Phase 3)', () => {
+  it('اشتراك منتهٍ: المريض لا يقرأ سجله', async () => {
+    const db = dbAs('patient-exp');
+    await assertFails(getDoc(doc(db, 'patients/patient-exp')));
+  });
+
+  it('اشتراك منتهٍ: الدكتور لا يقرأ مرضاه', async () => {
+    const db = dbAs('coach-exp');
+    await assertFails(getDoc(doc(db, 'patients/patient-exp')));
+  });
+
+  it('اشتراك منتهٍ: الأدمن لا يقرأ مرضى عيادته', async () => {
+    const db = dbAs('admin-exp');
+    await assertFails(getDoc(doc(db, 'patients/patient-exp')));
+  });
+
+  it('فترة سماح: القراءة مسموحة', async () => {
+    const db = dbAs('coach-grace');
+    // نزرع مريضًا لعيادة السماح أولًا (بلا قواعد)
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const adb = ctx.firestore();
+      await setDoc(doc(adb, 'patients/patient-grace'), {
+        clinicId: 'clinic-grace',
+        profile: { clientName: 'Grace' },
+        invitedBy: 'coach-grace',
+      });
+    });
+    await assertSucceeds(getDoc(doc(db, 'patients/patient-grace')));
+  });
+
+  it('اشتراك نشط: القراءة مسموحة كالمعتاد', async () => {
+    const db = dbAs('coach-1');
+    await assertSucceeds(getDoc(doc(db, 'patients/patient-coach1')));
+  });
+
+  it('صاحب العيادة يقرأ وثيقة اشتراكه حتى لو منتهي', async () => {
+    const db = dbAs('admin-exp');
+    await assertSucceeds(getDoc(doc(db, 'clinicSubscriptions/clinic-expired')));
+  });
+
+  it('المريض لا يقرأ وثيقة الاشتراك', async () => {
+    const db = dbAs('patient-exp');
+    await assertFails(getDoc(doc(db, 'clinicSubscriptions/clinic-expired')));
+  });
+});
+
+// --- المرحلة الثالثة: نطاق الدكتور (مرضاه فقط) ---
+describe('emulator — coach scoping (Phase 3)', () => {
+  it('الدكتور يقرأ مريضه (invitedBy هو)', async () => {
+    const db = dbAs('coach-1');
+    await assertSucceeds(getDoc(doc(db, 'patients/patient-coach1')));
+  });
+
+  it('الدكتور لا يقرأ مريض زميله', async () => {
+    const db = dbAs('coach-1');
+    await assertFails(getDoc(doc(db, 'patients/patient-admin1')));
+  });
+
+  it('الدكتور لا يكتب على مريض زميله', async () => {
+    const db = dbAs('coach-1');
+    await assertFails(
+      setDoc(
+        doc(db, 'patients/patient-admin1/dayLogs/d1'),
+        { note: 'x' },
+        { merge: true },
+      ),
+    );
+  });
+
+  it('الدكتور يكتب على مجموعة فرعية لمريضه', async () => {
+    const db = dbAs('coach-1');
+    await assertSucceeds(
+      setDoc(doc(db, 'patients/patient-coach1/dayLogs/d1'), { note: 'ok' }),
+    );
+  });
+
+  it('صاحب العيادة يقرأ كل مرضى عيادته', async () => {
+    const db = dbAs('admin-1');
+    await assertSucceeds(getDoc(doc(db, 'patients/patient-coach1')));
+    await assertSucceeds(getDoc(doc(db, 'patients/patient-admin1')));
+  });
+});
+
+// --- المرحلة الثالثة: أدوار الدعوات وصاحب المنصة ---
+describe('emulator — invitations and platform owner (Phase 3)', () => {
+  it('صاحب العيادة لا يدعو admin جديد: مرفوض', async () => {
+    const db = dbAs('admin-1');
+    await assertFails(
+      setDoc(doc(db, 'invitations/boss@example.com'), {
+        email: 'boss@example.com',
+        role: 'admin',
+        clinicId: 'clinic-a',
+        createdBy: 'admin-1',
+        status: 'pending',
+      }),
+    );
+  });
+
+  it('صاحب العيادة يدعو دكتور: مسموح', async () => {
+    const db = dbAs('admin-1');
+    await assertSucceeds(
+      setDoc(doc(db, 'invitations/doc2@example.com'), {
+        email: 'doc2@example.com',
+        role: 'coach',
+        clinicId: 'clinic-a',
+        createdBy: 'admin-1',
+        status: 'pending',
+      }),
+    );
+  });
+
+  it('صاحب المنصة يدعو صاحب عيادة لعيادة موجودة: مسموح', async () => {
+    const db = dbAs('owner-1');
+    await assertSucceeds(
+      setDoc(doc(db, 'invitations/newowner@example.com'), {
+        email: 'newowner@example.com',
+        role: 'admin',
+        clinicId: 'clinic-new',
+        createdBy: 'owner-1',
+        status: 'pending',
+      }),
+    );
+  });
+
+  it('صاحب المنصة يدعو لعيادة غير موجودة: مرفوض', async () => {
+    const db = dbAs('owner-1');
+    await assertFails(
+      setDoc(doc(db, 'invitations/ghost@example.com'), {
+        email: 'ghost@example.com',
+        role: 'admin',
+        clinicId: 'clinic-ghost',
+        createdBy: 'owner-1',
+        status: 'pending',
+      }),
+    );
+  });
+
+  it('صاحب المنصة يقرأ أي عيادة واشتراكها', async () => {
+    const db = dbAs('owner-1');
+    await assertSucceeds(getDoc(doc(db, 'clinics/clinic-new')));
+    await assertSucceeds(getDoc(doc(db, 'clinicSubscriptions/clinic-a')));
+  });
+
+  it('صاحب العيادة لا يعدّل حالة عيادته: مرفوض', async () => {
+    const db = dbAs('admin-1');
+    // نزرع عيادة clinic-a أولًا
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const adb = ctx.firestore();
+      await setDoc(doc(adb, 'clinics/clinic-a'), {
+        name: 'A',
+        ownerUid: 'admin-1',
+        status: 'active',
+      });
+    });
+    await assertFails(updateDoc(doc(db, 'clinics/clinic-a'), { status: 'suspended' }));
+  });
+
+  it('صاحب العيادة يعدّل اسم عيادته: مسموح', async () => {
+    const db = dbAs('admin-1');
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const adb = ctx.firestore();
+      await setDoc(doc(adb, 'clinics/clinic-a'), {
+        name: 'A',
+        ownerUid: 'admin-1',
+        status: 'active',
+      });
+    });
+    await assertSucceeds(updateDoc(doc(db, 'clinics/clinic-a'), { name: 'A Renamed' }));
+  });
+
+  it('الدكتور لا ينشئ دعوة باشتراك منتهٍ: مرفوض', async () => {
+    const db = dbAs('coach-exp');
+    await assertFails(
+      setDoc(doc(db, 'invitations/exp2@example.com'), {
+        email: 'exp2@example.com',
+        role: 'patient',
+        clinicId: 'clinic-expired',
+        createdBy: 'coach-exp',
+        status: 'pending',
+      }),
+    );
   });
 });
