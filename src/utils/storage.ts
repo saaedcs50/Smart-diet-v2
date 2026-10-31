@@ -361,7 +361,19 @@ export function exportFullBackupJSON(): string {
 
 export function importFullBackupJSON(jsonString: string): boolean {
   try {
+    // SDV2-DATA-002: التحقق من البنية قبل الكتابة — لا نجاح على بيانات فارغة.
+    if (!jsonString || jsonString.length > 50 * 1024 * 1024) {
+      console.error('Backup file empty or too large');
+      return false;
+    }
     const data = JSON.parse(jsonString);
+    // يجب أن يحتوي على قسم واحد على الأقل من أقسام النسخة المعروفة
+    const hasContent = data.plan || data.dailyLogs || data.notificationSettings ||
+      data.activeFastingSession || data.medications || data.bodyLogs;
+    if (!hasContent) {
+      console.error('Backup file has no recognized data sections');
+      return false;
+    }
     if (data.plan) {
       savePlanToStorage(data.plan);
     }
