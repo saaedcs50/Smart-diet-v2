@@ -229,16 +229,18 @@ export function calculateBMI(weight: number | null, heightCm: number | null): { 
   const hM = heightCm / 100;
   const bmi = weight / (hM * hM);
   const val = bmi.toFixed(1);
+  // ملاحظة (SDV2-CLIN-003): مؤشر كتلة الجسم أداة فحص وليس تشخيصًا طبيًا
+  const disclaimer = ' — مؤشر فحص وليس تشخيصًا';
   if (bmi < 18.5) {
-    return { val, label: 'نحافة محتاجة زيادة عضل (< 18.5)', color: 'text-blue-500' };
+    return { val, label: `نحافة محتاجة زيادة عضل (< 18.5)${disclaimer}`, color: 'text-blue-500' };
   } else if (bmi < 25) {
-    return { val, label: 'وزن مثالي وطبيعي تماماً ✅ (18.5 - 24.9)', color: 'text-emerald-600' };
+    return { val, label: `وزن في النطاق الطبيعي ✅ (18.5 - 24.9)${disclaimer}`, color: 'text-emerald-600' };
   } else if (bmi < 30) {
-    return { val, label: 'زيادة وزن بسيطة محتاجة تظبيط ⚠️ (25 - 29.9)', color: 'text-amber-500' };
+    return { val, label: `زيادة وزن بسيطة محتاجة تظبيط ⚠️ (25 - 29.9)${disclaimer}`, color: 'text-amber-500' };
   } else if (bmi < 35) {
-    return { val, label: 'سمنة درجة أولى 🚨 (30 - 34.9)', color: 'text-rose-500' };
+    return { val, label: `سمنة درجة أولى 🚨 (30 - 34.9)${disclaimer}`, color: 'text-rose-500' };
   } else {
-    return { val, label: 'سمنة مفرطة محتاجة التزام جاد 🚨 (35+)', color: 'text-red-600' };
+    return { val, label: `سمنة من الدرجة الثانية فأعلى — استشر مختصًا 🚨 (35+)${disclaimer}`, color: 'text-red-600' };
   }
 }
 
@@ -263,15 +265,60 @@ export function calculateWHtR(waistCm: number | null, heightCm: number | null): 
  * معادلة خلود المعتمدة لمعدل الحرق الأساسي (REE / BMR):
  * REE = (9.99 × الوزن_كجم) + (6.25 × الطول_سم) − (4.92 × العمر_سنة)
  * الناتج يُقرّب لأقرب عدد صحيح، وهي صيغة موحدة للجنسين في خطوة الـ REE (بدون +5 أو -161).
+ *
+ * بطاقة المعادلة (SDV2-CLIN-001):
+ * - الاسم: Kholoud REE (معادلة خلود الداخلية)
+ * - الإصدار: v1 (2026-10-31)
+ * - المصدر: صيغة داخلية للعيادة — ليست Mifflin-St Jeor القياسية
+ * - ملاحظة: تغيير المعادلة الافتراضية يتطلب اعتماد اختصاصي تغذية
  */
+export const KHOLOUD_REE_META = {
+  name: 'Kholoud REE',
+  version: 'v1',
+  source: 'internal-clinic-formula',
+  isStandardMifflin: false,
+  noteAr: 'معادلة داخلية للعيادة — ليست Mifflin-St Jeor القياسية',
+} as const;
+
 export function calculateREE_Kholoud(weightKg: number, heightCm: number, ageYears: number): number {
   if (weightKg <= 0 || heightCm <= 0 || ageYears <= 0) return 0;
   return Math.round(9.99 * weightKg + 6.25 * heightCm - 4.92 * ageYears);
 }
 
 /**
+ * معادلة Mifflin-St Jeor القياسية (1990):
+ * - للذكور: (10 × الوزن) + (6.25 × الطول) − (5 × العمر) + 5
+ * - للإناث: (10 × الوزن) + (6.25 × الطول) − (5 × العمر) − 161
+ *
+ * بطاقة المعادلة (SDV2-CLIN-001):
+ * - الاسم: Mifflin-St Jeor (1990)
+ * - المصدر: Mifflin MD et al., Am J Clin Nutr 1990;51:241-7
+ * - ملاحظة: المعادلة القياسية المنشورة — تختلف عن معادلة خلود الداخلية
+ */
+export const MIFFLIN_ST_JEOR_META = {
+  name: 'Mifflin-St Jeor',
+  version: '1990',
+  source: 'Mifflin MD et al., Am J Clin Nutr 1990',
+  isStandardMifflin: true,
+} as const;
+
+export function calculateREE_MifflinStJeor(
+  weightKg: number,
+  heightCm: number,
+  ageYears: number,
+  gender: 'male' | 'female',
+): number {
+  if (weightKg <= 0 || heightCm <= 0 || ageYears <= 0) return 0;
+  const base = 10 * weightKg + 6.25 * heightCm - 5 * ageYears;
+  return Math.round(gender === 'male' ? base + 5 : base - 161);
+}
+
+/**
  * calculateBMR - تستخدم صيغة معادلة خلود الموحدة كافتراضي أساسي.
  * يمكن تمرير useClassicMifflin: true لاختيار صيغة ميفلين الكلاسيكية ذات التفريق الجنسي.
+ *
+ * ملاحظة (SDV2-CLIN-001): الافتراضي هو معادلة خلود الداخلية وليست Mifflin-St Jeor
+ * القياسية. لا تغيّر الافتراضي دون اعتماد اختصاصي.
  */
 export function calculateBMR(
   weightKg: number,
@@ -281,13 +328,9 @@ export function calculateBMR(
   useClassicMifflin: boolean = false
 ): number {
   if (useClassicMifflin && gender) {
-    if (gender === 'male') {
-      return Math.round(10 * weightKg + 6.25 * heightCm - 5 * ageYears + 5);
-    } else {
-      return Math.round(10 * weightKg + 6.25 * heightCm - 5 * ageYears - 161);
-    }
+    return calculateREE_MifflinStJeor(weightKg, heightCm, ageYears, gender);
   }
-  // معادلة خلود الموحدة
+  // معادلة خلود الموحدة (الافتراضي — معادلة داخلية)
   return calculateREE_Kholoud(weightKg, heightCm, ageYears);
 }
 

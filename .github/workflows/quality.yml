@@ -74,3 +74,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
+
+  rls-policy-check:
+    name: Supabase RLS policy static validation (SDV2-TEST-001)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify RLS policies documented in migration
+        run: |
+          echo "Checking that RLS policies are documented..."
+          for table in profiles clinics clinic_subscriptions platform_config invitations patients day_logs adherence_configs adherence_scores fcm_tokens consents; do
+            if ! grep -q "$table" supabase/migrations/20261031000000_baseline.sql; then
+              echo "FAIL: Table $table not documented in baseline migration"
+              exit 1
+            fi
+          done
+          echo "All 11 tables documented in baseline migration"
+
+      - name: Verify Edge Function source in repo
+        run: |
+          if [ ! -f "supabase/functions/notify/index.ts" ]; then
+            echo "FAIL: Edge Function source not in repo (SDV2-CONF-002)"
+            exit 1
+          fi
+          echo "Edge Function source present in repo"

@@ -6,8 +6,20 @@ const BRAND_SHORT_NAME = "عيادة التغذية";
 const BRAND_LOGO_PATH = "/icon.svg";
 // BRAND_INJECT_END
 
-self.addEventListener('install', () => {
-  self.skipWaiting();
+self.addEventListener('install', (event) => {
+  // SDV2-PWA-001: Precache app shell for offline support
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll([
+        '/',
+        '/index.html',
+        '/manifest.json',
+        '/icon.svg',
+      ]).catch(() => {
+        // Ignore cache failures during install (e.g., offline first install)
+      });
+    }).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -120,6 +132,62 @@ self.addEventListener('notificationclick', (event) => {
       if (self.clients.openWindow) {
         return self.clients.openWindow(urlToOpen);
       }
+    })
+  );
+});
+
+// SDV2-PWA-001: Fetch handler for offline app-shell support
+// Strategy: Cache-first for static assets, network-first for navigation with cache fallback
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Only handle same-origin requests
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  // Skip non-GET requests (API calls, etc.)
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Skip Supabase API and Vercel API calls — always go to network
+  if (url.pathname.startsWith('/rest/') ||
+      url.pathname.startsWith('/auth/') ||
+      url.pathname.startsWith('/functions/') ||
+      url.pathname.startsWith('/api/')) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      // For navigation requests: network-first with cache fallback
+      if (event.request.mode === 'navigate') {
+        return fetch(event.request)
+          .then((response) => {
+            // Cache successful navigation responses
+            if (response.ok) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            }
+            return response;
+          })
+          .catch(() => {
+            // Offline: return cached index.html or the cached response
+            return cached || caches.match('/index.html');
+          });
+      }
+      // For static assets: cache-first with network fallback
+      if (cached) {
+        return cached;
+      }
+      return fetch(event.request).then((response) => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      });
     })
   );
 });

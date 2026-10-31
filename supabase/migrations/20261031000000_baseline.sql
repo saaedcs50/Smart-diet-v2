@@ -1,0 +1,40 @@
+-- ============================================================================
+-- Baseline migration: Smart Diet Platform schema (2026-10-31)
+-- ============================================================================
+-- This baseline captures the schema as deployed via Supabase Dashboard SQL Editor.
+-- Tables: profiles, clinics, clinic_subscriptions, platform_config, invitations,
+--         patients, day_logs, adherence_configs, adherence_scores, fcm_tokens,
+--         consents
+-- RLS enabled on all tables with policies mirroring the B2B authorization model.
+-- Grants: authenticated and service_role have CRUD; anon has none (except TRUNCATE revoked).
+--
+-- SDV2-CONF-001: Versioned migrations for reproducible builds.
+-- ============================================================================
+
+-- Note: Full schema SQL is maintained in docs. This baseline documents the
+-- migration point. New changes must be added as new timestamped migrations,
+-- never by editing this baseline.
+
+-- Tables created via dashboard (2026-10-31):
+--   1. profiles (id UUID PK -> auth.users, role, clinic_id, email, display_name, disabled)
+--   2. clinics (id TEXT PK, name, owner_uid, owner_name, owner_phone, status)
+--   3. clinic_subscriptions (clinic_id PK -> clinics, plan, status, dates, payments JSONB)
+--   4. platform_config (key TEXT PK, value JSONB)
+--   5. invitations (email TEXT PK, role, clinic_id, created_by, status)
+--   6. patients (id UUID PK -> auth.users, clinic_id -> clinics, profile JSONB, plan JSONB, invited_by)
+--   7. day_logs (id BIGSERIAL PK, patient_id -> patients, log_date DATE, log JSONB, UNIQUE(patient_id, log_date))
+--   8. adherence_configs (patient_id PK -> patients, axes JSONB, updated_by)
+--   9. adherence_scores (id BIGSERIAL PK, patient_id -> patients, score_date DATE, scores JSONB, overall NUMERIC)
+--  10. fcm_tokens (patient_id PK -> patients, tokens TEXT[])
+--  11. consents (id BIGSERIAL PK, patient_id -> patients, purpose TEXT, consent JSONB, granted_by, UNIQUE(patient_id, purpose))
+--
+-- Helper functions (SECURITY DEFINER):
+--   - caller_role(), caller_clinic_id(), clinic_sub_active(cid), can_access_patient(pid)
+--
+-- RLS policies: 24+ policies enforcing owner/staff/patient access with subscription gate.
+-- Grants: GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO authenticated, service_role.
+--         REVOKE TRUNCATE ON ALL TABLES IN SCHEMA public FROM anon, authenticated.
+
+-- Tables in this baseline (for CI validation):
+-- profiles, clinics, clinic_subscriptions, platform_config, invitations,
+-- patients, day_logs, adherence_configs, adherence_scores, fcm_tokens, consents

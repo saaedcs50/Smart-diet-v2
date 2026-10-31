@@ -91,10 +91,15 @@ export async function decryptBackupJSON(envelopeJson: string, passphrase: string
   if (envelope?.app !== ENVELOPE_APP || envelope?.encrypted !== true) {
     throw new Error('هذا الملف ليس نسخة احتياطية مشفرة.');
   }
+  // SDV2-DATA-001: حدّ عدد تكرارات PBKDF2 وحجم الملف قبل أي عمل مشفّر مكلف.
+  const iterations = envelope.iterations || KDF_ITERATIONS;
+  if (!Number.isSafeInteger(iterations) || iterations < 1000 || iterations > 1000000) {
+    throw new Error('عدد تكرارات التشفير في الملف غير صالح.');
+  }
   const key = await deriveKey(
     passphrase,
     fromB64(envelope.salt),
-    envelope.iterations || KDF_ITERATIONS
+    iterations
   );
   try {
     const plain = await crypto.subtle.decrypt(

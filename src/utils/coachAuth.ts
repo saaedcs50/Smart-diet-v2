@@ -21,7 +21,19 @@ function readBuildFlag(name: string): string | undefined {
   ).process?.env?.[name];
 }
 
-export const COACH_LOCAL_ONLY = readBuildFlag('VITE_COACH_LOCAL_ONLY') === 'true';
+export const COACH_LOCAL_ONLY = (() => {
+  // SDV2-SEC-002: الوضع المحلي الخالص مسموح فقط في وضع التطوير الصريح.
+  // في الإنتاج/المعاينة يجب الفشل المغلق عند تعذر الوصول للخادم —
+  // لا يُنشأ رمز محلي لزائر جديد لمجرد تعذر الـ API.
+  const flag = readBuildFlag('VITE_COACH_LOCAL_ONLY') === 'true';
+  if (!flag) return false;
+  try {
+    const isDev = (import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV === true;
+    return isDev;
+  } catch {
+    return false;
+  }
+})();
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 const HASH_V2_PREFIX = 'v2$';
