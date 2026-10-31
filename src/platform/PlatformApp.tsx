@@ -56,6 +56,8 @@ import type { DayLog, PlanConfig } from '../types';
 import { SubscriptionGate } from './subscription/SubscriptionGate';
 import { SubscriptionCard } from './subscription/SubscriptionCard';
 import { AdherenceSection } from './adherence/AdherenceSection';
+import { registerFcmToken, isFcmConfigured, notifyPatient } from './fcm';
+import { getFirebaseAuth } from './firebase';
 
 type Route =
   | { view: 'login' }
@@ -513,6 +515,13 @@ function PatientDetail({
 
   useEffect(load, [patientUid]);
 
+  // تسجيل توكن FCM للمريض (مرة واحدة عند فتح ملفه)
+  useEffect(() => {
+    if (!isStaffView && isFcmConfigured()) {
+      void registerFcmToken(patientUid).catch(() => {});
+    }
+  }, [patientUid, isStaffView]);
+
   if (loading) return <p className="text-sm text-slate-500">جاري تحميل بيانات المريض…</p>;
   if (error) return <p className="text-sm font-bold text-red-600">{error}</p>;
   if (!doc) return <p className="text-sm text-slate-500">لا يوجد ملف مريض بهذا المعرف.</p>;
@@ -560,12 +569,61 @@ function PatientDetail({
         uid={viewerUid}
         isStaffView={isStaffView}
       />
+      {isStaffView && (
+        <NotifyPatientButton patientUid={patientUid} clientName={doc.profile.clientName} />
+      )}
       {!isStaffView && <SyncSection patientUid={patientUid} />}
       {isStaffView && (
         <p className="text-xs text-slate-500">
           عيادة هذا المريض: {doc.clinicId} — عيادتك: {viewerClinicId}
         </p>
       )}
+    </div>
+  );
+}
+
+// زر إشعار المريض (للدكتور) — يرسل FCM عبر الـ Worker.
+function NotifyPatientButton({
+  patientUid,
+  clientName,
+}: {
+  patientUid: string;
+  clientName: string;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  async function send() {
+    setBusy(true);
+    setResult(null);
+    try {
+      const user = getFirebaseAuth().currentUser;
+      if (!user) throw new Error('غير مسجل');
+      const idToken = await user.getIdToken();
+      const res = await notifyPatient(
+        patientUid,
+        'تحديث من دكتورك',
+        `دكتورك حدّث خطتك — افتح التطبيق للاطلاع`,
+        idToken,
+      );
+      setResult(res.sent > 0 ? `تم إرسال الإشعار (${res.sent})` : 'لا توجد أجهزة مسجلة للمريض');
+    } catch (err) {
+      setResult(err instanceof Error ? err.message : 'فشل الإرسال');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+      <button
+        onClick={() => void send()}
+        disabled={busy}
+        className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+      >
+        {busy ? 'جارٍ الإرسال…' : `🔔 إشعار ${clientName}`}
+      </button>
+      {result && <span className="text-xs text-slate-600 dark:text-slate-400">{result}</span>}
     </div>
   );
 }
