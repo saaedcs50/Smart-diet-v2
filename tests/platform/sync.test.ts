@@ -77,14 +77,6 @@ function memoryWriters(options?: {
       (store.dayLogs as Record<string, DayLog> | undefined) ??= {};
       (store.dayLogs as Record<string, DayLog>)[date] = log;
     },
-    saveActiveFasting: async () => undefined,
-    saveNotificationSettings: async () => undefined,
-    saveMilestones: async () => undefined,
-    saveSeasonal: async () => undefined,
-    saveShoppingList: async (_uid, week) => {
-      (store.weeks as string[] | undefined) ??= [];
-      (store.weeks as string[]).push(week);
-    },
     saveConsent: async () => undefined,
   };
   return { writers, store };
@@ -101,14 +93,18 @@ describe('summarizeSnapshot', () => {
 });
 
 describe('migrateLocalToCloud', () => {
-  it('يكتب الخطة والأيام والقوائم عند غياب خطة سحابية', async () => {
+  it('يكتب الخطة والأيام عند غياب خطة سحابية (الأقسام غير المدعومة تُسجَّل)', async () => {
     const { writers, store } = memoryWriters();
     const report = await migrateLocalToCloud(fakeSnapshot(), 'patient-1', 'patient-1', writers);
     expect(report.planWritten).toBe(true);
     expect(report.planSkippedCloudExists).toBe(false);
     expect(report.dayLogCount).toBe(2);
     expect(report.dayLogFailed).toEqual([]);
-    expect(report.shoppingListCount).toBe(1);
+    // SDV2-INT-002: قوائم التسوق غير مدعومة — تُسجَّل في unsupportedSections
+    expect(report.shoppingListCount).toBe(0);
+    expect(report.unsupportedSections).toContain('shoppingLists');
+    expect(report.unsupportedSections).toContain('notificationSettings');
+    expect(report.unsupportedSections).toContain('milestones');
     expect(report.errors).toEqual([]);
     expect(store.plan).toBeDefined();
   });
