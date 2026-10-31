@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { PlatformAuthProvider, usePlatformAuth } from '../auth';
-import { isFirebaseConfigured } from '../firebase';
+import { isSupabaseConfigured } from '../supabase';
 import { ClinicsTab } from './ClinicsTab';
 import { ActivationsTab } from './ActivationsTab';
 import { NewClinicTab } from './NewClinicTab';
@@ -111,10 +111,10 @@ function OwnerShell() {
 }
 
 export function OwnerApp() {
-  if (!isFirebaseConfigured()) {
+  if (!isSupabaseConfigured()) {
     return (
       <div dir="rtl" className="mx-auto max-w-md p-6 text-center">
-        إعدادات Firebase غير موجودة.
+        إعدادات Supabase غير موجودة.
       </div>
     );
   }

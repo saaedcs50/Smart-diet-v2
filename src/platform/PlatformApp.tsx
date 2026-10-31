@@ -22,7 +22,7 @@
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { PlatformAuthProvider, usePlatformAuth } from './auth';
-import { isFirebaseConfigured } from './firebase';
+import { isSupabaseConfigured } from './supabase';
 import {
   assignPatientCoach,
   getPatient,
@@ -57,7 +57,7 @@ import { SubscriptionGate } from './subscription/SubscriptionGate';
 import { SubscriptionCard } from './subscription/SubscriptionCard';
 import { AdherenceSection } from './adherence/AdherenceSection';
 import { registerFcmToken, isFcmConfigured, notifyPatient } from './fcm';
-import { getFirebaseAuth } from './firebase';
+import { getSupabase } from './supabase';
 
 type Route =
   | { view: 'login' }
@@ -597,14 +597,19 @@ function NotifyPatientButton({
     setBusy(true);
     setResult(null);
     try {
-      const user = getFirebaseAuth().currentUser;
+      const {
+        data: { user },
+      } = await getSupabase().auth.getUser();
       if (!user) throw new Error('غير مسجل');
-      const idToken = await user.getIdToken();
+      const {
+        data: { session },
+      } = await getSupabase().auth.getSession();
+      const accessToken = session?.access_token ?? '';
       const res = await notifyPatient(
         patientUid,
         'تحديث من دكتورك',
         `دكتورك حدّث خطتك — افتح التطبيق للاطلاع`,
-        idToken,
+        accessToken,
       );
       setResult(res.sent > 0 ? `تم إرسال الإشعار (${res.sent})` : 'لا توجد أجهزة مسجلة للمريض');
     } catch (err) {
@@ -960,14 +965,14 @@ function PlatformShell() {
 }
 
 export default function PlatformApp() {
-  if (!isFirebaseConfigured()) {
+  if (!isSupabaseConfigured()) {
     return (
       <div dir="rtl" className="mx-auto max-w-3xl p-6">
         <h1 className="text-xl font-black text-slate-900">وضع المنصة غير مهيأ</h1>
         <p className="mt-2 text-sm text-slate-600">
-          اضبط متغيرات بيئة Firebase (VITE_FIREBASE_*) في ملف .env المحلي أو
-          بيئة النشر (انظر .env.example) ثم أعد التحميل. لا توجد قيم
-          افتراضية عمدًا.
+          اضبط متغيرات بيئة Supabase (VITE_SUPABASE_URL و VITE_SUPABASE_ANON_KEY)
+          في ملف .env المحلي أو بيئة النشر (انظر .env.example) ثم أعد التحميل.
+          لا توجد قيم افتراضية عمدًا.
         </p>
       </div>
     );
