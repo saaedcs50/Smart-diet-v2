@@ -407,7 +407,11 @@ export async function getDayLog(
     .eq('patient_id', uid)
     .eq('log_date', date)
     .single();
-  if (error || !data) return null;
+  if (error) {
+    logDbError(`getDayLog(${uid}, ${date})`, error);
+    return null;
+  }
+  if (!data) return null;
   return dayLogFromFirestore((data as { log: unknown }).log);
 }
 
@@ -433,7 +437,11 @@ export async function listDayLogs(uid: string): Promise<DayLog[]> {
     .from('day_logs')
     .select('log')
     .eq('patient_id', uid);
-  if (error || !data) return [];
+  if (error) {
+    logDbError(`listDayLogs(${uid})`, error);
+    return [];
+  }
+  if (!data) return [];
   const out: DayLog[] = [];
   for (const row of data as Array<{ log: unknown }>) {
     const parsed = dayLogFromFirestore(row.log);
@@ -472,7 +480,11 @@ export async function listClinicPatients(
     .from('patients')
     .select()
     .eq('clinic_id', clinicId);
-  if (error || !data) return [];
+  if (error) {
+    logDbError(`listClinicPatients(${clinicId})`, error);
+    return [];
+  }
+  if (!data) return [];
   return (data as Array<Record<string, unknown>>).map(rowToPatientDoc);
 }
 
@@ -484,7 +496,11 @@ export async function listClinicPatientEntries(
     .from('patients')
     .select()
     .eq('clinic_id', clinicId);
-  if (error || !data) return [];
+  if (error) {
+    logDbError(`listClinicPatientEntries(${clinicId})`, error);
+    return [];
+  }
+  if (!data) return [];
   return (data as Array<Record<string, unknown>>).map((row) => ({
     uid: row.id as string,
     doc: rowToPatientDoc(row),
@@ -519,7 +535,11 @@ export async function listClinicStaffEntries(
     .select()
     .eq('clinic_id', clinicId)
     .eq('role', 'coach');
-  if (error || !data) return [];
+  if (error) {
+    logDbError(`listClinicStaffEntries(${clinicId})`, error);
+    return [];
+  }
+  if (!data) return [];
   return (data as Array<Record<string, unknown>>).map((row) => ({
     uid: row.id as string,
     doc: rowToUserDoc(row),
@@ -536,7 +556,11 @@ export async function listDoctorPatients(
     .select()
     .eq('clinic_id', clinicId)
     .eq('invited_by', coachUid);
-  if (error || !data) return [];
+  if (error) {
+    logDbError(`listDoctorPatients(${clinicId}, ${coachUid})`, error);
+    return [];
+  }
+  if (!data) return [];
   return (data as Array<Record<string, unknown>>).map((row) => ({
     uid: row.id as string,
     doc: rowToPatientDoc(row),
