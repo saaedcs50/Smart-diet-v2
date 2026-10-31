@@ -11,6 +11,10 @@ import {
   calculateBMI,
   calculateBMR,
   calculateTDEE,
+  calculateREE_Kholoud,
+  calculateREE_MifflinStJeor,
+  KHOLOUD_REE_META,
+  MIFFLIN_ST_JEOR_META,
 } from '../src/utils/calculations';
 
 describe('clinicalCalculators — BMR formulas', () => {
@@ -38,6 +42,39 @@ describe('clinicalCalculators — BMR formulas', () => {
   it('calculateBMR guards invalid input (Kholoud REE returns 0)', () => {
     expect(calculateBMR(0, 180, 30)).toBe(0);
     expect(calculateBMR(80, 0, 30)).toBe(0);
+  });
+});
+
+// SDV2-CLIN-001: REE equation labeling — both equations tested, labels verified
+describe('REE equation metadata (SDV2-CLIN-001)', () => {
+  it('Kholoud REE metadata is labeled as internal (not Mifflin)', () => {
+    expect(KHOLOUD_REE_META.name).toBe('Kholoud REE');
+    expect(KHOLOUD_REE_META.isStandardMifflin).toBe(false);
+    expect(KHOLOUD_REE_META.source).toContain('internal');
+  });
+
+  it('Mifflin-St Jeor metadata is labeled as standard', () => {
+    expect(MIFFLIN_ST_JEOR_META.name).toBe('Mifflin-St Jeor');
+    expect(MIFFLIN_ST_JEOR_META.isStandardMifflin).toBe(true);
+  });
+
+  it('calculateREE_MifflinStJeor matches standard formula', () => {
+    // Male: 10*80 + 6.25*180 - 5*30 + 5 = 800 + 1125 - 150 + 5 = 1780
+    expect(calculateREE_MifflinStJeor(80, 180, 30, 'male')).toBe(1780);
+    // Female: 10*80 + 6.25*180 - 5*30 - 161 = 800 + 1125 - 150 - 161 = 1614
+    expect(calculateREE_MifflinStJeor(80, 180, 30, 'female')).toBe(1614);
+  });
+
+  it('calculateREE_MifflinStJeor guards invalid input', () => {
+    expect(calculateREE_MifflinStJeor(0, 180, 30, 'male')).toBe(0);
+    expect(calculateREE_MifflinStJeor(80, 0, 30, 'female')).toBe(0);
+  });
+
+  it('Kholoud REE differs from Mifflin-St Jeor (documents the distinction)', () => {
+    const kholoud = calculateREE_Kholoud(80, 180, 30);
+    const mifflinMale = calculateREE_MifflinStJeor(80, 180, 30, 'male');
+    // They should differ — this is the documented distinction in SDV2-CLIN-001
+    expect(kholoud).not.toBe(mifflinMale);
   });
 });
 
