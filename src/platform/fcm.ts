@@ -48,8 +48,10 @@ export async function registerFcmToken(patientUid: string): Promise<string | nul
       userVisibleOnly: true,
       applicationServerKey: vapidBytes.buffer as ArrayBuffer,
     });
-    const token = subscription.endpoint;
-    if (!token) return null;
+    // تخزين الاشتراك الكامل (endpoint + keys) — الإرسال يحتاج المفاتيح وليس الرابط فقط
+    const subJson = subscription.toJSON();
+    if (!subJson.endpoint) return null;
+    const token = JSON.stringify(subJson);
 
     // حفظ التوكن (دمج مع الموجودة بلا تكرار)
     const sb = getSupabase();
