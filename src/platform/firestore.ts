@@ -23,6 +23,18 @@ import type { NotificationSettings } from '../utils/notifications';
 import type { SeasonalActivation } from '../utils/seasonalTemplate';
 import type { ShoppingListState } from '../utils/shoppingList';
 
+// SDV2-UX-001: لا تخفي أخطاء الصلاحيات على شكل بيانات فارغة.
+// سجّل الخطأ مع السياق حتى يمكن تشخيص مشاكل RLS/Grants.
+function logDbError(context: string, error: unknown): void {
+  const msg = error instanceof Error ? error.message : String(error);
+  // في المتصفح: console.warn. في الاختبارات: صامت.
+  if (typeof console !== 'undefined' && typeof process === 'undefined') {
+    console.warn(`[Supabase] ${context}: ${msg}`);
+  } else if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'test') {
+    console.warn(`[Supabase] ${context}: ${msg}`);
+  }
+}
+
 export type PlatformRole = 'patient' | 'coach' | 'admin' | 'owner';
 // owner = صاحب المنصة (سعيد) — clinicId = 'platform'.
 // admin = صاحب العيادة، coach = الدكتور، patient = المريض.
@@ -314,7 +326,11 @@ export async function getClinic(clinicId: string): Promise<ClinicDoc | null> {
     .select()
     .eq('id', clinicId)
     .single();
-  if (error || !data) return null;
+  if (error) {
+    logDbError(`getClinic(${clinicId})`, error);
+    return null;
+  }
+  if (!data) return null;
   return data as unknown as ClinicDoc;
 }
 
@@ -324,7 +340,11 @@ export async function getPatient(uid: string): Promise<PatientDoc | null> {
     .select()
     .eq('id', uid)
     .single();
-  if (error || !data) return null;
+  if (error) {
+    logDbError(`getPatient(${uid})`, error);
+    return null;
+  }
+  if (!data) return null;
   return rowToPatientDoc(data as Record<string, unknown>);
 }
 
@@ -431,7 +451,11 @@ export async function listDayLogEntries(
     .select('log_date, log')
     .eq('patient_id', uid)
     .order('log_date', { ascending: false });
-  if (error || !data) return [];
+  if (error) {
+    logDbError(`listDayLogEntries(${uid})`, error);
+    return [];
+  }
+  if (!data) return [];
   const out: Array<{ date: string; log: DayLog }> = [];
   for (const row of data as Array<{ log_date: string; log: unknown }>) {
     const parsed = dayLogFromFirestore(row.log);
