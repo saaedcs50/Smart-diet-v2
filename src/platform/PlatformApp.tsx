@@ -53,6 +53,8 @@ import {
   type SyncStatus,
 } from './sync';
 import type { DayLog, PlanConfig } from '../types';
+import { SubscriptionGate } from './subscription/SubscriptionGate';
+import { SubscriptionCard } from './subscription/SubscriptionCard';
 
 type Route =
   | { view: 'login' }
@@ -640,6 +642,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
 
   return (
     <div className="flex flex-col gap-4">
+      <SubscriptionCard clinicId={clinicId} />
       <Card>
         <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
           الدكاترة
@@ -847,34 +850,42 @@ function PlatformShell() {
         </Card>
       )}
 
-      {user && profile && !profile.disabled && route.view === 'patient' && (
-        <>
-          {profile.role === 'patient' && profile.uid !== route.patientUid ? (
-            <Card>
-              <p className="text-sm font-bold text-red-600">
-                لا يمكنك عرض ملف مريض آخر — يمكنك عرض ملفك فقط.
-              </p>
-            </Card>
-          ) : (
+      {user && profile && !profile.disabled && !profileMissing && (
+        <SubscriptionGate
+          clinicId={profile.clinicId}
+          uid={profile.uid}
+          role={profile.role}
+        >
+          {route.view === 'patient' && (
+            <>
+              {profile.role === 'patient' && profile.uid !== route.patientUid ? (
+                <Card>
+                  <p className="text-sm font-bold text-red-600">
+                    لا يمكنك عرض ملف مريض آخر — يمكنك عرض ملفك فقط.
+                  </p>
+                </Card>
+              ) : (
+                <PatientDetail
+                  patientUid={route.patientUid}
+                  viewerClinicId={profile.clinicId}
+                  isStaffView={profile.role !== 'patient'}
+                />
+              )}
+            </>
+          )}
+
+          {route.view !== 'patient' && profile.role === 'patient' && (
             <PatientDetail
-              patientUid={route.patientUid}
+              patientUid={profile.uid}
               viewerClinicId={profile.clinicId}
-              isStaffView={profile.role !== 'patient'}
+              isStaffView={false}
             />
           )}
-        </>
-      )}
 
-      {user && profile && !profile.disabled && route.view !== 'patient' && profile.role === 'patient' && (
-        <PatientDetail
-          patientUid={profile.uid}
-          viewerClinicId={profile.clinicId}
-          isStaffView={false}
-        />
-      )}
-
-      {user && profile && !profile.disabled && route.view !== 'patient' && profile.role !== 'patient' && (
-        <StaffDashboard clinicId={profile.clinicId} uid={profile.uid} isAdmin={profile.role === 'admin'} />
+          {route.view !== 'patient' && profile.role !== 'patient' && (
+            <StaffDashboard clinicId={profile.clinicId} uid={profile.uid} isAdmin={profile.role === 'admin'} />
+          )}
+        </SubscriptionGate>
       )}
     </div>
   );

@@ -111,10 +111,33 @@ service cloud.firestore {
 
     // --- اشتراكات العيادات --------------------------------------------------
     // القراءة: صاحب المنصة + طاقم العيادة (حتى لو منتهي — صاحب العيادة
-    // يحتاج رؤية حالة التجديد). الكتابة: صاحب المنصة فقط.
+    // يحتاج رؤية حالة التجديد). الكتابة: صاحب المنصة فقط، ما عدا إلحاق
+    // طلب دفع جديد من صاحب العيادة (إضافة واحدة بنهاية payments، بلا
+    // تعديل على المدفوعات السابقة ولا على باقي الحقول).
+    function isValidPaymentAppend() {
+      let oldPayments = resource.data.get('payments', []);
+      let newPayments = request.resource.data.get('payments', []);
+      // حقلان فقط يتغيران: payments وupdatedAt
+      return request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['payments', 'updatedAt'])
+        // عنصر واحد يُلحق بالنهاية، والسابقة كما هي
+        && newPayments.size() == oldPayments.size() + 1
+        && newPayments.removeAll(oldPayments).size() == 1
+        // بنية الطلب الجديد سليمة وغير مراجَع
+        && isValidNewPayment(newPayments[newPayments.size() - 1]);
+    }
+    function isValidNewPayment(p) {
+      return p.method in ['instapay', 'vodafone_cash']
+        && p.amount is number && p.amount > 0
+        && p.reference is string && p.reference.size() > 0
+             && p.reference.size() < 100
+        && (!('reviewedAt' in p) || p.reviewedAt == null)
+        && (!('reviewedBy' in p) || p.reviewedBy == null);
+    }
     match /clinicSubscriptions/{sid} {
       allow read: if isPlatformOwner() || (isStaff() && clinicId() == sid);
       allow write: if isPlatformOwner();
+      allow update: if isAdmin() && clinicId() == sid && isValidPaymentAppend();
     }
 
     // --- إعدادات المنصة -----------------------------------------------------

@@ -154,6 +154,12 @@ describe('firestore.rules content', () => {
     expect(rules).toContain('match /clinicSubscriptions/{sid}');
     expect(rules).toContain('match /platformConfig/{doc}');
     expect(rules).toContain('allow write: if isPlatformOwner();');
+    // المرحلة 4: الأدمن يلحق طلب دفع (إضافة واحدة بنهاية payments)
+    expect(rules).toContain('isValidPaymentAppend');
+    expect(rules).toContain('isValidNewPayment');
+    expect(rules).toContain(
+      'allow update: if isAdmin() && clinicId() == sid && isValidPaymentAppend();',
+    );
   });
 
   it('B2B: أدوار الدعوات — المنصة تدعو admin، والأدمن لا يدعو admin', () => {
