@@ -51,6 +51,7 @@ const PLATFORM_ROLES: ReadonlySet<string> = new Set([
   'patient',
   'coach',
   'admin',
+  'owner',
 ]);
 
 // تحقق خالص (قابل للاختبار بلا Firebase) من شكل مستند المستخدم.

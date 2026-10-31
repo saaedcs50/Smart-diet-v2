@@ -51,6 +51,9 @@ const NotificationSettingsModal = lazy(() => import('./components/NotificationSe
 const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
 const PrototypeApp = lazy(() => import('./prototype/PrototypeApp').then(m => ({ default: m.PrototypeApp })));
 const PlatformApp = lazy(() => import('./platform/PlatformApp'));
+const OwnerApp = lazy(() =>
+  import('./platform/owner/OwnerApp').then((m) => ({ default: m.OwnerApp })),
+);
 
 const ModalFallback: React.FC = () => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs">
@@ -312,6 +315,16 @@ export default function App() {
     return (
       <Suspense fallback={<TabFallback />}>
         <PlatformApp />
+      </Suspense>
+    );
+  }
+
+  // لوحة صاحب المنصة — تعمل فقط مع VITE_PLATFORM_ENABLED=true، والدور
+  // 'owner' يُتحقق منه داخل OwnerApp نفسه (القواعد تفرضه أيضًا).
+  if (currentPath.startsWith('/owner') && isPlatformEnabled()) {
+    return (
+      <Suspense fallback={<TabFallback />}>
+        <OwnerApp />
       </Suspense>
     );
   }

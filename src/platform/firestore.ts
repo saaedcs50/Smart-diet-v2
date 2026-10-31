@@ -138,6 +138,17 @@ export interface PlatformPaymentMethods {
   updatedAt?: FieldValue;
 }
 
+// مستند العيادة في نموذج B2B — clinics/{clinicId}.
+// (يختلف عن ClinicDoc القديم الخاص بوضع العيادة الواحدة.)
+export interface B2BClinicDoc {
+  name: string;
+  ownerUid: string; // فارغ حتى يسجل صاحب العيادة بالدعوة
+  ownerName: string;
+  ownerPhone: string;
+  status: 'active' | 'suspended';
+  createdAt?: FieldValue;
+}
+
 export interface MilestonesDoc {
   unlocked: MilestonesUnlocked;
   initialized: boolean;
