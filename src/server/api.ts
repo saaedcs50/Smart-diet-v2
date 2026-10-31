@@ -1,10 +1,10 @@
 import express, { Router, Request, Response } from 'express';
 import crypto from 'crypto';
-import { brandCopy } from '../config/brand.js';
+import { brandCopy } from '../config/brand';
 import {
   getCoachGuardStore,
   GuardUnavailableError,
-} from './coachGuardStore.js';
+} from './coachGuardStore';
 
 export const apiRouter = Router();
 
@@ -138,9 +138,12 @@ const handleHealth = (_req: Request, res: Response) => {
 // 2. Create Session (مُصدَّر للاختبارات)
 export const handleCreateSession = async (req: Request, res: Response) => {
   const ip = req.ip || req.socket.remoteAddress || 'unknown';
-  const store = getCoachGuardStore();
 
   try {
+    // SDV2-SEC-003: getCoachGuardStore() داخل الـ try حتى يُمسك
+    // GuardUnavailableError بواسطة guardFailure ويُرجع 503 بدل انهيار غير مُعالج.
+    const store = getCoachGuardStore();
+
     if (await store.isLockedOut(ip)) {
       return res.status(429).json({
         ok: false,
