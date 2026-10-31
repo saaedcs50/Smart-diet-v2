@@ -57,3 +57,18 @@
 **Tests:** 278 passed, 3 skipped. TypeScript clean.
 
 **Note:** The P0 SQL migration must be applied via Supabase Dashboard SQL Editor (direct DB connections blocked). Verification queries included in migration file.
+
+---
+
+## PR34 Independent Review (2026-10-31) — Follow-up Fixes
+
+**Branch:** `fix/pr34-audit-followup`
+**Audit:** SMART_DIET_V2_PR34_INDEPENDENT_REVIEW_1_vyn9.md
+
+| Finding ID | Title | Status | Evidence |
+|---|---|---|---|
+| P1-2 | Sync UI partial state | FIXED | `SyncState` now includes `'partial'`; `SyncStatus.unsupportedSections` persisted. `SyncSection.run()` sets `partial` when errors=0 but unsupportedSections>0. UI shows «نجحت جزئيًا» + Arabic labels of skipped sections (الصيام النشط، إعدادات التنبيهات، المعالم، القالب الموسمي، قوائم التسوق). New test for partial round-trip. |
+| P1-3 | Payment methods public marker | FIXED | `savePaymentMethods()` now writes `public: 'true'` inside the JSONB value, matching the `config_read_public` policy predicate `(value ->> 'public') = 'true'`. Clinic users can read payment instructions; private settings stay hidden. |
+| P1-4 | Migration drift documentation | FIXED | `docs/remediation/PR34-DRIFT-ANALYSIS.md` documents: (1) live profiles_self_insert allows patient/coach/admin vs committed patient-only; (2) live trigger `enforce_invitation_consume` vs committed `enforce_invitation_immutable_cols` (+ re-open blocked live); (3) empty migration history; (4) manual dashboard process. Includes reconciliation recommendation + verification queries. |
+
+**Note:** P0-1 (staff self-insert), P0-2 (PUBLIC execute on helpers), and P1-1 (invitation re-open) from the PR34 review require live-database decisions/changes beyond code fixes and are NOT addressed in this branch — they need owner confirmation on the intended policy before reconciliation.
