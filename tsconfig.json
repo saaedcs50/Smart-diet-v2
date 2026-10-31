@@ -32,5 +32,6 @@
     "noImplicitThis": true,
     "alwaysStrict": true,
     "useUnknownInCatchVariables": true
-  }
+  },
+  "exclude": ["supabase/functions"]
 }
