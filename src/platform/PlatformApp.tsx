@@ -360,6 +360,18 @@ function InviteForm({ clinicId, createdBy, isAdmin }: { clinicId: string; create
 // قسم المزامنة (واجهة المريض نفسه فقط)
 // ---------------------------------------------------------------------------
 
+// SDV2-P1-2: تسميات عربية للأقسام غير المدعومة سحابيًا (تُعرض عند المزامنة الجزئية)
+function sectionLabelAr(section: string): string {
+  switch (section) {
+    case 'activeFasting': return 'الصيام النشط';
+    case 'notificationSettings': return 'إعدادات التنبيهات';
+    case 'milestones': return 'المعالم';
+    case 'seasonal': return 'القالب الموسمي';
+    case 'shoppingLists': return 'قوائم التسوق';
+    default: return section;
+  }
+}
+
 function SyncSection({ patientUid }: { patientUid: string }) {
   const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<SyncStatus>(() => loadSyncStatus());
@@ -377,7 +389,7 @@ function SyncSection({ patientUid }: { patientUid: string }) {
   const run = async () => {
     setError(null);
     setBusy(true);
-    setStatus({ state: 'syncing', at: null, dayLogCount: 0, planWritten: false, error: null });
+    setStatus({ state: 'syncing', at: null, dayLogCount: 0, planWritten: false, error: null, unsupportedSections: [] });
     try {
       await saveConsent(
         patientUid,
@@ -389,12 +401,14 @@ function SyncSection({ patientUid }: { patientUid: string }) {
       setSummary(summarizeSnapshot(snapshot));
       const result = await migrateLocalToCloud(snapshot, patientUid, patientUid);
       setReport(result);
+      // SDV2-P1-2: لا تُعرض المزامنة «ناجحة» بينما أقسام لم تُرفع — حالة جزئية صريحة.
       const next: SyncStatus = {
-        state: result.errors.length > 0 ? 'error' : 'success',
+        state: result.errors.length > 0 ? 'error' : result.unsupportedSections.length > 0 ? 'partial' : 'success',
         at: new Date().toISOString(),
         dayLogCount: result.dayLogCount,
         planWritten: result.planWritten,
         error: result.errors.length > 0 ? result.errors.join('؛ ') : null,
+        unsupportedSections: result.unsupportedSections,
       };
       setStatus(next);
       saveSyncStatus(next);
@@ -405,6 +419,7 @@ function SyncSection({ patientUid }: { patientUid: string }) {
         dayLogCount: 0,
         planWritten: false,
         error: errorText(caught),
+        unsupportedSections: [],
       };
       setStatus(next);
       saveSyncStatus(next);
@@ -434,10 +449,16 @@ function SyncSection({ patientUid }: { patientUid: string }) {
       </button>
       {status.state !== 'idle' && (
         <p className="mt-2 text-xs text-slate-500">
-          آخر حالة: {status.state === 'success' ? 'نجحت' : status.state === 'syncing' ? 'جارية…' : 'فشلت'}
+          آخر حالة: {status.state === 'success' ? 'نجحت' : status.state === 'partial' ? 'نجحت جزئيًا' : status.state === 'syncing' ? 'جارية…' : 'فشلت'}
           {status.at ? ` — ${status.at}` : ''}
-          {status.state === 'success' ? ` — ${status.dayLogCount} يوم، والخطة ${status.planWritten ? 'رُفعت' : 'كانت موجودة سحابيًا فلم تُستبدل'}.` : ''}
+          {(status.state === 'success' || status.state === 'partial') ? ` — ${status.dayLogCount} يوم، والخطة ${status.planWritten ? 'رُفعت' : 'كانت موجودة سحابيًا فلم تُستبدل'}.` : ''}
           {status.error ? ` — ${status.error}` : ''}
+        </p>
+      )}
+      {status.state === 'partial' && status.unsupportedSections.length > 0 && (
+        <p className="mt-2 text-xs font-bold text-amber-700">
+          تنبيه: بعض الأقسام لم تُرفع سحابيًا وبقيت على جهازك فقط:{' '}
+          {status.unsupportedSections.map(sectionLabelAr).join('، ')}.
         </p>
       )}
       {report && report.planSkippedCloudExists && (
