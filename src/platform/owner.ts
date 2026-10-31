@@ -289,7 +289,9 @@ export async function savePaymentMethods(
   const { error } = await getSupabase().from('platform_config').upsert(
     {
       key: 'paymentMethods',
-      value: { ...methods, updatedAt: new Date().toISOString() },
+      // SDV2-P1-3: وسم علني صريح — سياسة config_read_public تتطلب (value->>'public') = 'true'
+      // حتى يتمكن طاقم العيادة من قراءة طرق الدفع دون كشف الإعدادات الخاصة.
+      value: { ...methods, public: 'true', updatedAt: new Date().toISOString() },
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'key' },
