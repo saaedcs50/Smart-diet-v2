@@ -36,14 +36,9 @@ import type { ShoppingListState } from '../utils/shoppingList';
 import type { MilestonesDoc } from './firestore';
 import {
   getPatientPlan,
-  saveActiveFasting,
   saveConsent,
   saveDayLog,
-  saveMilestones,
-  saveNotificationSettings,
   savePatientPlan,
-  saveSeasonal,
-  saveShoppingList,
 } from './firestore';
 
 export interface LocalSnapshot {
@@ -106,11 +101,14 @@ export interface SyncReport {
   planSkippedCloudExists: boolean;
   dayLogCount: number;
   dayLogFailed: string[];
-  activeFastingWritten: boolean;
-  notificationSettingsWritten: boolean;
-  milestonesWritten: boolean;
-  seasonalWritten: boolean;
-  shoppingListCount: number;
+  // SDV2-INT-002: الأقسام التالية غير مدعومة في سكيما Supabase الحالية
+  // ولا تُزامن. تُحفظ محليًا فقط. القيم أدناه للتوافق مع الواجهة.
+  activeFastingWritten: false;
+  notificationSettingsWritten: false;
+  milestonesWritten: false;
+  seasonalWritten: false;
+  shoppingListCount: 0;
+  unsupportedSections: string[];
   errors: string[];
 }
 
@@ -118,23 +116,15 @@ export interface SyncWriters {
   getPatientPlan: (uid: string) => Promise<PlanConfig | null>;
   savePatientPlan: (uid: string, plan: PlanConfig, editorUid: string) => Promise<void>;
   saveDayLog: (uid: string, date: string, log: DayLog, editorUid: string) => Promise<void>;
-  saveActiveFasting: (uid: string, session: ActiveFastingSession, editorUid: string) => Promise<void>;
-  saveNotificationSettings: (uid: string, settings: NotificationSettings, editorUid: string) => Promise<void>;
-  saveMilestones: (uid: string, state: MilestonesDoc, editorUid: string) => Promise<void>;
-  saveSeasonal: (uid: string, state: SeasonalActivation | null, editorUid: string) => Promise<void>;
-  saveShoppingList: (uid: string, weekStart: string, state: ShoppingListState, editorUid: string) => Promise<void>;
   saveConsent: (uid: string, type: string, consent: { text: string; grantedAt: string | null; revokedAt: string | null; version: string }, editorUid: string) => Promise<void>;
+  // SDV2-INT-002: الكتّاب التالية أُزيلت — لا توجد جداول لها في سكيما Supabase:
+  // saveActiveFasting, saveNotificationSettings, saveMilestones, saveSeasonal, saveShoppingList
 }
 
 export const defaultSyncWriters: SyncWriters = {
   getPatientPlan,
   savePatientPlan,
   saveDayLog,
-  saveActiveFasting,
-  saveNotificationSettings,
-  saveMilestones,
-  saveSeasonal,
-  saveShoppingList,
   saveConsent,
 };
 
@@ -175,6 +165,7 @@ export async function migrateLocalToCloud(
     milestonesWritten: false,
     seasonalWritten: false,
     shoppingListCount: 0,
+    unsupportedSections: [],
     errors: [],
   };
 
@@ -202,65 +193,17 @@ export async function migrateLocalToCloud(
     }
   }
 
-  const optionalWrites: Array<[string, () => Promise<void>, () => void]> = [
-    [
-      'activeFasting',
-      async () => {
-        if (snapshot.activeFasting) {
-          await writers.saveActiveFasting(patientUid, snapshot.activeFasting, editorUid);
-        }
-      },
-      () => {
-        report.activeFastingWritten = snapshot.activeFasting !== null;
-      },
-    ],
-    [
-      'notificationSettings',
-      async () => {
-        await writers.saveNotificationSettings(patientUid, snapshot.notificationSettings, editorUid);
-      },
-      () => {
-        report.notificationSettingsWritten = true;
-      },
-    ],
-    [
-      'milestones',
-      async () => {
-        await writers.saveMilestones(patientUid, snapshot.milestones, editorUid);
-      },
-      () => {
-        report.milestonesWritten = true;
-      },
-    ],
-    [
-      'seasonal',
-      async () => {
-        await writers.saveSeasonal(patientUid, snapshot.seasonal, editorUid);
-      },
-      () => {
-        report.seasonalWritten = true;
-      },
-    ],
-  ];
-  for (const [label, write, mark] of optionalWrites) {
-    try {
-      await write();
-      mark();
-    } catch (error) {
-      report.errors.push(`${label}: ${error instanceof Error ? error.message : 'unknown'}`);
-    }
-  }
-
-  for (const [weekStart, state] of Object.entries(snapshot.shoppingLists)) {
-    try {
-      await writers.saveShoppingList(patientUid, weekStart, state, editorUid);
-      report.shoppingListCount += 1;
-    } catch (error) {
-      report.errors.push(
-        `shoppingList ${weekStart}: ${error instanceof Error ? error.message : 'unknown'}`,
-      );
-    }
-  }
+  // SDV2-INT-002: الأقسام التالية غير مدعومة في سكيما Supabase الحالية
+  // ولا تُزامن — تبقى محلية فقط: الصيام النشط، إعدادات التنبيهات،
+  // المعالم، القالب الموسمي، قوائم التسوق. يُسجَّل ذلك صراحةً في التقرير
+  // حتى لا تُعرض المزامنة «ناجحة» بينما أقسام لم تُرفع.
+  const unsupported: string[] = [];
+  if (snapshot.activeFasting) unsupported.push('activeFasting');
+  unsupported.push('notificationSettings');
+  unsupported.push('milestones');
+  if (snapshot.seasonal) unsupported.push('seasonal');
+  if (Object.keys(snapshot.shoppingLists).length > 0) unsupported.push('shoppingLists');
+  report.unsupportedSections = unsupported;
 
   return report;
 }
