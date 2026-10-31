@@ -82,6 +82,14 @@ export async function encryptBackupJSON(plainJson: string, passphrase: string): 
 
 /** يفك تشفير مغلف نسخة احتياطية. يرمي خطأ عند كلمة مرور خاطئة أو ملف تالف. */
 export async function decryptBackupJSON(envelopeJson: string, passphrase: string): Promise<string> {
+  // SDV2-DATA-001: فحص حجم البايت قبل أي تحليل — يمنع ملفات ضخمة خبيثة
+  // من استنزاف الذاكرة في JSON.parse أو اشتقاق المفتاح.
+  const MAX_ENVELOPE_BYTES = 60 * 1024 * 1024; // 60MB — يطابق حد الاستيراد العادي
+  const byteLen = new TextEncoder().encode(envelopeJson).length;
+  if (byteLen > MAX_ENVELOPE_BYTES) {
+    throw new Error('ملف النسخة الاحتياطية كبير جدًا.');
+  }
+
   let envelope: BackupEnvelope;
   try {
     envelope = JSON.parse(envelopeJson) as BackupEnvelope;
@@ -90,6 +98,22 @@ export async function decryptBackupJSON(envelopeJson: string, passphrase: string
   }
   if (envelope?.app !== ENVELOPE_APP || envelope?.encrypted !== true) {
     throw new Error('هذا الملف ليس نسخة احتياطية مشفرة.');
+  }
+  // SDV2-DATA-001: تحقق صارم من أطوال حقول المغلف قبل فك base64.
+  // salt: 16 بايت، iv: 12 بايت، data: حد أقصى 50MB.
+  const MAX_FIELD_B64 = {
+    salt: 32, // 16 bytes -> ~24 chars base64, نسمح بهامش
+    iv: 24, // 12 bytes -> 16 chars base64
+    data: 70 * 1024 * 1024, // ~50MB ciphertext
+  };
+  if (typeof envelope.salt !== 'string' || envelope.salt.length > MAX_FIELD_B64.salt) {
+    throw new Error('حقل الملح في الملف غير صالح.');
+  }
+  if (typeof envelope.iv !== 'string' || envelope.iv.length > MAX_FIELD_B64.iv) {
+    throw new Error('حقل الـ IV في الملف غير صالح.');
+  }
+  if (typeof envelope.data !== 'string' || envelope.data.length > MAX_FIELD_B64.data) {
+    throw new Error('حجم البيانات المشفرة غير صالح.');
   }
   // SDV2-DATA-001: حدّ عدد تكرارات PBKDF2 وحجم الملف قبل أي عمل مشفّر مكلف.
   const iterations = envelope.iterations || KDF_ITERATIONS;
