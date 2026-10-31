@@ -390,6 +390,82 @@ describe('emulator — subscription gate (Phase 3)', () => {
   });
 });
 
+// --- المرحلة الرابعة: إلحاق طلب دفع من صاحب العيادة ---
+describe('emulator — payment append (Phase 4)', () => {
+  const payment = {
+    method: 'instapay',
+    amount: 1000,
+    currency: 'EGP',
+    reference: 'REF123',
+    submittedAt: null,
+    submittedBy: 'admin-1',
+    reviewedAt: null,
+    reviewedBy: null,
+    note: '',
+  };
+
+  it('الأدمن يلحق طلب دفع جديد', async () => {
+    const db = dbAs('admin-1');
+    await assertSucceeds(
+      updateDoc(doc(db, 'clinicSubscriptions/clinic-a'), {
+        payments: [payment],
+        updatedAt: new Date(),
+      }),
+    );
+  });
+
+  it('الأدمن لا يعدّل مدفوعات سابقة', async () => {
+    const db = dbAs('admin-1');
+    // أولًا: إلحاق شرعي (نزرعه بلا قواعد لضمان الحالة)
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const adb = ctx.firestore();
+      await updateDoc(doc(adb, 'clinicSubscriptions/clinic-a'), {
+        payments: [payment],
+      });
+    });
+    // محاولة تعديل المبلغ — مرفوضة
+    const tampered = { ...payment, amount: 1 };
+    await assertFails(
+      updateDoc(doc(db, 'clinicSubscriptions/clinic-a'), {
+        payments: [tampered],
+        updatedAt: new Date(),
+      }),
+    );
+  });
+
+  it('الأدمن لا يغيّر حالة الاشتراك', async () => {
+    const db = dbAs('admin-1');
+    await assertFails(
+      updateDoc(doc(db, 'clinicSubscriptions/clinic-b'), {
+        payments: [payment],
+        status: 'expired',
+        updatedAt: new Date(),
+      }),
+    );
+  });
+
+  it('الدكتور العادي لا يلحق طلب دفع', async () => {
+    const db = dbAs('coach-1');
+    await assertFails(
+      updateDoc(doc(db, 'clinicSubscriptions/clinic-a'), {
+        payments: [payment],
+        updatedAt: new Date(),
+      }),
+    );
+  });
+
+  it('طلب بلا رقم عملية مرفوض', async () => {
+    const db = dbAs('admin-1');
+    const bad = { ...payment, reference: '' };
+    await assertFails(
+      updateDoc(doc(db, 'clinicSubscriptions/clinic-b'), {
+        payments: [bad],
+        updatedAt: new Date(),
+      }),
+    );
+  });
+});
+
 // --- المرحلة الثالثة: نطاق الدكتور (مرضاه فقط) ---
 describe('emulator — coach scoping (Phase 3)', () => {
   it('الدكتور يقرأ مريضه (invitedBy هو)', async () => {
