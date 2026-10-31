@@ -106,6 +106,21 @@ export function PlatformAuthProvider({
       setLoading(true);
       const parsed = await fetchProfile(uid);
       if (cancelled) return;
+      // SDV2-INT-005: لا تعتمد على Realtime وحده (قد لا تكون الجداول منشورة).
+      // إذا لم يوجد الملف بعد، أعد المحاولة بتراجع — قد يُنشأ الملف بعد حدث الدخول.
+      if (parsed === null) {
+        for (let attempt = 0; attempt < 3 && !cancelled; attempt++) {
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+          if (cancelled) return;
+          const retry = await fetchProfile(uid);
+          if (retry !== null) {
+            setProfile(retry);
+            setProfileMissing(false);
+            setLoading(false);
+            return;
+          }
+        }
+      }
       // اشتراك realtime على صف الملف: عند إنشاء الحساب يصل حدث الدخول
       // قبل إنشاء الملف، فيحدّث الاشتراك الملف لحظة إنشائه بلا إعادة تحميل.
       channel?.unsubscribe();
