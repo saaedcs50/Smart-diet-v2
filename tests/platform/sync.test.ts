@@ -137,13 +137,31 @@ describe('sync status store', () => {
     };
     expect(loadSyncStatus(store).state).toBe('idle');
     saveSyncStatus(
-      { state: 'success', at: '2026-10-24', dayLogCount: 2, planWritten: true, error: null },
+      { state: 'success', at: '2026-10-24', dayLogCount: 2, planWritten: true, error: null, unsupportedSections: [] },
       store,
     );
     const loaded = loadSyncStatus(store);
     expect(loaded.state).toBe('success');
     expect(loaded.dayLogCount).toBe(2);
+    expect(loaded.unsupportedSections).toEqual([]);
     backing.set('sd_platform_sync_status', '{not json');
     expect(loadSyncStatus(store).state).toBe('idle');
+  });
+
+  it('يحفظ ويسترجع حالة المزامنة الجزئية مع الأقسام غير المدعومة (SDV2-P1-2)', () => {
+    const backing = new Map<string, string>();
+    const store = {
+      getItem: (key: string) => backing.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        backing.set(key, value);
+      },
+    };
+    saveSyncStatus(
+      { state: 'partial', at: '2026-11-01', dayLogCount: 3, planWritten: true, error: null, unsupportedSections: ['shoppingLists', 'milestones'] },
+      store,
+    );
+    const loaded = loadSyncStatus(store);
+    expect(loaded.state).toBe('partial');
+    expect(loaded.unsupportedSections).toEqual(['shoppingLists', 'milestones']);
   });
 });
