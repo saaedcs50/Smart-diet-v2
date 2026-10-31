@@ -191,12 +191,13 @@ export function getCoachGuardStore(): CoachGuardStore {
   const token = (process.env.UPSTASH_REDIS_REST_TOKEN || '').trim();
   if (url && token) {
     store = new UpstashCoachGuardStore(url, token);
+  } else if (process.env.NODE_ENV === 'production') {
+    // SDV2-SEC-003: الفشل المغلق في الإنتاج — لا نعود للذاكرة بصمت.
+    // حدّ الذاكرة لا يعمل عبر نسخ Vercel المتعددة، فالسماح به يعطل الحماية.
+    throw new GuardUnavailableError(
+      'مخزن الحماية غير مهيأ في الإنتاج. اضبط UPSTASH_REDIS_REST_URL و UPSTASH_REDIS_REST_TOKEN.',
+    );
   } else {
-    if (process.env.NODE_ENV === 'production') {
-      console.error(
-        'UPSTASH_REDIS_REST_URL/TOKEN غير معرفين: حدّ محاولات الـ PIN يعمل في الذاكرة فقط وغير فعّال عبر نسخ Vercel المتعددة.',
-      );
-    }
     store = new MemoryCoachGuardStore();
   }
   return store;
