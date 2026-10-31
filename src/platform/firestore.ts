@@ -615,8 +615,17 @@ export async function saveConsent(
   consent: ConsentDoc,
   editorUid: string,
 ): Promise<void> {
-  void uid; void type; void consent; void editorUid;
-  throw new Error(`saveConsent: ${NOT_MIGRATED}`);
+  const sb = getSupabase();
+  const { error } = await sb.from('consents').upsert(
+    {
+      patient_id: uid,
+      purpose: type,
+      consent: consent as unknown as Record<string, unknown>,
+      granted_by: editorUid,
+    },
+    { onConflict: 'patient_id,purpose' },
+  );
+  if (error) throw new Error(`saveConsent: ${error.message}`);
 }
 
 export async function saveActiveFasting(
