@@ -46,7 +46,9 @@ import type { NotificationSettings } from '../utils/notifications';
 import type { SeasonalActivation } from '../utils/seasonalTemplate';
 import type { ShoppingListState } from '../utils/shoppingList';
 
-export type PlatformRole = 'patient' | 'coach' | 'admin';
+export type PlatformRole = 'patient' | 'coach' | 'admin' | 'owner';
+// owner = صاحب المنصة (سعيد) — يُنشأ من الكونسول فقط، clinicId = 'platform'.
+// admin = صاحب العيادة، coach = الدكتور، patient = المريض.
 
 export interface PlatformUserProfile {
   uid: string;
@@ -102,6 +104,38 @@ export interface PatientDoc {
   invitedBy?: string;
   updatedAt?: FieldValue;
   updatedBy?: string;
+}
+
+// اشتراك العيادة clinicSubscriptions/{clinicId} — الوثيقة الوحيدة للاشتراك
+// في نموذج B2B (لا اشتراك للمريض ولا للدكتور).
+export type SubscriptionPlan = 'permanent' | 'monthly' | 'annual';
+export type SubscriptionStatus = 'active' | 'grace' | 'expired';
+export interface PaymentRecord {
+  method: 'instapay' | 'vodafone_cash';
+  amount: number;
+  currency: 'EGP';
+  reference: string;
+  submittedAt?: FieldValue;
+  submittedBy?: string;
+  reviewedAt?: FieldValue | null;
+  reviewedBy?: string | null;
+  note?: string;
+}
+export interface ClinicSubscriptionDoc {
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  startAt?: FieldValue;
+  expiresAt?: FieldValue | null; // null للدائم
+  graceEndsAt?: FieldValue | null;
+  payments: PaymentRecord[];
+  updatedAt?: FieldValue;
+}
+
+// إعدادات المنصة platformConfig/paymentMethods — بيانات الدفع اليدوي.
+export interface PlatformPaymentMethods {
+  instapay: { label: string; value: string };
+  vodafoneCash: { label: string; value: string };
+  updatedAt?: FieldValue;
 }
 
 export interface MilestonesDoc {
