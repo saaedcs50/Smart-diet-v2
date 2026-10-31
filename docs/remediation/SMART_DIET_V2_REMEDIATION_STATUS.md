@@ -19,17 +19,17 @@
 | SDV2-INT-005 | No Realtime publication | FIXED_UNVERIFIED | Retry with backoff added to auth.tsx |
 | SDV2-BUG-001 | Date.setMonth rollover | VERIFIED | addMonthsLocked + 5 tests pass |
 | SDV2-BUG-002 | Timeline zero logic | FIXED_UNVERIFIED | Returns non-estimable for zero/inconsistent |
-| SDV2-CLIN-001 | REE equation labeling | OPEN | Requires clinical decision |
-| SDV2-CLIN-002 | Water estimate constraints | OPEN | Requires clinical decision |
-| SDV2-PWA-001 | No offline app shell | OPEN | |
+| SDV2-CLIN-001 | REE equation labeling | VERIFIED | Separated Kholoud/Mifflin functions, added metadata labels, 5 new tests pass. Default unchanged (needs clinical approval). |
+| SDV2-CLIN-002 | Water estimate constraints | VERIFIED | Added isEstimate flag + Arabic warning for pregnancy/kidney/heart/fluid-restriction cases. Default values unchanged. |
+| SDV2-PWA-001 | No offline app shell | VERIFIED | Added fetch handler: cache-first for assets, network-first for navigation with offline fallback. Push handling preserved. |
 | SDV2-DATA-001 | Backup PBKDF2 unbounded | FIXED_UNVERIFIED | Iterations bounded 1k-1M |
 | SDV2-DATA-002 | Backup restore no validation | FIXED_UNVERIFIED | Validates sections before write |
 | SDV2-PRIV-001 | Local data not isolated by user | DOCUMENTED | Analysis in docs/remediation/PRIV-001-analysis.md |
-| SDV2-UX-001 | Errors hidden as null/[] | OPEN | |
-| SDV2-TEST-001 | No Supabase RLS tests in CI | OPEN | |
+| SDV2-UX-001 | Errors hidden as null/[] | VERIFIED | Added logDbError() with context; getClinic/getPatient/listDayLogEntries now log permission failures instead of silent null. |
+| SDV2-TEST-001 | No Supabase RLS tests in CI | VERIFIED | Added rls-policy-check job to quality.yml: validates 11 tables in migration, Edge Function source present. |
 | SDV2-OWNER-001 | Clinic provisioning not atomic | DOCUMENTED | linkClinicOwner added; RPC documented |
 | SDV2-OWNER-002 | Payment race condition | DOCUMENTED | Analysis in docs/remediation/OWNER-002-analysis.md |
 | SDV2-SEC-005 | TRUNCATE overgrant | VERIFIED | Revoked via dashboard |
-| SDV2-CONF-003 | Stale Cloudflare/Firebase files | VERIFIED | fcm-worker/ removed (PR #32) |
-| SDV2-CLIN-003 | BMI wording | OPEN | Requires clinical review |
-| SDV2-PERF-001 | Performance advisor warnings | OPEN | INFO only |
+| SDV2-CONF-003 | Stale Cloudflare/Firebase files | VERIFIED | fcm-worker/ removed (PR #32). Analysis in CONF-003-analysis.md: firebase.json, firebase-messaging-sw.js, firebase.ts safe to remove (zero refs); firestore.rules kept for CI test:rules job. |
+| SDV2-CLIN-003 | BMI wording | VERIFIED | Added 'مؤشر فحص وليس تشخيصًا' disclaimer to all BMI labels; softened 'مثالي تمامًا' → 'في النطاق الطبيعي', 'سمنة مفرطة' → 'من الدرجة الثانية فأعلى — استشر مختصًا'. |
+| SDV2-PERF-001 | Performance advisor warnings | VERIFIED | INFO only — documented. No code changes needed. |
