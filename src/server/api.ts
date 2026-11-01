@@ -1,10 +1,10 @@
 import express, { Router, Request, Response } from 'express';
 import crypto from 'crypto';
-import { brandCopy } from '../config/brand';
+import { brandCopy } from '../config/brand.js';
 import {
   getCoachGuardStore,
   GuardUnavailableError,
-} from './coachGuardStore';
+} from './coachGuardStore.js';
 
 export const apiRouter = Router();
 
