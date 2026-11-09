@@ -385,13 +385,12 @@ function SyncSection({ patientUid }: { patientUid: string }) {
   const [report, setReport] = useState<SyncReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const emptySummary = EMPTY_LOCAL_SYNC_SUMMARY;
   const [summary, setSummary] = useState(() => {
-    if (['mismatch', 'unavailable'].includes(getLocalDataBindingStatus(patientUid))) return emptySummary;
+    if (['mismatch', 'unavailable'].includes(getLocalDataBindingStatus(patientUid))) return EMPTY_LOCAL_SYNC_SUMMARY;
     try {
       return summarizeSnapshot(readLocalSnapshot());
     } catch {
-      return emptySummary;
+      return EMPTY_LOCAL_SYNC_SUMMARY;
     }
   });
 
@@ -404,13 +403,13 @@ function SyncSection({ patientUid }: { patientUid: string }) {
     setReport(null);
     setError(null);
     if (nextBinding === 'mismatch' || nextBinding === 'unavailable') {
-      setSummary(emptySummary);
+      setSummary(EMPTY_LOCAL_SYNC_SUMMARY);
       return;
     }
     try {
       setSummary(summarizeSnapshot(readLocalSnapshot()));
     } catch {
-      setSummary(emptySummary);
+      setSummary(EMPTY_LOCAL_SYNC_SUMMARY);
     }
   }, [patientUid]);
 
