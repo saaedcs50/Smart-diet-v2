@@ -678,7 +678,7 @@ function PatientDetail({
           </p>
         )
       )}
-      {!isStaffView && <SyncSection patientUid={patientUid} />}
+      {!isStaffView && <SyncSection key={patientUid} patientUid={patientUid} />}
       {isStaffView && (
         <p className="text-xs text-slate-500">
           عيادة هذا المريض: {doc.clinicId} — عيادتك: {viewerClinicId}
