@@ -58,6 +58,7 @@ import { SubscriptionCard } from './subscription/SubscriptionCard';
 import { AdherenceSection } from './adherence/AdherenceSection';
 import { registerFcmToken, isFcmConfigured, isPushDeliveryEnabled, notifyPatient } from './fcm';
 import { getSupabase } from './supabase';
+import { bindLocalDataToPatient, getLocalDataBindingStatus, type LocalDataBindingStatus } from './localDataOwnership';
 
 type Route =
   | { view: 'login' }
@@ -374,20 +375,60 @@ function sectionLabelAr(section: string): string {
 
 function SyncSection({ patientUid }: { patientUid: string }) {
   const [consent, setConsent] = useState(false);
-  const [status, setStatus] = useState<SyncStatus>(() => loadSyncStatus());
+  const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
+  const [bindingStatus, setBindingStatus] = useState<LocalDataBindingStatus>(() =>
+    getLocalDataBindingStatus(patientUid),
+  );
+  const [status, setStatus] = useState<SyncStatus>(() => loadSyncStatus(undefined, patientUid));
   const [report, setReport] = useState<SyncReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const emptySummary = { dayLogCount: 0, shoppingListCount: 0, hasPlan: false, hasActiveFasting: false };
   const [summary, setSummary] = useState(() => {
+    if (getLocalDataBindingStatus(patientUid) === 'mismatch') return emptySummary;
     try {
       return summarizeSnapshot(readLocalSnapshot());
     } catch {
-      return { dayLogCount: 0, shoppingListCount: 0, hasPlan: false, hasActiveFasting: false };
+      return emptySummary;
     }
   });
 
+  useEffect(() => {
+    const nextBinding = getLocalDataBindingStatus(patientUid);
+    setBindingStatus(nextBinding);
+    setOwnershipConfirmed(false);
+    setConsent(false);
+    setStatus(loadSyncStatus(undefined, patientUid));
+    setReport(null);
+    setError(null);
+    if (nextBinding === 'mismatch') {
+      setSummary(emptySummary);
+      return;
+    }
+    try {
+      setSummary(summarizeSnapshot(readLocalSnapshot()));
+    } catch {
+      setSummary(emptySummary);
+    }
+  }, [patientUid]);
+
   const run = async () => {
     setError(null);
+    const currentBinding = getLocalDataBindingStatus(patientUid);
+    if (currentBinding === 'mismatch') {
+      setBindingStatus(currentBinding);
+      setError('بيانات هذا الجهاز مرتبطة بحساب آخر؛ لن نرفعها إلى هذا الحساب.');
+      return;
+    }
+    if (currentBinding === 'unavailable') {
+      setBindingStatus(currentBinding);
+      setError('التخزين المحلي غير متاح؛ تعذّر التحقق من ملكية البيانات.');
+      return;
+    }
+    if (currentBinding === 'unbound' && !ownershipConfirmed) {
+      setError('أكّد أولًا أن البيانات المحلية على هذا الجهاز تخص الحساب الحالي.');
+      return;
+    }
     setBusy(true);
     setStatus({ state: 'syncing', at: null, dayLogCount: 0, planWritten: false, error: null, unsupportedSections: [] });
     try {
@@ -397,6 +438,10 @@ function SyncSection({ patientUid }: { patientUid: string }) {
         { text: SYNC_CONSENT_TEXT, grantedAt: new Date().toISOString(), revokedAt: null, version: SYNC_CONSENT_VERSION },
         patientUid,
       );
+      if (currentBinding === 'unbound') {
+        bindLocalDataToPatient(patientUid);
+        setBindingStatus('matched');
+      }
       const snapshot = readLocalSnapshot();
       setSummary(summarizeSnapshot(snapshot));
       const result = await migrateLocalToCloud(snapshot, patientUid, patientUid);
@@ -411,7 +456,7 @@ function SyncSection({ patientUid }: { patientUid: string }) {
         unsupportedSections: result.unsupportedSections,
       };
       setStatus(next);
-      saveSyncStatus(next);
+      saveSyncStatus(next, undefined, patientUid);
     } catch (caught) {
       const next: SyncStatus = {
         state: 'error',
@@ -434,17 +479,46 @@ function SyncSection({ patientUid }: { patientUid: string }) {
       <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
         مزامنة بيانات جهازي
       </h3>
-      <p className="mt-1 text-xs text-slate-500">
-        على هذا الجهاز الآن: خطة {summary.hasPlan ? 'موجودة' : 'غير موجودة'}،{' '}
-        {summary.dayLogCount} سجل يومي، {summary.shoppingListCount} قائمة تسوق.
-        المزامنة اختيارية ولا تعمل تلقائيًا أبدًا.
-      </p>
+      {bindingStatus === 'mismatch' ? (
+        <p className="mt-1 text-xs font-bold text-red-700">
+          بيانات هذا الجهاز مرتبطة بحساب آخر. تم إخفاء ملخصها ومنع رفعها إلى الحساب الحالي لحماية الخصوصية.
+          استخدم حساب المريض المرتبط بهذه البيانات أو جهازًا/ملف متصفح منفصلًا.
+        </p>
+      ) : (
+        <p className="mt-1 text-xs text-slate-500">
+          على هذا الجهاز الآن: خطة {summary.hasPlan ? 'موجودة' : 'غير موجودة'}،{' '}
+          {summary.dayLogCount} سجل يومي، {summary.shoppingListCount} قائمة تسوق.
+          المزامنة اختيارية ولا تعمل تلقائيًا أبدًا.
+        </p>
+      )}
+      {bindingStatus === 'unbound' && (
+        <label className="mt-3 flex items-start gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+          <input
+            type="checkbox"
+            checked={ownershipConfirmed}
+            onChange={(event) => setOwnershipConfirmed(event.target.checked)}
+          />
+          <span>
+            أؤكد أن كل بيانات الخطة والسجلات المحلية على هذا الجهاز تخص الحساب المسجل حاليًا.
+            عند التأكيد ستُربط بيانات هذا الجهاز بهذا الحساب، ولن يُسمح لحساب آخر بمزامنتها.
+          </span>
+        </label>
+      )}
+      {bindingStatus === 'matched' && (
+        <p className="mt-2 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+          تم ربط بيانات هذا الجهاز بالحساب الحالي؛ لن تُرفع إلى حساب آخر.
+        </p>
+      )}
       <label className="mt-3 flex items-start gap-2 text-xs font-bold text-slate-700 dark:text-slate-200">
         <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
         <span>{SYNC_CONSENT_TEXT}</span>
       </label>
       {error && <p className="mt-2 text-xs font-bold text-red-600">{error}</p>}
-      <button className={`${buttonClass} mt-3`} onClick={run} disabled={busy || !consent}>
+      <button
+        className={`${buttonClass} mt-3`}
+        onClick={run}
+        disabled={busy || !consent || bindingStatus === 'mismatch' || bindingStatus === 'unavailable' || (bindingStatus === 'unbound' && !ownershipConfirmed)}
+      >
         مزامنة بيانات جهازي الآن
       </button>
       {status.state !== 'idle' && (
