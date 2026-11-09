@@ -95,7 +95,7 @@ describe('doctor data exports', () => {
   it('quotes CSV fields and neutralizes spreadsheet formulas', () => {
     const csv = buildDoctorCsv([fixture('=HYPERLINK("https://evil.example","click")')]);
     expect(csv.charCodeAt(0)).toBe(0xfeff);
-    expect(csv).toContain('"'=HYPERLINK(""https://evil.example"",""click"")"');
+    expect(csv).toContain(`"'=HYPERLINK(""https://evil.example"",""click"")"`);
     expect(csv).toContain('2026-11-08');
   });
 
