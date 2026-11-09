@@ -314,8 +314,8 @@ function zipStore(files: Array<{ name: string; content: string }>): Uint8Array {
     u16(view, 4, 20);
     u16(view, 6, 0x0800); // UTF-8 names
     u16(view, 8, 0); // STORE
-    u16(view, 10, 0);
-    u16(view, 12, 0);
+    u16(view, 10, 0); // 00:00
+    u16(view, 12, 33); // 1980-01-01
     u32(view, 14, crc);
     u32(view, 18, data.length);
     u32(view, 22, data.length);
@@ -338,8 +338,8 @@ function zipStore(files: Array<{ name: string; content: string }>): Uint8Array {
     u16(view, 6, 20);
     u16(view, 8, 0x0800);
     u16(view, 10, 0);
-    u16(view, 12, 0);
-    u16(view, 14, 0);
+    u16(view, 12, 0); // 00:00
+    u16(view, 14, 33); // 1980-01-01
     u32(view, 16, entry.crc);
     u32(view, 20, entry.data.length);
     u32(view, 24, entry.data.length);
