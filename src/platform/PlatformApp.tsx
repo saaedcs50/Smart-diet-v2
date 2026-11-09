@@ -6,7 +6,7 @@
 //   رسالة إعداد واضحة بدل انكسار غامض.
 // - لا تسجيل ذاتي: التسجيل بدعوة فقط (البريد المدعو به + كلمة مرور)،
 //   ودخول Google عند إنشاء الحساب للطاقم فقط (تفرضه invitations.ts).
-// - لوحة الأخصائية هنا حقيقية (بيانات من Firestore عبر طبقة المرحلة
+// - لوحة الطاقم هنا حقيقية (بيانات من Supabase عبر طبقة المنصة
 //   الأولى)، لا بيانات وهمية — مسار /prototype التجريبي منفصل ولا يُمس.
 // - المزامنة opt-in صريح من واجهة المريض نفسه فقط، بعد موافقة صريحة
 //   تُحفظ في consents/sync قبل أي رفع (دراسة §٦).
@@ -866,7 +866,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
           مرضى العيادة — {filterLabel(filter, coaches)}
         </h2>
         <p className="mt-1 text-xs text-slate-500">
-          مرضى عيادتك فقط — من Firestore مباشرة، لا بيانات وهمية. عيّن
+          مرضى عيادتك فقط — من قاعدة المنصة مباشرة، لا بيانات وهمية. عيّن
           الطبيب من القائمة المنسدلة لكل مريض.
         </p>
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل المرضى…</p>}
@@ -1013,7 +1013,7 @@ function PlatformShell() {
         )}
       </header>
       <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-        وضع المنصة (تجريبي) — بيانات المشروع التجريبي فقط، وليست بيانات إنتاج.
+        نسخة تشغيل تجريبي محدودة — الدخول بدعوة فقط. استخدم حسابك المخصص لك، ولا تشارك بيانات المرضى خارج صلاحياتك.
       </p>
 
       {!user && route.view === 'register' && <RegisterForm invitedEmail={route.email} />}
