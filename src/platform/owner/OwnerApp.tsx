@@ -101,9 +101,9 @@ function OwnerShell() {
         </nav>
       </header>
       <main className="mx-auto max-w-4xl p-4">
-        {tab === 'clinics' && <ClinicsTab ownerUid={profile.uid} />}
-        {tab === 'activations' && <ActivationsTab ownerUid={profile.uid} />}
-        {tab === 'new' && <NewClinicTab ownerUid={profile.uid} />}
+        {tab === 'clinics' && <ClinicsTab />}
+        {tab === 'activations' && <ActivationsTab />}
+        {tab === 'new' && <NewClinicTab />}
         {tab === 'payments' && <PaymentSettingsTab />}
       </main>
     </div>

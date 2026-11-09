@@ -20,7 +20,7 @@ const METHOD_LABELS: Record<string, string> = {
   vodafone_cash: 'فودافون كاش',
 };
 
-export function ActivationsTab({ ownerUid }: { ownerUid: string }) {
+export function ActivationsTab() {
   const [items, setItems] = useState<PendingActivation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,7 +53,6 @@ export function ActivationsTab({ ownerUid }: { ownerUid: string }) {
       await activateSubscription({
         clinicId: a.clinicId,
         plan: plans[k] ?? 'annual',
-        reviewedBy: ownerUid,
         paymentIndex: a.paymentIndex,
       });
       await reload();
@@ -76,7 +75,6 @@ export function ActivationsTab({ ownerUid }: { ownerUid: string }) {
       await rejectActivation({
         clinicId: a.clinicId,
         paymentIndex: a.paymentIndex,
-        reviewedBy: ownerUid,
         note,
       });
       await reload();

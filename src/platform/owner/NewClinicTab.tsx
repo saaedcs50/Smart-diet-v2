@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { createClinicWithOwner } from '../owner';
 
-export function NewClinicTab({ ownerUid }: { ownerUid: string }) {
+export function NewClinicTab() {
   const [name, setName] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
@@ -27,7 +27,6 @@ export function NewClinicTab({ ownerUid }: { ownerUid: string }) {
         ownerName,
         ownerEmail,
         ownerPhone,
-        createdBy: ownerUid,
       });
       setDone(`تم إنشاء العيادة ودعوة المالك (${id}). أخبره بالتسجيل من /platform بالبريد المدعو به.`);
       setName('');
