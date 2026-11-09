@@ -373,6 +373,8 @@ function sectionLabelAr(section: string): string {
   }
 }
 
+const EMPTY_LOCAL_SYNC_SUMMARY = { dayLogCount: 0, shoppingListCount: 0, hasPlan: false, hasActiveFasting: false };
+
 function SyncSection({ patientUid }: { patientUid: string }) {
   const [consent, setConsent] = useState(false);
   const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
@@ -383,9 +385,9 @@ function SyncSection({ patientUid }: { patientUid: string }) {
   const [report, setReport] = useState<SyncReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const emptySummary = { dayLogCount: 0, shoppingListCount: 0, hasPlan: false, hasActiveFasting: false };
+  const emptySummary = EMPTY_LOCAL_SYNC_SUMMARY;
   const [summary, setSummary] = useState(() => {
-    if (getLocalDataBindingStatus(patientUid) === 'mismatch') return emptySummary;
+    if (['mismatch', 'unavailable'].includes(getLocalDataBindingStatus(patientUid))) return emptySummary;
     try {
       return summarizeSnapshot(readLocalSnapshot());
     } catch {
@@ -401,7 +403,7 @@ function SyncSection({ patientUid }: { patientUid: string }) {
     setStatus(loadSyncStatus(undefined, patientUid));
     setReport(null);
     setError(null);
-    if (nextBinding === 'mismatch') {
+    if (nextBinding === 'mismatch' || nextBinding === 'unavailable') {
       setSummary(emptySummary);
       return;
     }
@@ -483,6 +485,10 @@ function SyncSection({ patientUid }: { patientUid: string }) {
         <p className="mt-1 text-xs font-bold text-red-700">
           بيانات هذا الجهاز مرتبطة بحساب آخر. تم إخفاء ملخصها ومنع رفعها إلى الحساب الحالي لحماية الخصوصية.
           استخدم حساب المريض المرتبط بهذه البيانات أو جهازًا/ملف متصفح منفصلًا.
+        </p>
+      ) : bindingStatus === 'unavailable' ? (
+        <p className="mt-1 text-xs font-bold text-red-700">
+          تعذّر الوصول الآمن إلى التخزين المحلي؛ أُوقفت المزامنة حتى يمكن التحقق من ملكية البيانات.
         </p>
       ) : (
         <p className="mt-1 text-xs text-slate-500">
