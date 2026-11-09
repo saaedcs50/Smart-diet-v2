@@ -56,7 +56,7 @@ import type { DayLog, PlanConfig } from '../types';
 import { SubscriptionGate } from './subscription/SubscriptionGate';
 import { SubscriptionCard } from './subscription/SubscriptionCard';
 import { AdherenceSection } from './adherence/AdherenceSection';
-import { registerFcmToken, isFcmConfigured, notifyPatient } from './fcm';
+import { registerFcmToken, isFcmConfigured, isPushDeliveryEnabled, notifyPatient } from './fcm';
 import { getSupabase } from './supabase';
 
 type Route =
@@ -591,7 +591,13 @@ function PatientDetail({
         isStaffView={isStaffView}
       />
       {isStaffView && (
-        <NotifyPatientButton patientUid={patientUid} clientName={doc.profile.clientName} />
+        isPushDeliveryEnabled() ? (
+          <NotifyPatientButton patientUid={patientUid} clientName={doc.profile.clientName} />
+        ) : (
+          <p className="text-xs text-slate-500">
+            الإشعارات متوقفة مؤقتًا لحين تنفيذ واختبار تشفير Web Push RFC 8291.
+          </p>
+        )
       )}
       {!isStaffView && <SyncSection patientUid={patientUid} />}
       {isStaffView && (
