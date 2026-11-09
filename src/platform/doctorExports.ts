@@ -416,8 +416,10 @@ h1{font-size:22px;margin:0 0 6px}h2{font-size:18px;margin:0 0 4px;color:#0f766e}
 table{width:100%;border-collapse:collapse;margin:4px 0 10px;table-layout:fixed}
 th,td{border:1px solid #cbd5e1;padding:6px;vertical-align:top;overflow-wrap:anywhere}
 th{background:#f1f5f9;font-weight:700}.header{margin-bottom:18px;border-bottom:2px solid #0f766e;padding-bottom:12px}
-@page{size:A4 landscape;margin:12mm}@media print{body{margin:0}.patient{break-before:auto}}
+.no-print{margin:0 0 18px;padding:8px 16px;border:0;border-radius:8px;background:#0f766e;color:white;font:inherit;font-weight:700;cursor:pointer}
+@page{size:A4 landscape;margin:12mm}@media print{body{margin:0}.patient{break-before:auto}.no-print{display:none}}
 </style></head><body>
+<button class="no-print" onclick="window.print()">طباعة / حفظ PDF</button>
 <header class="header"><h1>تقرير متابعة مرضى الطبيب</h1>
 <div>العيادة: ${esc(clinicName)} · الطبيب: ${esc(doctorName)} · تاريخ التصدير: ${esc(reportDate)}</div>
 <div>عدد المرضى: ${patients.length} — يحتوي التقرير على الخطط والسجلات اليومية المتاحة للطبيب المسجل.</div></header>
