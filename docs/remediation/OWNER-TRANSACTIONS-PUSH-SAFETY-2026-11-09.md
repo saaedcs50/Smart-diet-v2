@@ -13,6 +13,8 @@ The Staging database now provides two authenticated RPCs:
 - `owner_create_clinic_with_owner`: checks that the current JWT belongs to an enabled `owner`, validates the clinic/owner fields, then creates the clinic, initial expired subscription, and pending admin invitation in one transaction. An email invitation conflict aborts the entire transaction.
 - `owner_review_clinic_payment`: checks the current actor's owner role, locks the subscription row with `FOR UPDATE`, validates the payment record and state, then updates subscription status and payment review metadata as one operation. Audit attribution comes from `auth.uid()`, not a caller-supplied UID.
 
+Both RPCs run as `SECURITY INVOKER`, not `SECURITY DEFINER`: their explicit owner checks and the existing owner RLS policies are enforced under the caller's own privileges. Staging smoke tests passed after this change, and the Supabase Security Advisor no longer reports the two owner RPCs.
+
 The React owner dashboard now calls these RPCs and no longer passes actor IDs to the write functions.
 
 ## Web Push deliberately disabled
