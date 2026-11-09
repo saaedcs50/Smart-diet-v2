@@ -23,7 +23,7 @@ Migration `20261109072730_explicit_rls_all_platform_tables` explicitly enables R
 
 Migration `20261109073443_consolidate_clinic_subscription_policies` replaces legacy `PUBLIC` policies on `clinics`, `clinic_subscriptions`, and `day_logs` with authenticated-only policies, preserves the admin/owner/staff semantics, and combines the clinic/subscription read and update branches into single policies where appropriate.
 
-Migration `20261109073500_restrict_remaining_public_policies` restricts the legacy invitation, patient, and config-owner policies to `authenticated`. The only remaining `PUBLIC` policy is `platform_config.config_read_public`, which intentionally permits reading rows explicitly marked `value.public = true` (anon still has no grants to patient, profile, or invitation tables).
+Migration `20261109073500_restrict_remaining_public_policies` restricts the legacy invitation, patient, and config-owner policies to `authenticated`. Migration `20261109074506_split_platform_config_read` separates the public config read for `anon` from the authenticated owner/public-row read. There are no policies assigned to the broad `PUBLIC` role; anon can only read platform-config rows explicitly marked `value.public = true`.
 
 ## Live Staging test
 
@@ -33,6 +33,8 @@ A rolled-back transaction created synthetic admin, coach A, coach B, and patient
 - Admin: own profile visible; all profile rows in its clinic visible (team roster).
 - A subsequent query confirmed no synthetic `be000000-*` profiles remained after rollback.
 - A second rolled-back test verified a coach can read only their assigned patient and that patient's day logs; the coach cannot read another clinic's subscription, update the clinic or subscription, or enumerate other profiles. The clinic admin can read its own clinic/subscription and update the clinic, but cannot update the subscription. All 14 role-boundary assertions passed; no `bf000000-*` synthetic profiles/patients/day logs remained after rollback.
+- Migration `20261109074419_consolidate_remaining_rls_policies` consolidates patient, invitation, profile and platform-config policies to one permissive policy per table/action/role. Migration `20261109074506_split_platform_config_read` keeps anon reads limited to explicitly public config rows without granting anon access to the private helper schema.
+- A full rolled-back Staging transaction ran 33 role-boundary assertions across `anon`, `owner`, `admin`, `coach`, `patient`, and a new invitee. All 33 passed, including invitation-based profile provisioning, clinic/subscription write boundaries, assigned-patient and day-log isolation, and public/private config separation. All synthetic profile/patient/invitation/config records were confirmed absent after rollback.
 
 ## CI improvement
 
@@ -48,7 +50,7 @@ This remains a **static** check. It does not replace the pending live role × ta
 
 - Security Advisor: one warning — Supabase Auth leaked-password protection disabled.
 - Health Advisor: no findings.
-- Performance Advisor after the policy changes: 10 multiple-permissive-policy notices and 7 unused-index informational findings remain. The policy notices are now limited to role-specific invitation/patient/profile/platform-config branches; unused indexes are not dropped without workload evidence.
+- Performance Advisor after final consolidation: 0 multiple-permissive-policy notices and 7 unused-index informational findings remain. Unused indexes are not dropped without workload evidence.
 
 ## Release boundaries
 
