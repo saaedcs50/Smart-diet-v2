@@ -27,7 +27,12 @@ function validNumber(value: unknown): number | null {
 }
 
 function planOf(patient: DoctorExportPatient): PlanConfig | null {
-  return patient.doc.plan ?? null;
+  const plan = patient.doc.plan;
+  if (!plan) return null;
+  // Never export the legacy local admin PIN even if an old database row has it.
+  const { adminPin: _adminPin, ...safePlan } = plan;
+  void _adminPin;
+  return safePlan as PlanConfig;
 }
 
 function lastEntry(patient: DoctorExportPatient): { date: string; log: DayLog } | null {
@@ -58,6 +63,7 @@ export function buildDoctorExportSheets(patients: DoctorExportPatient[]): Export
     'Last log date',
     'Last recorded weight (kg)',
     'Last recorded water (ml)',
+    'Full plan JSON (admin PIN removed)',
   ]];
 
   const dayRows: ExportCell[][] = [[
@@ -87,6 +93,7 @@ export function buildDoctorExportSheets(patients: DoctorExportPatient[]): Export
     'Completed fasting hours',
     'Fasting',
     'Freeze day',
+    'Full day log JSON',
   ]];
 
   for (const patient of patients) {
@@ -145,6 +152,7 @@ export function buildDoctorExportSheets(patients: DoctorExportPatient[]): Export
         validNumber(log.completedFastingHours),
         log.isFasting === true,
         log.isFreeze === true,
+        jsonCell(log),
       ]);
     }
   }
