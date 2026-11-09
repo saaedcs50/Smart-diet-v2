@@ -164,4 +164,25 @@ describe('sync status store', () => {
     expect(loaded.state).toBe('partial');
     expect(loaded.unsupportedSections).toEqual(['shoppingLists', 'milestones']);
   });
+  it('يعزل حالة المزامنة بين حسابين على الجهاز نفسه', () => {
+    const backing = new Map<string, string>();
+    const store = {
+      getItem: (key: string) => backing.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        backing.set(key, value);
+      },
+    };
+    const stateA = {
+      state: 'success' as const,
+      at: '2026-11-09',
+      dayLogCount: 4,
+      planWritten: true,
+      error: null,
+      unsupportedSections: [],
+    };
+    saveSyncStatus(stateA, store, 'patient-a');
+    expect(loadSyncStatus(store, 'patient-a').dayLogCount).toBe(4);
+    expect(loadSyncStatus(store, 'patient-b').state).toBe('idle');
+  });
+
 });
