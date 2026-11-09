@@ -75,7 +75,6 @@ export function ActivationsTab() {
       await rejectActivation({
         clinicId: a.clinicId,
         paymentIndex: a.paymentIndex,
-        reviewedBy: ownerUid,
         note,
       });
       await reload();
