@@ -69,13 +69,30 @@ function fixture(name = 'Patient A'): DoctorExportPatient {
     uid: 'patient-test-uid',
     doc,
     entries: [{ date: '2026-11-08', log }],
+    adherenceConfig: {
+      axes: [
+        { name: 'Meals', weight: 30 },
+        { name: 'Advice', weight: 25 },
+        { name: 'Water', weight: 25 },
+        { name: 'Activity', weight: 20 },
+      ],
+      updatedBy: 'coach-test',
+    },
+    adherenceScores: [{
+      date: '2026-11-08',
+      scores: [80, 70, 90, 100],
+      overall: 83.5,
+      enteredBy: 'coach-test',
+      enteredAt: '2026-11-08T13:00:00.000Z',
+      note: 'Synthetic adherence note',
+    }],
   };
 }
 
 describe('doctor data exports', () => {
   it('builds patient and daily-log sheets and redacts legacy admin PIN', () => {
     const sheets = buildDoctorExportSheets([fixture()]);
-    expect(sheets.map((sheet) => sheet.name)).toEqual(['Patients', 'Daily Logs']);
+    expect(sheets.map((sheet) => sheet.name)).toEqual(['Patients', 'Daily Logs', 'Adherence Scores']);
 
     const patientHeader = sheets[0].rows[0];
     const fullPlanIndex = patientHeader.indexOf('Full plan JSON (admin PIN removed)');
@@ -83,6 +100,9 @@ describe('doctor data exports', () => {
     const exportedPlan = JSON.parse(String(sheets[0].rows[1][fullPlanIndex])) as Record<string, unknown>;
     expect(exportedPlan.adminPin).toBeUndefined();
     expect(exportedPlan.clientName).toBe('Patient A');
+    const patientAdherenceIndex = patientHeader.indexOf('Adherence history (JSON)');
+    const exportedAdherence = JSON.parse(String(sheets[0].rows[1][patientAdherenceIndex])) as Array<{ overall: number }>;
+    expect(exportedAdherence[0].overall).toBe(83.5);
 
     const dailyHeader = sheets[1].rows[0];
     const fullLogIndex = dailyHeader.indexOf('Full day log JSON');
@@ -90,6 +110,10 @@ describe('doctor data exports', () => {
     const exportedLog = JSON.parse(String(sheets[1].rows[1][fullLogIndex])) as Record<string, unknown>;
     expect(exportedLog.weight).toBe(82.5);
     expect(exportedLog.notes).toBe('Synthetic daily note');
+
+    const adherenceHeader = sheets[2].rows[0];
+    expect(adherenceHeader).toContain('Overall (%)');
+    expect(sheets[2].rows[1][5]).toBe(83.5);
   });
 
   it('quotes CSV fields and neutralizes spreadsheet formulas', () => {
@@ -116,5 +140,7 @@ describe('doctor data exports', () => {
     expect(html).not.toContain('<img src=x');
     expect(html).toContain('window.print()');
     expect(html).toContain('Synthetic daily note');
+    expect(html).toContain('83.5%');
+    expect(html).toContain('Synthetic adherence note');
   });
 });
