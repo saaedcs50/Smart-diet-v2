@@ -77,8 +77,8 @@ INSERT INTO public.invitations(email,role,clinic_id,created_by,status)
 VALUES ('sdv2-invitee@example.invalid','patient','sdv2-smoke-a','c0000000-0000-4000-8000-000000000002','pending');
 INSERT INTO public.platform_config(key,value)
 VALUES
-('sdv2_smoke_public','{"public":"true","smoke":true}'),
-('sdv2_smoke_private','{"public":"false","smoke":true}');
+('rls_pub','{"public":"true","smoke":true}'),
+('rls_priv','{"public":"false","smoke":true}');
 
 CREATE TEMP TABLE sdv2_rls_results (
   assertion text NOT NULL,
@@ -93,10 +93,10 @@ SET LOCAL ROLE anon;
 SELECT set_config('request.jwt.claims','{"role":"anon"}',true);
 INSERT INTO sdv2_rls_results
 SELECT 'anon reads public platform config',true,count(*)=1,'public row count='||count(*)
-FROM public.platform_config WHERE key='sdv2_smoke_public';
+FROM public.platform_config WHERE key='rls_pub';
 INSERT INTO sdv2_rls_results
 SELECT 'anon cannot read private platform config',true,count(*)=0,'private row count='||count(*)
-FROM public.platform_config WHERE key='sdv2_smoke_private';
+FROM public.platform_config WHERE key='rls_priv';
 INSERT INTO sdv2_rls_results
 SELECT 'anon cannot SELECT profiles table',true,NOT has_table_privilege('anon','public.profiles','SELECT'),'table privilege check';
 
@@ -112,7 +112,7 @@ SELECT 'owner sees both clinics',true,count(*)=2,'visible='||count(*) FROM publi
 INSERT INTO sdv2_rls_results
 SELECT 'owner sees both subscriptions',true,count(*)=2,'visible='||count(*) FROM public.clinic_subscriptions WHERE clinic_id LIKE 'sdv2-smoke-%';
 INSERT INTO sdv2_rls_results
-SELECT 'owner sees private platform config',true,count(*)=1,'private rows='||count(*) FROM public.platform_config WHERE key='sdv2_smoke_private';
+SELECT 'owner sees private platform config',true,count(*)=1,'private rows='||count(*) FROM public.platform_config WHERE key='rls_priv';
 WITH changed AS (
  UPDATE public.clinic_subscriptions SET plan='annual' WHERE clinic_id='sdv2-smoke-a' RETURNING clinic_id
 )
