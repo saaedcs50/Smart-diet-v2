@@ -90,6 +90,18 @@ function fixture(name = 'Patient A'): DoctorExportPatient {
 }
 
 
+
+function crc32(bytes: Uint8Array): number {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit++) {
+      crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
 function zipEntries(bytes: Uint8Array): Map<string, string> {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const decoder = new TextDecoder();
@@ -111,6 +123,9 @@ function zipEntries(bytes: Uint8Array): Map<string, string> {
       throw new Error('Invalid central directory entry');
     }
     const size = view.getUint32(centralOffset + 24, true);
+    const expectedCrc = view.getUint32(centralOffset + 16, true);
+    const compression = view.getUint16(centralOffset + 10, true);
+    if (compression !== 0) throw new Error('Expected an uncompressed ZIP entry');
     const nameLength = view.getUint16(centralOffset + 28, true);
     const extraLength = view.getUint16(centralOffset + 30, true);
     const commentLength = view.getUint16(centralOffset + 32, true);
@@ -119,7 +134,9 @@ function zipEntries(bytes: Uint8Array): Map<string, string> {
     const localNameLength = view.getUint16(localOffset + 26, true);
     const localExtraLength = view.getUint16(localOffset + 28, true);
     const dataStart = localOffset + 30 + localNameLength + localExtraLength;
-    files.set(name, decoder.decode(bytes.subarray(dataStart, dataStart + size)));
+    const fileBytes = bytes.subarray(dataStart, dataStart + size);
+    if (crc32(fileBytes) !== expectedCrc) throw new Error(`CRC mismatch for ${name}`);
+    files.set(name, decoder.decode(fileBytes));
     centralOffset += 46 + nameLength + extraLength + commentLength;
   }
 
