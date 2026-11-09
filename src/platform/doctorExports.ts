@@ -176,12 +176,13 @@ export function buildDoctorCsv(patients: DoctorExportPatient[]): string {
     rows.push([...p, ...Array(dayHeader.length - 2).fill('')]);
   }
 
-  const patientIndex = new Map(patients.map((p) => [p.uid, p]));
+  const patientRowByUid = new Map(
+    patients.map((patient, index) => [patient.uid, patientsSheet.rows[index + 1]]),
+  );
   for (let i = 1; i < daySheet.rows.length; i++) {
     const day = daySheet.rows[i];
-    const patient = patientIndex.get(String(day[0]));
-    const patientRowIndex = patients.findIndex((p) => p.uid === day[0]);
-    const patientRow = patientsSheet.rows[patientRowIndex + 1] ?? [];
+    const patientRow = patientRowByUid.get(String(day[0]));
+    if (!patientRow) continue;
     rows.push([...patientRow, ...day.slice(2)]);
   }
 
