@@ -62,6 +62,6 @@
   },
   "description": "Smart Diet — منصة متابعة تغذية White-Label للعيادات (PWA)",
   "engines": {
-    "node": ">=20"
+    "node": "24.x"
   }
 }
