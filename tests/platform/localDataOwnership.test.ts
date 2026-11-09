@@ -39,7 +39,9 @@ describe('local data ownership lock', () => {
 
   it('fails closed when the ownership marker is malformed', () => {
     const store = memoryStore();
-    store.setItem('sd_smartdiet_platform_local_data_owner', '{bad json');
+    bindLocalDataToPatient('patient-a', store);
+    const key = store.values.keys().next().value as string;
+    store.setItem(key, '{bad json');
 
     expect(getLocalDataBindingStatus('patient-a', store)).toBe('mismatch');
   });
