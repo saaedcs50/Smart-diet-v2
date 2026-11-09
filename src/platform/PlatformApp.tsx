@@ -467,7 +467,7 @@ function SyncSection({ patientUid }: { patientUid: string }) {
         unsupportedSections: [],
       };
       setStatus(next);
-      saveSyncStatus(next);
+      saveSyncStatus(next, undefined, patientUid);
       setError(errorText(caught));
     } finally {
       setBusy(false);
