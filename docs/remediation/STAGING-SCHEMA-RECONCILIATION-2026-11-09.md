@@ -35,7 +35,7 @@ These migrations reconcile the existing manually provisioned Staging schema. The
 - `profiles` is in the Realtime publication.
 - Effective grants were checked with `has_table_privilege`: `authenticated` and `service_role` have SELECT/INSERT/UPDATE/DELETE across the public tables and no TRUNCATE; `anon` has no CRUD and no TRUNCATE. `anon` has no `private` schema usage; `authenticated` does.
 - Referential integrity aggregate checks returned zero orphans for the existing profile/patient/clinic/invitation/subscription/day-log relationships before applying changes.
-- A synthetic transaction under `SET LOCAL ROLE authenticated` verified invitation-based admin profile creation, invitee consumption, and clinic-admin re-opening. The transaction was rolled back; the synthetic test data was not retained.
+- Synthetic transactions under `SET LOCAL ROLE authenticated` verified invitation-based admin profile creation, invitee consumption, clinic-admin re-opening, patient-owned consent and push-token writes, coach writes to an invited patient's adherence configuration, patient read access to adherence data, and patient write denial for adherence configuration. All tests used synthetic identifiers and were rolled back; no test rows were retained.
 - Supabase Security Advisor now reports only the existing warning that leaked-password protection is disabled.
 - Supabase Health Advisor returned no findings.
 - The Auth RLS init-plan warnings were cleared. Remaining Performance Advisor findings are multiple permissive policies on legacy tables and unused indexes in the newly-created/low-traffic schema. The unused-index notices are not grounds for dropping indexes before workload testing.
