@@ -89,6 +89,43 @@ function fixture(name = 'Patient A'): DoctorExportPatient {
   };
 }
 
+
+function zipEntries(bytes: Uint8Array): Map<string, string> {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const decoder = new TextDecoder();
+  let endOffset = -1;
+  for (let offset = bytes.length - 22; offset >= Math.max(0, bytes.length - 65557); offset--) {
+    if (view.getUint32(offset, true) === 0x06054b50) {
+      endOffset = offset;
+      break;
+    }
+  }
+  if (endOffset < 0) throw new Error('ZIP end-of-central-directory not found');
+
+  const count = view.getUint16(endOffset + 10, true);
+  let centralOffset = view.getUint32(endOffset + 16, true);
+  const files = new Map<string, string>();
+
+  for (let index = 0; index < count; index++) {
+    if (view.getUint32(centralOffset, true) !== 0x02014b50) {
+      throw new Error('Invalid central directory entry');
+    }
+    const size = view.getUint32(centralOffset + 24, true);
+    const nameLength = view.getUint16(centralOffset + 28, true);
+    const extraLength = view.getUint16(centralOffset + 30, true);
+    const commentLength = view.getUint16(centralOffset + 32, true);
+    const localOffset = view.getUint32(centralOffset + 42, true);
+    const name = decoder.decode(bytes.subarray(centralOffset + 46, centralOffset + 46 + nameLength));
+    const localNameLength = view.getUint16(localOffset + 26, true);
+    const localExtraLength = view.getUint16(localOffset + 28, true);
+    const dataStart = localOffset + 30 + localNameLength + localExtraLength;
+    files.set(name, decoder.decode(bytes.subarray(dataStart, dataStart + size)));
+    centralOffset += 46 + nameLength + extraLength + commentLength;
+  }
+
+  return files;
+}
+
 describe('doctor data exports', () => {
   it('builds patient and daily-log sheets and redacts legacy admin PIN', () => {
     const sheets = buildDoctorExportSheets([fixture()]);
@@ -126,12 +163,12 @@ describe('doctor data exports', () => {
   it('creates an uncompressed OpenXML workbook ZIP with two worksheets', () => {
     const bytes = buildDoctorXlsx([fixture()]);
     expect(Array.from(bytes.slice(0, 4))).toEqual([0x50, 0x4b, 0x03, 0x04]);
-    const archiveText = new TextDecoder().decode(bytes);
-    expect(archiveText).toContain('[Content_Types].xml');
-    expect(archiveText).toContain('xl/worksheets/sheet1.xml');
-    expect(archiveText).toContain('xl/worksheets/sheet2.xml');
-    expect(archiveText).toContain('Full plan JSON (admin PIN removed)');
-    expect(archiveText).not.toContain('9876');
+    const files = zipEntries(bytes);
+    expect(files.has('[Content_Types].xml')).toBe(true);
+    expect(files.get('xl/workbook.xml')).toContain('Adherence Scores');
+    expect(files.get('xl/worksheets/sheet1.xml')).toContain('Full plan JSON (admin PIN removed)');
+    expect(files.get('xl/worksheets/sheet3.xml')).toContain('Synthetic adherence note');
+    expect(files.get('xl/worksheets/sheet1.xml')).not.toContain('9876');
   });
 
   it('escapes patient-controlled HTML and includes the print-to-PDF action', () => {
