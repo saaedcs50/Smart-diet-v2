@@ -3,6 +3,7 @@ import {
   listDoctorPatientsForExport,
   listPatientDayLogsForExport,
 } from './firestore';
+import { getAdherenceExportData } from './adherence';
 import {
   buildDoctorCsv,
   buildDoctorPdfHtml,
@@ -24,10 +25,18 @@ async function loadDoctorExportData(
   // Limit concurrent queries so a large patient list does not exhaust PostgREST.
   for (let offset = 0; offset < assignedPatients.length; offset += 4) {
     const batch = assignedPatients.slice(offset, offset + 4);
-    const results = await Promise.all(batch.map(async (patient) => ({
-      ...patient,
-      entries: await listPatientDayLogsForExport(patient.uid),
-    })));
+    const results = await Promise.all(batch.map(async (patient) => {
+      const [entries, adherence] = await Promise.all([
+        listPatientDayLogsForExport(patient.uid),
+        getAdherenceExportData(patient.uid),
+      ]);
+      return {
+        ...patient,
+        entries,
+        adherenceConfig: adherence.config,
+        adherenceScores: adherence.scores,
+      };
+    }));
     output.push(...results);
   }
 
