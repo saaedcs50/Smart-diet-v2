@@ -201,7 +201,7 @@ function csvSafe(value: ExportCell): string {
   if (value == null) return '';
   let text = String(value);
   // Prevent spreadsheet formula execution when a CSV is opened in Excel.
-  if (/^[\s\u0000-\u001f]*[=+\-@]/.test(text)) text = "'" + text;
+  if (typeof value !== 'number' && /^[\s\u0000-\u001f]*[=+\-@]/.test(text)) text = "'" + text;
   if (/[",\r\n]/.test(text)) text = '"' + text.replace(/"/g, '""') + '"';
   return text;
 }
