@@ -826,7 +826,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
           الدكاترة
         </h2>
         <p className="mt-1 text-xs text-slate-500">
-          أطباء عيادتك وعدد عملاء كل منهم — من Firestore مباشرة، لا بيانات
+          أطباء عيادتك وعدد عملاء كل منهم — من قاعدة المنصة مباشرة، لا بيانات
           وهمية. اضغط على طبيب لعرض عملائه فقط.
         </p>
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل الدكاترة…</p>}
@@ -936,7 +936,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
           عملائي ({patients.length})
         </h2>
         <p className="mt-1 text-xs text-slate-500">
-          المرضى الذين دعوتهم أنت فقط — من Firestore مباشرة، لا بيانات
+          المرضى الذين دعوتهم أنت فقط — من قاعدة المنصة مباشرة، لا بيانات
           وهمية. اضغط على مريض لعرض خطته وسجلات تقدمه.
         </p>
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل عملائي…</p>}
