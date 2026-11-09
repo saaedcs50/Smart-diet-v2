@@ -109,8 +109,9 @@ export function DoctorExportButtons({
       setError(message);
       if (printWindow && !printWindow.closed) {
         printWindow.document.open();
-        printWindow.document.write(`<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>فشل التصدير</title><body style="font-family:Tahoma;padding:24px;color:#b91c1c">${message.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch] ?? ch)}</body></html>`);
+        printWindow.document.write('<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>فشل التصدير</title><body style="font-family:Tahoma;padding:24px;color:#b91c1c"></body></html>');
         printWindow.document.close();
+        printWindow.document.body.textContent = message;
       }
     } finally {
       setBusy(null);
