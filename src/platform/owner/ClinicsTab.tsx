@@ -54,7 +54,7 @@ function StatusBadge({ clinic }: { clinic: ClinicSummary }) {
   );
 }
 
-export function ClinicsTab({ ownerUid }: { ownerUid: string }) {
+export function ClinicsTab() {
   const [clinics, setClinics] = useState<ClinicSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -97,7 +97,6 @@ export function ClinicsTab({ ownerUid }: { ownerUid: string }) {
       await activateSubscription({
         clinicId: c.id,
         plan: renewPlan,
-        reviewedBy: ownerUid,
       });
       setRenewFor(null);
       await reload();
