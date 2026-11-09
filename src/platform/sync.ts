@@ -229,6 +229,12 @@ type MinimalStore = {
   setItem: (key: string, value: string) => void;
 };
 
+function syncStatusStorageKey(patientUid?: string): string {
+  return patientUid
+    ? `sd_platform_sync_status_${encodeURIComponent(patientUid)}`
+    : 'sd_platform_sync_status';
+}
+
 function resolveStore(provided?: MinimalStore): MinimalStore | null {
   if (provided) return provided;
   try {
@@ -239,7 +245,7 @@ function resolveStore(provided?: MinimalStore): MinimalStore | null {
   }
 }
 
-export function loadSyncStatus(store?: MinimalStore): SyncStatus {
+export function loadSyncStatus(store?: MinimalStore, patientUid?: string): SyncStatus {
   const fallback: SyncStatus = {
     state: 'idle',
     at: null,
@@ -251,7 +257,7 @@ export function loadSyncStatus(store?: MinimalStore): SyncStatus {
   const resolved = resolveStore(store);
   if (!resolved) return fallback;
   try {
-    const value = resolved.getItem('sd_platform_sync_status');
+    const value = resolved.getItem(syncStatusStorageKey(patientUid));
     if (!value) return fallback;
     const parsed = JSON.parse(value) as Partial<SyncStatus>;
     if (parsed.state !== 'idle' && parsed.state !== 'syncing' && parsed.state !== 'success' && parsed.state !== 'partial' && parsed.state !== 'error') {
@@ -270,11 +276,15 @@ export function loadSyncStatus(store?: MinimalStore): SyncStatus {
   }
 }
 
-export function saveSyncStatus(status: SyncStatus, store?: MinimalStore): void {
+export function saveSyncStatus(
+  status: SyncStatus,
+  store?: MinimalStore,
+  patientUid?: string,
+): void {
   const resolved = resolveStore(store);
   if (!resolved) return;
   try {
-    resolved.setItem('sd_platform_sync_status', JSON.stringify(status));
+    resolved.setItem(syncStatusStorageKey(patientUid), JSON.stringify(status));
   } catch {
     // حالة واجهة فقط — فشل حفظها لا يوقف المزامنة.
   }
