@@ -8,7 +8,6 @@
 // ============================================================================
 
 import { getSupabase } from './supabase';
-import { createInvitation } from './invitations';
 import type {
   ClinicSubscriptionDoc,
   PaymentRecord,
@@ -122,47 +121,15 @@ export function addMonthsLocked(from: Date, months: number): Date {
 export async function activateSubscription(input: {
   clinicId: string;
   plan: SubscriptionPlan;
-  reviewedBy: string;
   paymentIndex?: number;
 }): Promise<void> {
-  const sb = getSupabase();
-  const { data } = await sb
-    .from('clinic_subscriptions')
-    .select('payments')
-    .eq('clinic_id', input.clinicId)
-    .single();
-  const now = new Date().toISOString();
-  const expiresAt = expiryForPlan(input.plan, new Date());
-
-  let payments: PaymentRecord[] = [];
-  if (data) {
-    const existing = (data as { payments: unknown }).payments;
-    if (Array.isArray(existing)) payments = [...(existing as PaymentRecord[])];
-  }
-  if (
-    typeof input.paymentIndex === 'number' &&
-    payments[input.paymentIndex]
-  ) {
-    payments[input.paymentIndex] = {
-      ...payments[input.paymentIndex],
-      reviewedAt: now,
-      reviewedBy: input.reviewedBy,
-    };
-  }
-
-  const { error } = await sb.from('clinic_subscriptions').upsert(
-    {
-      clinic_id: input.clinicId,
-      plan: input.plan,
-      status: 'active',
-      start_at: now,
-      expires_at: expiresAt ? expiresAt.toISOString() : null,
-      grace_ends_at: null,
-      payments,
-      updated_at: now,
-    },
-    { onConflict: 'clinic_id' },
-  );
+  const { error } = await getSupabase().rpc('owner_review_clinic_payment', {
+    p_clinic_id: input.clinicId,
+    p_action: 'activate',
+    p_plan: input.plan,
+    p_payment_index: input.paymentIndex ?? null,
+    p_note: null,
+  });
   if (error) throw new Error(error.message);
 }
 
@@ -170,34 +137,16 @@ export async function activateSubscription(input: {
 export async function rejectActivation(input: {
   clinicId: string;
   paymentIndex: number;
-  reviewedBy: string;
   note: string;
 }): Promise<void> {
-  const sb = getSupabase();
-  const { data, error } = await sb
-    .from('clinic_subscriptions')
-    .select('payments')
-    .eq('clinic_id', input.clinicId)
-    .single();
-  if (error || !data) throw new Error('لا يوجد اشتراك لهذه العيادة');
-  const existing = (data as { payments: unknown }).payments;
-  const payments = Array.isArray(existing)
-    ? [...(existing as PaymentRecord[])]
-    : [];
-  const p = payments[input.paymentIndex];
-  if (!p) throw new Error('طلب الدفع غير موجود');
-  const now = new Date().toISOString();
-  payments[input.paymentIndex] = {
-    ...p,
-    reviewedAt: now,
-    reviewedBy: input.reviewedBy,
-    note: `مرفوض: ${input.note}`,
-  };
-  const { error: updateError } = await sb
-    .from('clinic_subscriptions')
-    .update({ payments, updated_at: now })
-    .eq('clinic_id', input.clinicId);
-  if (updateError) throw new Error(updateError.message);
+  const { error } = await getSupabase().rpc('owner_review_clinic_payment', {
+    p_clinic_id: input.clinicId,
+    p_action: 'reject',
+    p_plan: null,
+    p_payment_index: input.paymentIndex,
+    p_note: input.note,
+  });
+  if (error) throw new Error(error.message);
 }
 
 /** طلبات التفعيل المعلقة: مدفوعات بلا مراجعة في كل العيادات. */
@@ -230,45 +179,18 @@ export async function createClinicWithOwner(input: {
   ownerName: string;
   ownerEmail: string;
   ownerPhone: string;
-  createdBy: string;
 }): Promise<string> {
-  const sb = getSupabase();
-  const email = input.ownerEmail.trim().toLowerCase();
-  if (!email || !email.includes('@')) throw new Error('بريد غير صالح');
-  const clinicId = `clinic-${Date.now().toString(36)}`;
-  const now = new Date().toISOString();
-
-  const { error: clinicError } = await sb.from('clinics').insert({
-    id: clinicId,
-    name: input.name.trim(),
-    owner_uid: '',
-    owner_name: input.ownerName.trim(),
-    owner_phone: input.ownerPhone.trim(),
-    status: 'active',
+  const { data, error } = await getSupabase().rpc('owner_create_clinic_with_owner', {
+    p_name: input.name,
+    p_owner_name: input.ownerName,
+    p_owner_email: input.ownerEmail,
+    p_owner_phone: input.ownerPhone,
   });
-  if (clinicError) throw new Error(clinicError.message);
-
-  await createInvitation({
-    email,
-    role: 'admin',
-    clinicId,
-    createdBy: input.createdBy,
-  });
-
-  // اشتراك مبدئي: بلا خطة (يحتاج تفعيلًا بعد الدفع)
-  const { error: subError } = await sb.from('clinic_subscriptions').insert({
-    clinic_id: clinicId,
-    plan: 'monthly',
-    status: 'expired',
-    start_at: now,
-    expires_at: null,
-    grace_ends_at: null,
-    payments: [],
-    updated_at: now,
-  });
-  if (subError) throw new Error(subError.message);
-
-  return clinicId;
+  if (error) throw new Error(error.message);
+  if (typeof data !== 'string' || !data.startsWith('clinic-')) {
+    throw new Error('لم يُرجع الخادم معرف عيادة صالحًا');
+  }
+  return data;
 }
 
 // --- إعدادات الدفع ------------------------------------------------------------
