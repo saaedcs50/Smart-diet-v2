@@ -59,6 +59,7 @@ import { AdherenceSection } from './adherence/AdherenceSection';
 import { registerFcmToken, isFcmConfigured, isPushDeliveryEnabled, notifyPatient } from './fcm';
 import { getSupabase } from './supabase';
 import { bindLocalDataToPatient, getLocalDataBindingStatus, type LocalDataBindingStatus } from './localDataOwnership';
+import { DoctorExportButtons } from './DoctorExportButtons';
 
 type Route =
   | { view: 'login' }
@@ -906,7 +907,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   );
 }
 
-function CoachDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
+function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: string; doctorName: string }) {
   const [patients, setPatients] = useState<Array<{ uid: string; doc: PatientDoc }>>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -956,14 +957,29 @@ function CoachDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
           ))}
         </ul>
       </Card>
+      <DoctorExportButtons
+        clinicId={clinicId}
+        coachUid={uid}
+        doctorName={doctorName}
+      />
       <InviteForm clinicId={clinicId} createdBy={uid} isAdmin={false} />
     </div>
   );
 }
 
-function StaffDashboard({ clinicId, uid, isAdmin }: { clinicId: string; uid: string; isAdmin: boolean }) {
+function StaffDashboard({
+  clinicId,
+  uid,
+  isAdmin,
+  doctorName,
+}: {
+  clinicId: string;
+  uid: string;
+  isAdmin: boolean;
+  doctorName: string;
+}) {
   if (isAdmin) return <AdminDashboard clinicId={clinicId} uid={uid} />;
-  return <CoachDashboard clinicId={clinicId} uid={uid} />;
+  return <CoachDashboard clinicId={clinicId} uid={uid} doctorName={doctorName} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -1062,7 +1078,12 @@ function PlatformShell() {
           )}
 
           {route.view !== 'patient' && profile.role !== 'patient' && (
-            <StaffDashboard clinicId={profile.clinicId} uid={profile.uid} isAdmin={profile.role === 'admin'} />
+            <StaffDashboard
+              clinicId={profile.clinicId}
+              uid={profile.uid}
+              isAdmin={profile.role === 'admin'}
+              doctorName={profile.displayName ?? profile.email ?? profile.uid}
+            />
           )}
         </SubscriptionGate>
       )}

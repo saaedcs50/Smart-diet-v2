@@ -160,3 +160,73 @@ export async function addAdherenceScore(
   });
   if (error) throw new Error(error.message);
 }
+
+
+export interface AdherenceExportData {
+  config: AdherenceConfig | null;
+  scores: AdherenceScore[];
+}
+
+/** Strict, paginated read used by the doctor-only export. RLS remains authoritative. */
+export async function getAdherenceExportData(
+  patientUid: string,
+): Promise<AdherenceExportData> {
+  const { data: configRow, error: configError } = await getSupabase()
+    .from('adherence_configs')
+    .select('axes, updated_by, updated_at')
+    .eq('patient_id', patientUid)
+    .maybeSingle();
+
+  if (configError) {
+    throw new Error(`getAdherenceExportData(config): ${configError.message}`);
+  }
+
+  const config = configRow
+    ? {
+        axes: (configRow.axes as AdherenceAxis[]) ?? [],
+        updatedBy: configRow.updated_by as string,
+        updatedAt: configRow.updated_at as string,
+      }
+    : null;
+
+  const pageSize = 500;
+  const scores: AdherenceScore[] = [];
+  let offset = 0;
+  while (true) {
+    const { data, error } = await getSupabase()
+      .from('adherence_scores')
+      .select('score_date, scores, overall, entered_by, note, created_at')
+      .eq('patient_id', patientUid)
+      .order('score_date', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) {
+      throw new Error(`getAdherenceExportData(scores): ${error.message}`);
+    }
+    if (!data || data.length === 0) break;
+
+    for (const row of data as Array<Record<string, unknown>>) {
+      const values = row.scores;
+      if (!Array.isArray(values) || values.some((score) => typeof score !== 'number' || !Number.isFinite(score))) {
+        throw new Error(`درجة التزام غير صالحة للمريض ${patientUid}؛ أُلغي التصدير لتجنب ملف ناقص.`);
+      }
+      const overall = Number(row.overall);
+      if (!Number.isFinite(overall) || overall < 0 || overall > 100) {
+        throw new Error(`نسبة التزام غير صالحة للمريض ${patientUid}؛ أُلغي التصدير لتجنب ملف ناقص.`);
+      }
+      scores.push({
+        date: String(row.score_date),
+        scores: values as number[],
+        overall,
+        enteredBy: String(row.entered_by),
+        enteredAt: String(row.created_at),
+        note: String(row.note ?? ''),
+      });
+    }
+
+    if (data.length < pageSize) break;
+    offset += data.length;
+  }
+
+  return { config, scores };
+}

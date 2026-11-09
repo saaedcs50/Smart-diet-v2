@@ -567,6 +567,71 @@ export async function listDoctorPatients(
   }));
 }
 
+// تصدير كامل لمرضى الطبيب: الفلترة في استعلام Supabase نفسه + RLS.
+ // لا تعتمد هذه الدالة على قائمة مرسلة من المتصفح أو فلتر واجهة فقط.
+export async function listDoctorPatientsForExport(
+  clinicId: string,
+  coachUid: string,
+): Promise<Array<{ uid: string; doc: PatientDoc }>> {
+  const pageSize = 500;
+  const out: Array<{ uid: string; doc: PatientDoc }> = [];
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await getSupabase()
+      .from('patients')
+      .select()
+      .eq('clinic_id', clinicId)
+      .eq('invited_by', coachUid)
+      .order('id', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) throw new Error(`listDoctorPatientsForExport: ${error.message}`);
+    if (!data || data.length === 0) break;
+
+    for (const row of data as Array<Record<string, unknown>>) {
+      out.push({ uid: row.id as string, doc: rowToPatientDoc(row) });
+    }
+    if (data.length < pageSize) break;
+    offset += data.length;
+  }
+
+  return out;
+}
+
+// تصدير كل سجلات الأيام مع pagination؛ لا تقطع السجلات عند حد PostgREST.
+export async function listPatientDayLogsForExport(
+  patientUid: string,
+): Promise<Array<{ date: string; log: DayLog }>> {
+  const pageSize = 500;
+  const out: Array<{ date: string; log: DayLog }> = [];
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await getSupabase()
+      .from('day_logs')
+      .select('log_date, log')
+      .eq('patient_id', patientUid)
+      .order('log_date', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) throw new Error(`listPatientDayLogsForExport(${patientUid}): ${error.message}`);
+    if (!data || data.length === 0) break;
+
+    for (const row of data as Array<{ log_date: string; log: unknown }>) {
+      const log = dayLogFromFirestore(row.log);
+      if (!log) {
+        throw new Error(`سجل يومي غير صالح للمريض ${patientUid} بتاريخ ${row.log_date}؛ أُلغي التصدير لتجنب ملف ناقص.`);
+      }
+      out.push({ date: row.log_date, log });
+    }
+    if (data.length < pageSize) break;
+    offset += data.length;
+  }
+
+  return out;
+}
+
 // تعيين/إلغاء تعيين طبيب لمريض: كتابة invited_by فقط.
 // null تعني إلغاء التعيين (NULL في القاعدة).
 export async function assignPatientCoach(
