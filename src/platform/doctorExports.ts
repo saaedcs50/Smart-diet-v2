@@ -1,10 +1,13 @@
 import type { DayLog, PlanConfig } from '../types';
 import type { PatientDoc } from './firestore';
+import type { AdherenceConfig, AdherenceScore } from './adherence';
 
 export interface DoctorExportPatient {
   uid: string;
   doc: PatientDoc;
   entries: Array<{ date: string; log: DayLog }>;
+  adherenceConfig: AdherenceConfig | null;
+  adherenceScores: AdherenceScore[];
 }
 
 export type ExportCell = string | number | boolean | null | undefined;
@@ -63,6 +66,10 @@ export function buildDoctorExportSheets(patients: DoctorExportPatient[]): Export
     'Last log date',
     'Last recorded weight (kg)',
     'Last recorded water (ml)',
+    'Adherence axes (JSON)',
+    'Adherence history (JSON)',
+    'Latest adherence (%)',
+    'Latest adherence date',
     'Full plan JSON (admin PIN removed)',
   ]];
 
@@ -99,6 +106,7 @@ export function buildDoctorExportSheets(patients: DoctorExportPatient[]): Export
   for (const patient of patients) {
     const plan = planOf(patient);
     const last = lastEntry(patient);
+    const adherenceLatest = [...patient.adherenceScores].sort((a, b) => b.date.localeCompare(a.date))[0];
     patientRows.push([
       patient.uid,
       patient.doc.profile.clientName,
@@ -157,9 +165,35 @@ export function buildDoctorExportSheets(patients: DoctorExportPatient[]): Export
     }
   }
 
+  const adherenceRows: ExportCell[][] = [[
+    'Patient ID',
+    'Patient name',
+    'Date',
+    'Axes configuration (JSON)',
+    'Scores by axis (JSON)',
+    'Overall (%)',
+    'Entered at',
+    'Note',
+  ]];
+  for (const patient of patients) {
+    for (const score of patient.adherenceScores) {
+      adherenceRows.push([
+        patient.uid,
+        patient.doc.profile.clientName,
+        score.date,
+        jsonCell(patient.adherenceConfig?.axes),
+        jsonCell(score.scores),
+        validNumber(score.overall),
+        score.enteredAt ?? '',
+        score.note ?? '',
+      ]);
+    }
+  }
+
   return [
     { name: 'Patients', rows: patientRows },
     { name: 'Daily Logs', rows: dayRows },
+    { name: 'Adherence Scores', rows: adherenceRows },
   ];
 }
 
@@ -396,6 +430,9 @@ export function buildDoctorPdfHtml(patients: DoctorExportPatient[], clinicName: 
         <tr><th>الوجبات</th><td colspan="3">${esc(plan.meals?.map((m) => `${m.name}: ${m.items}`).join(' | '))}</td></tr>
         <tr><th>بنود المتابعة</th><td colspan="3">${esc(plan.checklist?.map((c) => c.label).join(' | '))}</td></tr>
       </tbody></table>` : '<p>لا توجد خطة مسجلة.</p>'}
+      <h3>الالتزام</h3>
+      ${patient.adherenceConfig ? `<p>المحاور والأوزان: ${esc(patient.adherenceConfig.axes.map((axis) => `${axis.name} (${axis.weight}%)`).join('، '))}</p>` : '<p>لا يوجد إعداد لمحاور الالتزام.</p>'}
+      ${patient.adherenceScores.length ? `<table><thead><tr><th>التاريخ</th><th>النسبة</th><th>الدرجات</th><th>ملاحظة</th></tr></thead><tbody>${[...patient.adherenceScores].sort((a, b) => b.date.localeCompare(a.date)).map((score) => `<tr><td>${esc(score.date)}</td><td>${esc(score.overall)}%</td><td>${esc(score.scores.join(' / '))}</td><td>${esc(score.note)}</td></tr>`).join('')}</tbody></table>` : '<p>لا توجد درجات التزام مسجلة.</p>'}
       <h3>السجلات اليومية</h3>
       ${logs.length ? `<table><thead><tr><th>التاريخ</th><th>الوزن</th><th>الماء</th><th>النوم</th><th>السعرات</th><th>ملاحظات</th></tr></thead>
         <tbody>${logs.map(({ date, log }) => `<tr>
