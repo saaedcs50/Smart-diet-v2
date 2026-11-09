@@ -9,6 +9,13 @@
 
 import { getSupabase } from './supabase';
 
+// Delivery remains disabled until RFC 8291 aes128gcm payload encryption is implemented and tested.
+const PUSH_DELIVERY_ENABLED = false;
+
+export function isPushDeliveryEnabled(): boolean {
+  return PUSH_DELIVERY_ENABLED;
+}
+
 const VAPID_KEY = (() => {
   const metaEnv = (import.meta as unknown as {
     env?: Record<string, string | undefined>;
@@ -22,7 +29,7 @@ const VAPID_KEY = (() => {
 })();
 
 export function isFcmConfigured(): boolean {
-  return !!VAPID_KEY;
+  return PUSH_DELIVERY_ENABLED && !!VAPID_KEY;
 }
 
 /**
@@ -32,7 +39,7 @@ export function isFcmConfigured(): boolean {
  */
 export async function registerFcmToken(patientUid: string): Promise<string | null> {
   try {
-    if (!VAPID_KEY) return null;
+    if (!PUSH_DELIVERY_ENABLED || !VAPID_KEY) return null;
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
 
     const permission = await Notification.requestPermission();
@@ -118,6 +125,9 @@ export async function notifyPatient(
   body: string,
   idToken: string,
 ): Promise<{ ok: boolean; sent: number }> {
+  if (!PUSH_DELIVERY_ENABLED) {
+    throw new Error('الإشعارات متوقفة مؤقتًا حتى تنفيذ تشفير Web Push RFC 8291');
+  }
   if (!FUNCTIONS_URL) throw new Error('رابط Edge Function غير مضبوط');
   const res = await fetch(FUNCTIONS_URL, {
     method: 'POST',
