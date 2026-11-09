@@ -129,6 +129,11 @@ export function buildDoctorExportSheets(patients: DoctorExportPatient[]): Export
       last?.date ?? '',
       validNumber(last?.log.weight),
       validNumber(last?.log.water),
+      jsonCell(patient.adherenceConfig?.axes),
+      jsonCell(patient.adherenceScores),
+      validNumber(adherenceLatest?.overall),
+      adherenceLatest?.date ?? '',
+      jsonCell(plan),
     ]);
 
     for (const entry of patient.entries) {
@@ -197,15 +202,20 @@ export function buildDoctorExportSheets(patients: DoctorExportPatient[]): Export
   ];
 }
 
+function startsWithSpreadsheetFormula(text: string): boolean {
+  let index = 0;
+  while (index < text.length && text.charCodeAt(index) <= 0x20) index += 1;
+  return index < text.length && '=+-@'.includes(text[index]);
+}
+
 function csvSafe(value: ExportCell): string {
   if (value == null) return '';
   let text = String(value);
   // Prevent spreadsheet formula execution when a CSV is opened in Excel.
-  if (typeof value !== 'number' && /^[\s\u0000-\u001f]*[=+\-@]/.test(text)) text = "'" + text;
-  if (/[",\r\n]/.test(text)) text = '"' + text.replace(/"/g, '""') + '"';
+  if (typeof value !== 'number' && startsWithSpreadsheetFormula(text)) text = "'" + text;
+  if (/[",\\r\\n]/.test(text)) text = '"' + text.replace(/"/g, '""') + '"';
   return text;
 }
-
 export function buildDoctorCsv(patients: DoctorExportPatient[]): string {
   const [patientsSheet, daySheet] = buildDoctorExportSheets(patients);
   const dayHeader = daySheet.rows[0];
