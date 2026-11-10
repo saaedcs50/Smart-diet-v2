@@ -472,6 +472,42 @@ export async function listDayLogEntries(
   return out;
 }
 
+/** بيانات وصفية فقط لآخر سجلات المرضى الذين مرّرهم نطاق الدور الحالي. */
+export interface RecentDayLogActivity {
+  patientUid: string;
+  date: string;
+}
+
+/**
+ * يعيد أحدث تواريخ السجلات دون تحميل محتوى اليوم الصحي.
+ * يجب تمرير معرفات المرضى الناتجة من استعلام الدور/العيادة الحالي،
+ * وتظل سياسات RLS في Supabase هي حدّ الوصول النهائي.
+ */
+export async function listRecentDayLogActivity(
+  patientUids: string[],
+  limit = 8,
+): Promise<RecentDayLogActivity[]> {
+  const scopedUids = [...new Set(patientUids.filter((uid) => typeof uid === 'string' && uid.length > 0))];
+  if (scopedUids.length === 0) return [];
+
+  const safeLimit = Math.max(1, Math.min(20, Math.floor(limit)));
+  const { data, error } = await getSupabase()
+    .from('day_logs')
+    .select('patient_id, log_date')
+    .in('patient_id', scopedUids)
+    .order('log_date', { ascending: false })
+    .limit(safeLimit);
+
+  if (error) {
+    logDbError('listRecentDayLogActivity', error);
+    throw new Error(error.message);
+  }
+
+  return ((data as Array<{ patient_id: string; log_date: string }> | null) ?? [])
+    .filter((row) => typeof row.patient_id === 'string' && typeof row.log_date === 'string')
+    .map((row) => ({ patientUid: row.patient_id, date: row.log_date }));
+}
+
 // للطاقم فقط (سياسات RLS ترفض غير طاقم العيادة): مرضى عيادة واحدة.
 export async function listClinicPatients(
   clinicId: string,
