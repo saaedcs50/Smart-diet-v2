@@ -38,21 +38,35 @@ export async function listAllClinics(): Promise<ClinicSummary[]> {
   const sb = getSupabase();
   const { data: clinics, error } = await sb.from('clinics').select();
   if (error) throw new Error(error.message);
-  const out: ClinicSummary[] = [];
-  for (const c of (clinics as Array<Record<string, unknown>>) ?? []) {
-    const data = c as Partial<Record<string, unknown>>;
-    // نتجاوز المستندات بلا ownerUid نصي
-    if (typeof data.owner_uid !== 'string') continue;
-    const { data: sub } = await sb
+
+  const rows = (clinics as Array<Record<string, unknown>>) ?? [];
+  const clinicIds = rows
+    .map((row) => row.id)
+    .filter((id): id is string => typeof id === 'string');
+
+  const subscriptionsByClinic = new Map<string, Record<string, unknown>>();
+  if (clinicIds.length > 0) {
+    const { data: subscriptions, error: subscriptionError } = await sb
       .from('clinic_subscriptions')
       .select()
-      .eq('clinic_id', c.id)
-      .single();
-    const subRow = sub as Record<string, unknown> | null;
+      .in('clinic_id', clinicIds);
+    if (subscriptionError) throw new Error(subscriptionError.message);
+    for (const subscription of (subscriptions as Array<Record<string, unknown>>) ?? []) {
+      if (typeof subscription.clinic_id === 'string') {
+        subscriptionsByClinic.set(subscription.clinic_id, subscription);
+      }
+    }
+  }
+
+  const out: ClinicSummary[] = [];
+  for (const c of rows) {
+    const data = c as Partial<Record<string, unknown>>;
+    if (typeof data.id !== 'string') continue;
+    const subRow = subscriptionsByClinic.get(data.id) ?? null;
     out.push({
-      id: c.id as string,
-      name: typeof data.name === 'string' ? data.name : (c.id as string),
-      ownerUid: data.owner_uid as string,
+      id: data.id,
+      name: typeof data.name === 'string' ? data.name : data.id,
+      ownerUid: typeof data.owner_uid === 'string' ? data.owner_uid : '',
       ownerName: typeof data.owner_name === 'string' ? data.owner_name : '',
       ownerPhone: typeof data.owner_phone === 'string' ? data.owner_phone : '',
       status: data.status === 'suspended' ? 'suspended' : 'active',
