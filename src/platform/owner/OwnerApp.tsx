@@ -1,8 +1,8 @@
 // ============================================================================
 // لوحة صاحب المنصة (/owner) — المرحلة الثالثة من بناء B2B
 // ----------------------------------------------------------------------------
-// لصاحب المنصة (role='owner') فقط. تبويبات: العيادات، طلبات التفعيل،
-// عيادة جديدة، إعدادات الدفع.
+// لصاحب المنصة (role='owner') فقط. تشمل النظرة العامة، العيادات،
+// طلبات التفعيل، إنشاء عيادة، سجل المدفوعات، وإعدادات الدفع.
 // ============================================================================
 
 import { useEffect, useState } from 'react';
@@ -12,19 +12,23 @@ import { ClinicsTab } from './ClinicsTab';
 import { ActivationsTab } from './ActivationsTab';
 import { NewClinicTab } from './NewClinicTab';
 import { PaymentSettingsTab } from './PaymentSettingsTab';
+import { OverviewTab } from './OverviewTab';
+import { PaymentHistoryTab } from './PaymentHistoryTab';
 
-type Tab = 'clinics' | 'activations' | 'new' | 'payments';
+type Tab = 'overview' | 'clinics' | 'activations' | 'new' | 'paymentHistory' | 'payments';
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'overview', label: 'نظرة عامة' },
   { id: 'clinics', label: 'العيادات' },
   { id: 'activations', label: 'طلبات التفعيل' },
   { id: 'new', label: 'عيادة جديدة' },
+  { id: 'paymentHistory', label: 'سجل المدفوعات' },
   { id: 'payments', label: 'إعدادات الدفع' },
 ];
 
 function OwnerShell() {
   const { user, profile, loading, signOutPlatform } = usePlatformAuth();
-  const [tab, setTab] = useState<Tab>('clinics');
+  const [tab, setTab] = useState<Tab>('overview');
 
   useEffect(() => {
     document.title = 'لوحة صاحب المنصة';
@@ -101,9 +105,11 @@ function OwnerShell() {
         </nav>
       </header>
       <main className="mx-auto max-w-4xl p-4">
+        {tab === 'overview' && <OverviewTab onNavigate={setTab} />}
         {tab === 'clinics' && <ClinicsTab />}
         {tab === 'activations' && <ActivationsTab />}
         {tab === 'new' && <NewClinicTab />}
+        {tab === 'paymentHistory' && <PaymentHistoryTab />}
         {tab === 'payments' && <PaymentSettingsTab />}
       </main>
     </div>
