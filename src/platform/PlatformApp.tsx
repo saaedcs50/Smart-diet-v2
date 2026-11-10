@@ -115,6 +115,24 @@ function Field({
   );
 }
 
+function DashboardMetric({
+  label,
+  value,
+  note,
+}: {
+  label: string;
+  value: string | number;
+  note: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <p className="text-xs font-bold text-slate-500">{label}</p>
+      <p className="mt-2 text-2xl font-black tabular-nums text-slate-900 dark:text-slate-100">{value}</p>
+      <p className="mt-1 text-xs text-slate-500">{note}</p>
+    </div>
+  );
+}
+
 const inputClass =
   'w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
 const buttonClass =
@@ -959,9 +977,17 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     }
   };
 
+  const patientsWithPlan = patients.filter((patient) => Boolean(patient.doc.plan)).length;
+
   return (
     <div className="flex flex-col gap-4">
       <SubscriptionCard clinicId={clinicId} />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <DashboardMetric label="مرضى العيادة" value={loading ? '—' : patients.length} note="ضمن نطاق عيادتك فقط" />
+        <DashboardMetric label="الأطباء" value={loading ? '—' : coaches.length} note="حسابات الطبيب النشطة في القائمة" />
+        <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة على قاعدة المنصة" />
+        <DashboardMetric label="بلا طبيب معيّن" value={loading ? '—' : summary.unassignedCount} note="يمكن تعيينهم من قائمة المرضى" />
+      </div>
       <Card>
         <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
           الدكاترة
@@ -1070,8 +1096,15 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
     };
   }, [clinicId, uid]);
 
+  const patientsWithPlan = patients.filter((patient) => Boolean(patient.doc.plan)).length;
+
   return (
     <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <DashboardMetric label="عملائي" value={loading ? '—' : patients.length} note="المرضى الذين دعوتهم أنت فقط" />
+        <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة سحابيًا" />
+        <DashboardMetric label="يحتاجون إعداد خطة" value={loading ? '—' : patients.length - patientsWithPlan} note="لا توجد لهم خطة سحابية بعد" />
+      </div>
       <Card>
         <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
           عملائي ({patients.length})
