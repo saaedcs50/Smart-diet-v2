@@ -6,18 +6,16 @@
 //   رسالة إعداد واضحة بدل انكسار غامض.
 // - لا تسجيل ذاتي: التسجيل بدعوة فقط (البريد المدعو به + كلمة مرور)،
 //   ودخول Google عند إنشاء الحساب للطاقم فقط (تفرضه invitations.ts).
-// - لوحة الأخصائية هنا حقيقية (بيانات من Firestore عبر طبقة المرحلة
-//   الأولى)، لا بيانات وهمية — مسار /prototype التجريبي منفصل ولا يُمس.
+// - لوحة الطبيب ومدير العيادة تعتمد على Supabase وقواعد RLS.
+//   مسار /prototype التجريبي منفصل ولا يُمس.
 // - المزامنة opt-in صريح من واجهة المريض نفسه فقط، بعد موافقة صريحة
 //   تُحفظ في consents/sync قبل أي رفع (دراسة §٦).
 // - الصور السحابية ملغاة بقرار المالك (2026-10-27): لا رفع إلى Cloud
 //   Storage ولا عرض صور سحابية؛ الصور تبقى محلية للمستخدم في التطبيق
 //   الرئيسي، أو يرسلها المستخدم بنفسه واتساب لطبيب العيادة (سياسة فقط،
 //   بلا بناء مشاركة واتساب هنا).
-// - لوحة الطاقم المتقدمة: الأدمن يرى الدكاترة وعدد عملاء كل منهم ويعيّن
-//   المرضى للأطباء، والطبيب يرى عملاءه فقط (من دعاهم). الربط على مستوى
-//   الواجهة فقط عبر حقل invitedBy — قراءة العيادة للطاقم تبقى كما هي،
-//   وصفحة المريض نفسها (الخطة + سجلات الأيام) لم تُبنَ من جديد.
+// - لوحة المدير والطبيب تعرض مؤشرات مبنية على صفوف نطاق العيادة
+//   أو مرضى الطبيب فقط؛ لا تجمع بيانات سريرية خارج صلاحية العرض.
 // ============================================================================
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
@@ -112,6 +110,24 @@ function Field({
       {label}
       <span className="mt-1 block">{children}</span>
     </label>
+  );
+}
+
+function DashboardMetric({
+  label,
+  value,
+  note,
+}: {
+  label: string;
+  value: string | number;
+  note: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <p className="text-xs font-bold text-slate-500">{label}</p>
+      <p className="mt-2 text-2xl font-black tabular-nums text-slate-900 dark:text-slate-100">{value}</p>
+      <p className="mt-1 text-xs text-slate-500">{note}</p>
+    </div>
   );
 }
 
@@ -959,9 +975,17 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     }
   };
 
+  const patientsWithPlan = patients.filter((patient) => Boolean(patient.doc.plan)).length;
+
   return (
     <div className="flex flex-col gap-4">
       <SubscriptionCard clinicId={clinicId} />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <DashboardMetric label="مرضى العيادة" value={loading ? '—' : patients.length} note="ضمن نطاق عيادتك فقط" />
+        <DashboardMetric label="الأطباء" value={loading ? '—' : coaches.length} note="حسابات الطبيب النشطة في القائمة" />
+        <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة على قاعدة المنصة" />
+        <DashboardMetric label="بلا طبيب معيّن" value={loading ? '—' : summary.unassignedCount} note="يمكن تعيينهم من قائمة المرضى" />
+      </div>
       <Card>
         <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
           الدكاترة
@@ -1070,8 +1094,15 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
     };
   }, [clinicId, uid]);
 
+  const patientsWithPlan = patients.filter((patient) => Boolean(patient.doc.plan)).length;
+
   return (
     <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <DashboardMetric label="عملائي" value={loading ? '—' : patients.length} note="المرضى الذين دعوتهم أنت فقط" />
+        <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة سحابيًا" />
+        <DashboardMetric label="يحتاجون إعداد خطة" value={loading ? '—' : patients.length - patientsWithPlan} note="لا توجد لهم خطة سحابية بعد" />
+      </div>
       <Card>
         <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
           عملائي ({patients.length})
