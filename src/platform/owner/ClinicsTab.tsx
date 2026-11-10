@@ -9,25 +9,13 @@ import {
   type ClinicSummary,
 } from '../owner';
 import type { SubscriptionPlan } from '../firestore';
+import { daysRemaining } from '../ownerDashboard';
 
 const PLAN_LABELS: Record<SubscriptionPlan, string> = {
   permanent: 'دائم',
   monthly: 'شهري',
   annual: 'سنوي',
 };
-
-function daysLeft(expiresAt: unknown): number | null {
-  if (!expiresAt) return null;
-  const t =
-    typeof expiresAt === 'string' || typeof expiresAt === 'number'
-      ? new Date(expiresAt)
-      : typeof expiresAt === 'object' &&
-          typeof (expiresAt as { toDate?: unknown }).toDate === 'function'
-        ? (expiresAt as { toDate: () => Date }).toDate()
-        : null;
-  if (!t || Number.isNaN(t.getTime())) return null;
-  return Math.ceil((t.getTime() - Date.now()) / 86400000);
-}
 
 function StatusBadge({ clinic }: { clinic: ClinicSummary }) {
   if (clinic.status === 'suspended') {
@@ -39,10 +27,14 @@ function StatusBadge({ clinic }: { clinic: ClinicSummary }) {
   }
   const s = clinic.subscription?.status;
   if (s === 'active') {
-    const left = daysLeft(clinic.subscription?.expiresAt);
+    const left = daysRemaining(clinic.subscription?.expiresAt);
     return (
       <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-        نشط{left != null ? ` — باقي ${left} يوم` : ' (دائم)'}
+        {clinic.subscription?.plan === 'permanent'
+          ? 'نشط — دائم'
+          : left != null
+            ? `نشط — باقي ${left} يوم`
+            : 'نشط'}
       </span>
     );
   }
