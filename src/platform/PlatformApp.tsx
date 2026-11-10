@@ -64,11 +64,13 @@ import { DoctorExportButtons } from './DoctorExportButtons';
 type Route =
   | { view: 'login' }
   | { view: 'register'; email?: string }
+  | { view: 'updatePassword' }
   | { view: 'dashboard' }
   | { view: 'patient'; patientUid: string };
 
 function parseRoute(): Route {
   const pathname = window.location.pathname;
+  if (pathname === '/platform/update-password') return { view: 'updatePassword' };
   if (pathname.startsWith('/platform/patients/')) {
     const uid = decodeURIComponent(pathname.split('/')[3] ?? '');
     return { view: 'patient', patientUid: uid };
@@ -129,11 +131,13 @@ function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [resetMessage, setResetMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
+    setResetMessage(null);
     setBusy(true);
     try {
       await signInWithEmail(email.trim(), password);
@@ -144,8 +148,34 @@ function LoginForm() {
     }
   };
 
+  const resetPassword = async () => {
+    setError(null);
+    setResetMessage(null);
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      setError('اكتب بريدك الإلكتروني أولًا، ثم اضغط «نسيت كلمة المرور؟».');
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error: resetError } = await getSupabase().auth.resetPasswordForEmail(
+        normalizedEmail,
+        { redirectTo: `${window.location.origin}/platform/update-password` },
+      );
+      if (resetError) throw resetError;
+      setResetMessage(
+        'لو البريد مرتبط بحساب، هيوصلك رابط استعادة. افتحه من نفس الجهاز، ثم اختَر كلمة مرور جديدة. افحص Spam لو لم تجده.',
+      );
+    } catch (caught) {
+      setError(errorText(caught));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const google = async () => {
     setError(null);
+    setResetMessage(null);
     setBusy(true);
     try {
       await signInWithGoogle();
@@ -170,6 +200,7 @@ function LoginForm() {
             className={inputClass}
             type="email"
             required
+            autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
@@ -179,13 +210,23 @@ function LoginForm() {
             className={inputClass}
             type="password"
             required
+            autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
         </Field>
-        {error && <p className="text-xs font-bold text-red-600">{error}</p>}
+        {error && <p role="alert" className="text-xs font-bold text-red-600">{error}</p>}
+        {resetMessage && <p role="status" className="text-xs font-bold text-emerald-700 dark:text-emerald-300">{resetMessage}</p>}
         <button className={buttonClass} type="submit" disabled={busy}>
           دخول
+        </button>
+        <button
+          className={ghostButtonClass}
+          type="button"
+          onClick={() => void resetPassword()}
+          disabled={busy}
+        >
+          نسيت كلمة المرور؟
         </button>
         <button className={ghostButtonClass} type="button" onClick={google} disabled={busy}>
           دخول Google — للطاقم
@@ -198,6 +239,106 @@ function LoginForm() {
           تسجيل بدعوة
         </button>
       </form>
+    </Card>
+  );
+}
+
+function UpdatePasswordForm() {
+  const { user } = usePlatformAuth();
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  if (!user) {
+    return (
+      <Card>
+        <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+          رابط الاستعادة غير صالح أو انتهت صلاحيته
+        </h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          ارجع لصفحة الدخول واطلب رابط استعادة جديدًا. لا تشارك رابط الاستعادة مع أي شخص.
+        </p>
+        <button className={buttonClass} type="button" onClick={() => navigate('/platform')}>
+          الرجوع لتسجيل الدخول
+        </button>
+      </Card>
+    );
+  }
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    if (password.length < 8) {
+      setError('كلمة المرور يجب ألا تقل عن 8 أحرف.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('تأكيد كلمة المرور غير مطابق.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error: updateError } = await getSupabase().auth.updateUser({ password });
+      if (updateError) throw updateError;
+      setSuccess(true);
+      setPassword('');
+      setConfirmPassword('');
+    } catch (caught) {
+      setError(errorText(caught));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card>
+      <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+        تعيين كلمة مرور جديدة
+      </h2>
+      <p className="mt-1 text-xs text-slate-500">
+        أدخل كلمة مرور جديدة لحسابك. استخدم 8 أحرف على الأقل.
+      </p>
+      {success ? (
+        <div className="mt-4 flex flex-col gap-3">
+          <p role="status" className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+            تم تحديث كلمة المرور بنجاح.
+          </p>
+          <button className={buttonClass} type="button" onClick={() => navigate('/owner')}>
+            فتح لوحة صاحب المنصة
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={(event) => void submit(event)} className="mt-4 flex flex-col gap-3">
+          <Field label="كلمة المرور الجديدة">
+            <input
+              className={inputClass}
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </Field>
+          <Field label="تأكيد كلمة المرور">
+            <input
+              className={inputClass}
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+            />
+          </Field>
+          {error && <p role="alert" className="text-xs font-bold text-red-600">{error}</p>}
+          <button className={buttonClass} type="submit" disabled={busy}>
+            {busy ? 'جارٍ الحفظ…' : 'حفظ كلمة المرور الجديدة'}
+          </button>
+        </form>
+      )}
     </Card>
   );
 }
@@ -1016,8 +1157,9 @@ function PlatformShell() {
         وضع المنصة (تجريبي) — بيانات المشروع التجريبي فقط، وليست بيانات إنتاج.
       </p>
 
+      {route.view === 'updatePassword' && <UpdatePasswordForm />}
       {!user && route.view === 'register' && <RegisterForm invitedEmail={route.email} />}
-      {!user && route.view !== 'register' && <LoginForm />}
+      {!user && route.view !== 'register' && route.view !== 'updatePassword' && <LoginForm />}
 
       {user && profileMissing && (
         <Card>
