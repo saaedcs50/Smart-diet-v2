@@ -967,7 +967,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
           الدكاترة
         </h2>
         <p className="mt-1 text-xs text-slate-500">
-          أطباء عيادتك وعدد عملاء كل منهم — من Firestore مباشرة، لا بيانات
+          أطباء عيادتك وعدد عملاء كل منهم — من قاعدة المنصة مباشرة، لا بيانات
           وهمية. اضغط على طبيب لعرض عملائه فقط.
         </p>
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل الدكاترة…</p>}
@@ -1007,7 +1007,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
           مرضى العيادة — {filterLabel(filter, coaches)}
         </h2>
         <p className="mt-1 text-xs text-slate-500">
-          مرضى عيادتك فقط — من Firestore مباشرة، لا بيانات وهمية. عيّن
+          مرضى عيادتك فقط — من قاعدة المنصة مباشرة، لا بيانات وهمية. عيّن
           الطبيب من القائمة المنسدلة لكل مريض.
         </p>
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل المرضى…</p>}
@@ -1077,7 +1077,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
           عملائي ({patients.length})
         </h2>
         <p className="mt-1 text-xs text-slate-500">
-          المرضى الذين دعوتهم أنت فقط — من Firestore مباشرة، لا بيانات
+          المرضى الذين دعوتهم أنت فقط — من قاعدة المنصة مباشرة، لا بيانات
           وهمية. اضغط على مريض لعرض خطته وسجلات تقدمه.
         </p>
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل عملائي…</p>}
@@ -1137,6 +1137,21 @@ function PlatformShell() {
     return () => window.removeEventListener('popstate', handler);
   }, []);
 
+  // صاحب المنصة له مساحة مستقلة ولا يجب أن يسقط في لوحة الطبيب/الأدمن.
+  // رابط الاستعادة يحتفظ بمساره حتى يتمكن من تعيين كلمة مرور جديدة أولًا.
+  useEffect(() => {
+    if (
+      !loading &&
+      user &&
+      profile?.role === 'owner' &&
+      !profile.disabled &&
+      route.view !== 'updatePassword' &&
+      window.location.pathname.startsWith('/platform')
+    ) {
+      window.location.replace('/owner');
+    }
+  }, [loading, user, profile?.role, profile?.disabled, route.view]);
+
   if (loading) {
     return <p className="p-6 text-sm text-slate-500">جاري التحقق من الجلسة…</p>;
   }
@@ -1154,7 +1169,7 @@ function PlatformShell() {
         )}
       </header>
       <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-        وضع المنصة (تجريبي) — بيانات المشروع التجريبي فقط، وليست بيانات إنتاج.
+        نسخة تشغيل تجريبي محدودة — الدخول بدعوة فقط. استخدم حسابك المخصص لك، ولا تشارك بيانات المرضى خارج صلاحياتك.
       </p>
 
       {route.view === 'updatePassword' && <UpdatePasswordForm />}
@@ -1185,7 +1200,15 @@ function PlatformShell() {
         </Card>
       )}
 
-      {user && profile && !profile.disabled && !profileMissing && (
+      {user && profile?.role === 'owner' && !profile.disabled && route.view !== 'updatePassword' && (
+        <Card>
+          <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+            جاري تحويلك إلى لوحة صاحب المنصة…
+          </p>
+        </Card>
+      )}
+
+      {user && profile && !profile.disabled && !profileMissing && profile.role !== 'owner' && (
         <SubscriptionGate
           clinicId={profile.clinicId}
           uid={profile.uid}
