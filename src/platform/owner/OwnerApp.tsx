@@ -59,6 +59,23 @@ function OwnerShell() {
     );
   }
 
+  if (profile.disabled) {
+    return (
+      <div dir="rtl" className="mx-auto max-w-md p-6 text-center">
+        <h1 className="mb-2 text-xl font-bold">الحساب موقوف</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          تم إيقاف هذا الحساب. تواصل مع مسؤول المنصة عند الحاجة.
+        </p>
+        <button
+          onClick={() => void signOutPlatform()}
+          className="mt-4 rounded-xl border px-4 py-2 text-sm"
+        >
+          تسجيل الخروج
+        </button>
+      </div>
+    );
+  }
+
   if (profile.role !== 'owner') {
     return (
       <div dir="rtl" className="mx-auto max-w-md p-6 text-center">
