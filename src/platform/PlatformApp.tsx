@@ -28,10 +28,12 @@ import {
   listClinicPatientEntries,
   listClinicStaffEntries,
   listDayLogEntries,
+  listRecentDayLogActivity,
   listDoctorPatients,
   saveConsent,
   summarizeDoctors,
   type PatientDoc,
+  type RecentDayLogActivity,
   type StaffEntry,
 } from './firestore';
 import {
@@ -128,6 +130,58 @@ function DashboardMetric({
       <p className="mt-2 text-2xl font-black tabular-nums text-slate-900 dark:text-slate-100">{value}</p>
       <p className="mt-1 text-xs text-slate-500">{note}</p>
     </div>
+  );
+}
+
+function RecentActivityCard({
+  title,
+  activity,
+  nameByUid,
+  loading,
+  error,
+  onOpenPatient,
+}: {
+  title: string;
+  activity: RecentDayLogActivity[];
+  nameByUid: Map<string, string>;
+  loading: boolean;
+  error: string | null;
+  onOpenPatient: (patientUid: string) => void;
+}) {
+  return (
+    <Card>
+      <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">{title}</h2>
+      <p className="mt-1 text-xs text-slate-500">
+        أحدث تواريخ السجلات فقط، دون عرض تفاصيل صحية في موجز النشاط.
+      </p>
+      {loading ? (
+        <p className="mt-3 text-sm text-slate-500">جاري تحميل النشاط…</p>
+      ) : error ? (
+        <p role="alert" className="mt-3 text-sm font-bold text-red-600">{error}</p>
+      ) : activity.length === 0 ? (
+        <p className="mt-3 text-sm text-slate-500">لا توجد سجلات أيام بعد ضمن نطاق العرض.</p>
+      ) : (
+        <ul className="mt-3 flex flex-col gap-2">
+          {activity.map((item, index) => (
+            <li key={`${item.patientUid}:${item.date}:${index}`}>
+              <button
+                type="button"
+                onClick={() => onOpenPatient(item.patientUid)}
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 text-right hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                    {nameByUid.get(item.patientUid) ?? 'مريض'}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-slate-500">سجل يوم {item.date}</span>
+                </span>
+                <span className="shrink-0 text-xs font-bold text-indigo-700 dark:text-indigo-300">فتح الملف</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }
 
@@ -784,8 +838,34 @@ function PatientDetail({
   if (error) return <p className="text-sm font-bold text-red-600">{error}</p>;
   if (!doc) return <p className="text-sm text-slate-500">لا يوجد ملف مريض بهذا المعرف.</p>;
 
+  const latestEntry = entries[0] ?? null;
+  const latestWeightEntry = entries.find(({ log }) => log.weight != null) ?? null;
+  const latestSleep = latestEntry?.log.sleepHours;
+
   return (
     <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <DashboardMetric
+          label="سجلات الأيام"
+          value={entries.length}
+          note="سجلات محفوظة على قاعدة المنصة"
+        />
+        <DashboardMetric
+          label="آخر تاريخ تسجيل"
+          value={latestEntry?.date ?? '—'}
+          note="تاريخ السجل الأحدث"
+        />
+        <DashboardMetric
+          label="آخر وزن مدخل"
+          value={latestWeightEntry ? `${latestWeightEntry.log.weight} كجم` : '—'}
+          note="القيمة المسجلة دون تفسير آلي"
+        />
+        <DashboardMetric
+          label="الماء في أحدث سجل"
+          value={latestEntry ? `${latestEntry.log.water} مل` : '—'}
+          note="القيمة التي سُجلت لذلك اليوم"
+        />
+      </div>
       <Card>
         <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
           {doc.profile.clientName}
@@ -810,15 +890,29 @@ function PatientDetail({
         {entries.length === 0 ? (
           <p className="mt-2 text-sm text-slate-500">لا توجد سجلات أيام سحابية بعد.</p>
         ) : (
-          <ul className="mt-2 flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200">
-            {entries.slice(0, 30).map(({ date, log }) => (
-              <li key={date} className="flex justify-between gap-2">
-                <span>{date}</span>
-                <span>
-                  وزن: {log.weight ?? '—'} — ماء: {log.water} مل
-                </span>
-              </li>
-            ))}
+          <ul className="mt-3 flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-200">
+            {entries.slice(0, 30).map(({ date, log }) => {
+              const recordedMeals = Object.values(log.meals ?? {}).filter(
+                (meal) => meal.type === 'default' || meal.type === 'alt',
+              ).length;
+              const completedChecks = Object.values(log.checks ?? {}).filter(Boolean).length;
+              return (
+                <li key={date} className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-bold">{date}</span>
+                    <span className="text-xs text-slate-500">
+                      وزن: {log.weight ?? '—'} — ماء: {log.water} مل
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                    {plan && <span>وجبات مختارة: {recordedMeals} / {plan.meals.length}</span>}
+                    {plan && <span>مهام مكتملة: {completedChecks} / {plan.checklist.length}</span>}
+                    {log.sleepHours != null && <span>النوم: {log.sleepHours} ساعة</span>}
+                    {log.quality && <span>جودة النوم: {log.quality}</span>}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </Card>
@@ -921,18 +1015,29 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   const [assignError, setAssignError] = useState<string | null>(null);
   const [assigningUid, setAssigningUid] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [activity, setActivity] = useState<RecentDayLogActivity[]>([]);
+  const [activityError, setActivityError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setActivity([]);
+    setActivityError(null);
     Promise.all([
       listClinicStaffEntries(clinicId),
       listClinicPatientEntries(clinicId),
     ])
-      .then(([staff, entries]) => {
+      .then(async ([staff, entries]) => {
         if (cancelled) return;
         setCoaches(staff);
         setPatients(entries);
         setError(null);
+        try {
+          const recent = await listRecentDayLogActivity(entries.map((entry) => entry.uid), 8);
+          if (!cancelled) setActivity(recent);
+        } catch (caught: unknown) {
+          if (!cancelled) setActivityError(errorText(caught));
+        }
       })
       .catch((caught: unknown) => {
         if (!cancelled) setError(errorText(caught));
@@ -986,6 +1091,14 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة على قاعدة المنصة" />
         <DashboardMetric label="بلا طبيب معيّن" value={loading ? '—' : summary.unassignedCount} note="يمكن تعيينهم من قائمة المرضى" />
       </div>
+      <RecentActivityCard
+        title="آخر نشاط المرضى"
+        activity={activity}
+        nameByUid={new Map(patients.map((patient) => [patient.uid, patient.doc.profile.clientName]))}
+        loading={loading}
+        error={activityError}
+        onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
+      />
       <Card>
         <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
           الدكاترة
@@ -1076,12 +1189,24 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const [patients, setPatients] = useState<Array<{ uid: string; doc: PatientDoc }>>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activity, setActivity] = useState<RecentDayLogActivity[]>([]);
+  const [activityError, setActivityError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setActivity([]);
+    setActivityError(null);
     listDoctorPatients(clinicId, uid)
-      .then((entries) => {
-        if (!cancelled) setPatients(entries);
+      .then(async (entries) => {
+        if (cancelled) return;
+        setPatients(entries);
+        try {
+          const recent = await listRecentDayLogActivity(entries.map((entry) => entry.uid), 8);
+          if (!cancelled) setActivity(recent);
+        } catch (caught: unknown) {
+          if (!cancelled) setActivityError(errorText(caught));
+        }
       })
       .catch((caught: unknown) => {
         if (!cancelled) setError(errorText(caught));
@@ -1103,6 +1228,14 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة سحابيًا" />
         <DashboardMetric label="يحتاجون إعداد خطة" value={loading ? '—' : patients.length - patientsWithPlan} note="لا توجد لهم خطة سحابية بعد" />
       </div>
+      <RecentActivityCard
+        title="آخر نشاط مرضاي"
+        activity={activity}
+        nameByUid={new Map(patients.map((patient) => [patient.uid, patient.doc.profile.clientName]))}
+        loading={loading}
+        error={activityError}
+        onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
+      />
       <Card>
         <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
           عملائي ({patients.length})
