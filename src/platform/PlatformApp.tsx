@@ -840,7 +840,6 @@ function PatientDetail({
 
   const latestEntry = entries[0] ?? null;
   const latestWeightEntry = entries.find(({ log }) => log.weight != null) ?? null;
-  const latestSleep = latestEntry?.log.sleepHours;
 
   return (
     <div className="flex flex-col gap-4">
