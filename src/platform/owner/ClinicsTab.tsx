@@ -17,9 +17,15 @@ const PLAN_LABELS: Record<SubscriptionPlan, string> = {
 };
 
 function daysLeft(expiresAt: unknown): number | null {
-  if (!expiresAt || typeof expiresAt !== 'object') return null;
-  const t = (expiresAt as { toDate?: () => Date }).toDate?.();
-  if (!t) return null;
+  if (!expiresAt) return null;
+  const t =
+    typeof expiresAt === 'string' || typeof expiresAt === 'number'
+      ? new Date(expiresAt)
+      : typeof expiresAt === 'object' &&
+          typeof (expiresAt as { toDate?: unknown }).toDate === 'function'
+        ? (expiresAt as { toDate: () => Date }).toDate()
+        : null;
+  if (!t || Number.isNaN(t.getTime())) return null;
   return Math.ceil((t.getTime() - Date.now()) / 86400000);
 }
 
