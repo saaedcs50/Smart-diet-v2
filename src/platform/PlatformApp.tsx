@@ -60,6 +60,7 @@ import { registerFcmToken, isFcmConfigured, isPushDeliveryEnabled, notifyPatient
 import { getSupabase } from './supabase';
 import { bindLocalDataToPatient, getLocalDataBindingStatus, type LocalDataBindingStatus } from './localDataOwnership';
 import { DoctorExportButtons } from './DoctorExportButtons';
+import { summarizePatientDayLog } from './patientDashboardMetrics';
 
 type Route =
   | { view: 'login' }
@@ -891,10 +892,7 @@ function PatientDetail({
         ) : (
           <ul className="mt-3 flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-200">
             {entries.slice(0, 30).map(({ date, log }) => {
-              const recordedMeals = Object.values(log.meals ?? {}).filter(
-                (meal) => meal.type === 'default' || meal.type === 'alt',
-              ).length;
-              const completedChecks = Object.values(log.checks ?? {}).filter(Boolean).length;
+              const daySummary = summarizePatientDayLog(log, plan);
               return (
                 <li key={date} className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -904,8 +902,8 @@ function PatientDetail({
                     </span>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                    {plan && <span>وجبات مختارة: {recordedMeals} / {plan.meals.length}</span>}
-                    {plan && <span>مهام مكتملة: {completedChecks} / {plan.checklist.length}</span>}
+                    {daySummary.plannedMeals != null && <span>وجبات مختارة: {daySummary.recordedMeals} / {daySummary.plannedMeals}</span>}
+                    {daySummary.plannedTasks != null && <span>مهام مكتملة: {daySummary.completedTasks} / {daySummary.plannedTasks}</span>}
                     {log.sleepHours != null && <span>النوم: {log.sleepHours} ساعة</span>}
                     {log.quality && <span>جودة النوم: {log.quality}</span>}
                   </div>
