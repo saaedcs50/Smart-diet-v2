@@ -84,7 +84,6 @@ const LEGACY = {
   coachOnboardingSeen: 'smartdiet_coach_onboarding_seen',
   coachSessionToken: 'smartdiet_coach_session_token',
   coachUnlocked: 'smartdiet_coach_unlocked',
-  photoDbName: 'nt_private_photos_db',
 } as const;
 
 function copyIfMissing(oldKey: string, newKey: string): void {
@@ -130,7 +129,7 @@ export function migrateLegacyStorageOnce(): void {
   }
 }
 
-export const LEGACY_PHOTO_DB = `sd_${brandStorageSlug()}_photos_db`;
+export const LEGACY_PHOTO_DB = 'nt_private_photos_db';
 
 
 const LEGACY_PATIENT_KEYS = [
