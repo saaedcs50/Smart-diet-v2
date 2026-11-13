@@ -48,7 +48,7 @@ describe('subscription — daysUntilExpiry', () => {
 
 describe('getSubscription', () => {
   it('uses the scoped gate RPC and does not select the payments JSONB field', async () => {
-    const rpc = vi.fn().mockResolvedValue({
+    const maybeSingle = vi.fn().mockResolvedValue({
       data: {
         plan: 'monthly',
         status: 'active',
@@ -59,6 +59,7 @@ describe('getSubscription', () => {
       },
       error: null,
     });
+    const rpc = vi.fn().mockReturnValue({ maybeSingle });
     vi.mocked(getSupabase).mockReturnValue({
       rpc,
     } as unknown as ReturnType<typeof getSupabase>);
@@ -73,10 +74,11 @@ describe('getSubscription', () => {
   });
 
   it('returns null when the caller cannot access the clinic gate', async () => {
-    const rpc = vi.fn().mockResolvedValue({
+    const maybeSingle = vi.fn().mockResolvedValue({
       data: null,
       error: { message: 'not authorized' },
     });
+    const rpc = vi.fn().mockReturnValue({ maybeSingle });
     vi.mocked(getSupabase).mockReturnValue({
       rpc,
     } as unknown as ReturnType<typeof getSupabase>);
