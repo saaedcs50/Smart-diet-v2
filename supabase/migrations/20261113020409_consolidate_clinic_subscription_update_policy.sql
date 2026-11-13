@@ -7,6 +7,8 @@ DROP POLICY IF EXISTS subscriptions_admin_payment_request_update
   ON public.clinic_subscriptions;
 DROP POLICY IF EXISTS subscriptions_owner_update
   ON public.clinic_subscriptions;
+DROP POLICY IF EXISTS subscriptions_update_authorized
+  ON public.clinic_subscriptions;
 
 CREATE POLICY subscriptions_update_authorized
   ON public.clinic_subscriptions FOR UPDATE TO authenticated
