@@ -5,7 +5,6 @@ import './index.css';
 import { applyBrandTheme, applyBrandHeadAssets } from './config/brand';
 import { migrateLegacyStorageOnce } from './utils/storageKeys';
 import {
-  getStorageScope,
   setStorageScope,
   setStorageScopeForUser,
 } from './utils/storageScope';
