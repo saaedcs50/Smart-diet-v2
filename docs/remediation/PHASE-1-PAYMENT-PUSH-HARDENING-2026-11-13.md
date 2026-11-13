@@ -48,6 +48,7 @@ The following migrations were recorded in the Staging ledger:
 - `20261113022823_harden_payment_request_idempotency`
 - `20261113022850_fix_payment_request_jsonb_keys`
 - `20261113023420_remove_duplicate_production_indexes`
+- `20261113023617_secure_patient_subscription_gate`
 
 Transaction-scoped tests using the existing synthetic Staging admin identity verified:
 - one payment request is appended;
@@ -70,10 +71,13 @@ Production received the same four payment-request migrations. The actual remote 
 - `20261113023312_harden_payment_request_idempotency`
 - `20261113023315_fix_payment_request_jsonb_keys`
 - `20261113023422_remove_duplicate_production_indexes`
+- `20261113023618_secure_patient_subscription_gate`
 
 The Production schema was inspected before applying them: required tables, columns, caller helper functions and owner RLS policies were present. Production currently has one owner profile, zero clinics, zero patients and zero subscriptions; no business records were created or altered. The payment RPC, append-guard trigger and single UPDATE policy are now present.
 
 The deployed Production `notify` Edge Function is now **version 4** with JWT verification still enabled. Its source includes the server-side `PUSH_DELIVERY_ENABLED = false` gate and returns HTTP 503 for direct POST calls before request processing. This closes the plaintext Web Push send path on the live function. Push remains unavailable until RFC 8291 encryption, standards test vectors, and end-to-end tests are completed.
+
+The patient subscription-gate read was also deployed to both projects. A narrowly scoped `SECURITY DEFINER` lookup inside the non-exposed `private` schema is reached through an authenticated `SECURITY INVOKER` RPC. It returns only plan/status/date fields for the caller's own clinic; it never returns the `payments` JSONB field. Staging tests verified active and grace state for two patients and rejected a cross-clinic lookup. Direct patient SELECT on `clinic_subscriptions` remains denied.
 
 ### Database Advisor results
 
