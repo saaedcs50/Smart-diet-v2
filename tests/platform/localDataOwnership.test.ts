@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   bindLocalDataToPatient,
   getLocalDataBindingStatus,
+  hasLegacyLocalDataBinding,
 } from '../../src/platform/localDataOwnership';
 
 function memoryStore(): Storage & { values: Map<string, string> } {
@@ -35,6 +36,13 @@ describe('local data ownership lock', () => {
     expect(() => bindLocalDataToPatient('patient-b', store)).toThrow('حساب آخر');
     expect(getLocalDataBindingStatus('patient-a', store)).toBe('matched');
     expect(getLocalDataBindingStatus('patient-b', store)).toBe('mismatch');
+  });
+
+  it('reports a legacy dataset as bound after explicit account confirmation', () => {
+    const store = memoryStore();
+    expect(hasLegacyLocalDataBinding(store)).toBe(false);
+    bindLocalDataToPatient('patient-a', store);
+    expect(hasLegacyLocalDataBinding(store)).toBe(true);
   });
 
   it('fails closed when the ownership marker is malformed', () => {
