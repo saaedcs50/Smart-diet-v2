@@ -38,40 +38,53 @@ Only clinic admins are shown the renewal submission form. Coaches and patients a
 - The migration must be applied to Staging first, followed by a transaction-scoped test using synthetic identities/rows and a post-migration Supabase Advisor review.
 - Production migration/deployment is intentionally not included. Production's migration ledger differs from Staging and must be handled under the documented clean-room/reconciliation procedure.
 
-## Staging verification — 2026-11-13
+## Staging and Production verification — 2026-11-13
 
-The migration was applied to Supabase Staging only. Its recorded versions are:
+### Supabase Staging
+
+The following migrations were recorded in the Staging ledger:
 - `20261113020248_atomic_clinic_payment_requests`
 - `20261113020409_consolidate_clinic_subscription_update_policy`
-- `20261113021000_harden_payment_request_idempotency`
-- `20261113021200_fix_payment_request_jsonb_keys`
+- `20261113022823_harden_payment_request_idempotency`
+- `20261113022850_fix_payment_request_jsonb_keys`
+- `20261113023420_remove_duplicate_production_indexes`
 
 Transaction-scoped tests using the existing synthetic Staging admin identity verified:
 - one payment request is appended;
-- a repeat using the same request UUID leaves exactly one matching record;
-- `submittedBy` matches `auth.uid()`;
+- a repeat using the same request UUID and identical data leaves one record;
+- reusing the same UUID with different payment data is rejected;
 - a different second pending request is rejected;
-- a direct admin attempt to change subscription status is rejected; and
-- a coach cannot call the payment submission RPC;
-- a cross-clinic request is rejected;
-- a retry with the same request UUID and identical payload is idempotent;
-- reusing the same UUID with changed payment data is rejected;
 - two concurrent requests with different UUIDs serialize, so only one pending request is accepted;
-- direct append attempts cannot backdate `submittedAt` or add extra JSON fields; and
-- the submitter ID is derived from `auth.uid()`.
+- `submittedBy` is derived from `auth.uid()`;
+- a direct admin attempt to change subscription status is rejected;
+- a coach and a cross-clinic admin request are rejected; and
+- direct append attempts cannot backdate `submittedAt` or add unapproved JSON fields.
 
-Each test transaction ended with `ROLLBACK`. The concurrent-call smoke test used a temporary Staging row, which was explicitly removed afterward. Follow-up queries confirmed no smoke-test payment rows remained. The owner's existing UPDATE policy and the new admin payment-request policy were consolidated into one UPDATE policy after Supabase Performance Advisor reported multiple permissive policies. The follow-up Advisor run no longer reports that finding.
+The concurrent smoke test's temporary row was removed. Follow-up checks confirmed no test payment rows remained. Owner subscription review still works. The RLS update policy is consolidated into one policy for owner/admin.
 
-Remaining Advisor findings after the change:
-- Security: leaked-password protection remains disabled (pre-existing project setting; not changed here).
-- Performance: seven pre-existing unused-index informational findings remain; no indexes were removed.
-- Health: no findings.
+### Supabase Production
 
-Production database and Edge Function deployments were not modified.
+Production received the same four payment-request migrations. The actual remote ledger versions are:
+- `20261113023307_atomic_clinic_payment_requests`
+- `20261113023310_consolidate_clinic_subscription_update_policy`
+- `20261113023312_harden_payment_request_idempotency`
+- `20261113023315_fix_payment_request_jsonb_keys`
+- `20261113023422_remove_duplicate_production_indexes`
 
-**Additional Production finding (2026-11-13):** Production has an active `notify` Edge Function (version 3, JWT verification enabled). Its deployed source still sends `JSON.stringify({ title, body })` directly to the Push endpoint and has no server-side delivery kill switch. The PR adds a server-side fail-closed guard to repository source, but that guard is **not active in Production until the Edge Function is deployed**. Production mitigation is deliberately left pending explicit authorization because it will disable the currently deployed endpoint. Do not treat the browser-side disabled flag as sufficient server protection.
+The Production schema was inspected before applying them: required tables, columns, caller helper functions and owner RLS policies were present. Production currently has one owner profile, zero clinics, zero patients and zero subscriptions; no business records were created or altered. The payment RPC, append-guard trigger and single UPDATE policy are now present.
 
-The Production migration ledger remains intentionally untouched.
+The deployed Production `notify` Edge Function is now **version 4** with JWT verification still enabled. Its source includes the server-side `PUSH_DELIVERY_ENABLED = false` gate and returns HTTP 503 for direct POST calls before request processing. This closes the plaintext Web Push send path on the live function. Push remains unavailable until RFC 8291 encryption, standards test vectors, and end-to-end tests are completed.
+
+### Database Advisor results
+
+- Staging Performance Advisor: the multiple-permissive-UPDATE warning is gone; its remaining unused-index notices are unchanged.
+- Production Performance Advisor: four confirmed duplicate indexes with no attached constraints were removed, preserving the canonical indexes and the unique constraint index. The duplicate-index warnings disappeared; six unused-index informational notices remain.
+- Production Security Advisor: leaked-password protection remains disabled (pre-existing setting; not changed here).
+- Production Health Advisor: no findings.
+
+### Migration-ledger note
+
+Staging and Production already had different historical migration ledgers before this work because their original schemas were provisioned through different procedures. The new migrations were applied successfully to both projects, but their remote version numbers differ because they were applied at different times. A reproducible clean-room baseline and a formal migration-ledger reconciliation are still release-engineering tasks; do not run a blind `supabase db push` across these environments until that reconciliation is complete.
 
 ## Acceptance criteria
 
