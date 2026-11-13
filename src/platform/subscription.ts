@@ -33,11 +33,11 @@ function rowToSubscription(row: Record<string, unknown>): ClinicSubscriptionDoc 
 export async function getSubscription(
   clinicId: string,
 ): Promise<ClinicSubscriptionDoc | null> {
+  // Patients need the subscription gate state, but must not read payment
+  // references or the clinic's full payments JSONB history.
   const { data, error } = await getSupabase()
-    .from('clinic_subscriptions')
-    .select()
-    .eq('clinic_id', clinicId)
-    .single();
+    .rpc('get_clinic_subscription_gate', { p_clinic_id: clinicId })
+    .maybeSingle();
   if (error || !data) return null;
   return rowToSubscription(data as Record<string, unknown>);
 }
