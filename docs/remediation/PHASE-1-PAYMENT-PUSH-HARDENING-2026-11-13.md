@@ -38,6 +38,29 @@ Only clinic admins are shown the renewal submission form. Coaches and patients a
 - The migration must be applied to Staging first, followed by a transaction-scoped test using synthetic identities/rows and a post-migration Supabase Advisor review.
 - Production migration/deployment is intentionally not included. Production's migration ledger differs from Staging and must be handled under the documented clean-room/reconciliation procedure.
 
+## Staging verification — 2026-11-13
+
+The migration was applied to Supabase Staging only. Its recorded versions are:
+- `20261113020248_atomic_clinic_payment_requests`
+- `20261113020409_consolidate_clinic_subscription_update_policy`
+
+Transaction-scoped tests using the existing synthetic Staging admin identity verified:
+- one payment request is appended;
+- a repeat using the same request UUID leaves exactly one matching record;
+- `submittedBy` matches `auth.uid()`;
+- a different second pending request is rejected;
+- a direct admin attempt to change subscription status is rejected; and
+- a coach cannot call the payment submission RPC.
+
+Each test transaction ended with `ROLLBACK`; a follow-up check found no smoke-test request ID persisted. The owner's existing UPDATE policy and the new admin payment-request policy were consolidated into one UPDATE policy after Supabase Performance Advisor reported multiple permissive policies. The follow-up Advisor run no longer reports that finding.
+
+Remaining Advisor findings after the change:
+- Security: leaked-password protection remains disabled (pre-existing project setting; not changed here).
+- Performance: seven pre-existing unused-index informational findings remain; no indexes were removed.
+- Health: no findings.
+
+Production was not modified. The Production migration ledger is still intentionally untouched.
+
 ## Acceptance criteria
 
 1. Direct POST to the Edge Function returns 503 while Push is disabled and makes no outbound Web Push call.
