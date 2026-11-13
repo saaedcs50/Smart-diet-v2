@@ -1,13 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   getStorageScope,
+  onStorageScopeChanged,
   setStorageScope,
   setStorageScopeForUser,
   withStorageScope,
 } from '../src/utils/storageScope';
 import { legacyNs, ns, StorageKeys } from '../src/utils/storageKeys';
 
-afterEach(() => setStorageScope('local'));
+afterEach(() => {
+  vi.unstubAllGlobals();
+  setStorageScope('local');
+});
 
 describe('account-scoped local storage namespace', () => {
   it('keeps the legacy local namespace unchanged', () => {
