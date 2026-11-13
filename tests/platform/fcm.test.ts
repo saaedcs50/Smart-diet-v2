@@ -11,7 +11,7 @@ import {
 } from '../../src/platform/fcm';
 
 describe('Web Push safety gate', () => {
-  it('keeps delivery disabled until RFC 8291 encryption is implemented', () => {
+  it('keeps delivery disabled until RFC 8291 encryption is implemented', async () => {
     expect(isPushDeliveryEnabled()).toBe(false);
     expect(SERVER_PUSH_DELIVERY_ENABLED).toBe(false);
     expect(isFcmConfigured()).toBe(false);
