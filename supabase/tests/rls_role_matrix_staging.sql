@@ -141,7 +141,7 @@ DECLARE gate_status text;
 BEGIN
   IF (SELECT count(*) FROM public.profiles) <> 1 THEN RAISE EXCEPTION 'patient-b: profile self only'; END IF;
   IF (SELECT count(*) FROM public.patients) <> 1 THEN RAISE EXCEPTION 'patient-b: patient self only'; END IF;
-  IF (SELECT count(*) FROM public.day_logs) <> 0 THEN RAISE EXCEPTION 'patient-b: another patient's day log visible'; END IF;
+  IF (SELECT count(*) FROM public.day_logs) <> 0 THEN RAISE EXCEPTION 'patient-b: another patient day log visible'; END IF;
   IF (SELECT count(*) FROM public.clinic_subscriptions) <> 0 THEN RAISE EXCEPTION 'patient-b: direct subscription read leaked'; END IF;
   SELECT status INTO gate_status
   FROM public.get_clinic_subscription_gate('clinic-b');
