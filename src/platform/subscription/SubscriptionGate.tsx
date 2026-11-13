@@ -26,12 +26,14 @@ export function GraceBanner({ daysLeft }: { daysLeft: number | null }) {
 
 function ExpiredBlock({
   clinicId,
-  uid,
+  role,
 }: {
   clinicId: string;
-  uid: string;
+  role: string;
 }) {
   const [showForm, setShowForm] = useState(false);
+  const canRequestRenewal = role === 'admin';
+
   return (
     <div
       dir="rtl"
@@ -43,21 +45,23 @@ function ExpiredBlock({
         انتهت فترة السماح ولم يتم التجديد — لا يمكن الوصول إلى بيانات العيادة
         حتى يتم تفعيل الاشتراك.
       </p>
-      {!showForm ? (
+      {canRequestRenewal && !showForm && (
         <button
           onClick={() => setShowForm(true)}
           className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white"
         >
           طلب التجديد
         </button>
-      ) : (
+      )}
+      {canRequestRenewal && showForm && (
         <div className="w-full">
-          <RenewalForm
-            clinicId={clinicId}
-            uid={uid}
-            onSubmitted={() => {}}
-          />
+          <RenewalForm clinicId={clinicId} onSubmitted={() => {}} />
         </div>
+      )}
+      {!canRequestRenewal && (
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          يُرجى التواصل مع مدير العيادة لإرسال طلب التجديد.
+        </p>
       )}
       <p className="text-xs text-slate-500">
         للاستفسار تواصل مع إدارة المنصة
@@ -68,12 +72,10 @@ function ExpiredBlock({
 
 export function SubscriptionGate({
   clinicId,
-  uid,
   role,
   children,
 }: {
   clinicId: string;
-  uid: string;
   role: string;
   children: ReactNode;
 }) {
@@ -113,7 +115,7 @@ export function SubscriptionGate({
   const status = sub?.status;
   // بلا اشتراك أو منتهي: إيقاف كامل (القواعد تمنع البيانات أصلًا)
   if (!sub || status === 'expired') {
-    return <ExpiredBlock clinicId={clinicId} uid={uid} />;
+    return <ExpiredBlock clinicId={clinicId} role={role} />;
   }
 
   const daysLeft = daysUntilExpiry(sub);
