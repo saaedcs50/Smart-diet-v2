@@ -1,6 +1,7 @@
 import { PhotoRecord } from '../types';
 import { StorageKeys, LEGACY_PHOTO_DB } from './storageKeys';
 import { getStorageScope, withStorageScope } from './storageScope';
+import { getLocalDataBindingStatus } from '../platform/localDataOwnership';
 
 const DB_VERSION = 1;
 const STORE_NAME = 'progress_photos';
@@ -87,8 +88,13 @@ async function openPhotoDB(): Promise<IDBDatabase> {
  * never uploads it, never deletes the source, and is idempotent by photo content.
  */
 export async function migrateLegacyPhotosToCurrentUser(): Promise<number> {
-  if (!getStorageScope().startsWith('user:')) {
+  const activeScope = getStorageScope();
+  if (!activeScope.startsWith('user:')) {
     throw new Error('يجب تسجيل الدخول بحساب المريض قبل نقل الصور المحلية');
+  }
+  const patientUid = activeScope.slice('user:'.length);
+  if (getLocalDataBindingStatus(patientUid) !== 'matched') {
+    throw new Error('يجب تأكيد ملكية بيانات الجهاز لهذا الحساب قبل نقل الصور');
   }
 
   const legacyScopedName = withStorageScope('local', () => StorageKeys.photoDbName());
