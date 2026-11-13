@@ -9,6 +9,7 @@ vi.mock('../../src/platform/supabase', () => ({
 import { getSupabase } from '../../src/platform/supabase';
 import {
   daysUntilExpiry,
+  getSubscription,
   submitActivationRequest,
 } from '../../src/platform/subscription';
 import type { ClinicSubscriptionDoc } from '../../src/platform/subscription';
@@ -42,6 +43,44 @@ describe('subscription — daysUntilExpiry', () => {
     const days = daysUntilExpiry(subWithExpiry(-2));
     expect(days).not.toBeNull();
     expect(days!).toBeLessThanOrEqual(0);
+  });
+});
+
+describe('getSubscription', () => {
+  it('uses the scoped gate RPC and does not select the payments JSONB field', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: {
+        plan: 'monthly',
+        status: 'active',
+        start_at: '2026-11-01T00:00:00.000Z',
+        expires_at: '2026-12-01T00:00:00.000Z',
+        grace_ends_at: null,
+        updated_at: '2026-11-01T00:00:00.000Z',
+      },
+      error: null,
+    });
+    vi.mocked(getSupabase).mockReturnValue({
+      rpc,
+    } as unknown as ReturnType<typeof getSupabase>);
+
+    const subscription = await getSubscription('clinic-a');
+    expect(rpc).toHaveBeenCalledOnce();
+    expect(rpc).toHaveBeenCalledWith('get_clinic_subscription_gate', {
+      p_clinic_id: 'clinic-a',
+    });
+    expect(subscription?.status).toBe('active');
+    expect(subscription?.payments).toEqual([]);
+  });
+
+  it('returns null when the caller cannot access the clinic gate', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'not authorized' },
+    });
+    vi.mocked(getSupabase).mockReturnValue({
+      rpc,
+    } as unknown as ReturnType<typeof getSupabase>);
+    await expect(getSubscription('clinic-b')).resolves.toBeNull();
   });
 });
 
