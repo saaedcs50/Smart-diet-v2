@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   getStorageScope,
   setStorageScope,
@@ -39,6 +39,22 @@ describe('account-scoped local storage namespace', () => {
     expect(result).toBe(legacyNs('plan'));
     expect(getStorageScope()).toBe('user:patient-a');
     expect(StorageKeys.plan()).toBe(userKey);
+  });
+
+
+  it('notifies mounted views when the active account scope changes', async () => {
+    const browser = new EventTarget();
+    vi.stubGlobal('window', browser);
+    const listener = vi.fn();
+    const unsubscribe = onStorageScopeChanged(listener);
+
+    setStorageScopeForUser('patient-a');
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    setStorageScopeForUser('patient-b');
+    expect(listener).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
   });
 
   it('rejects malformed account identifiers', () => {
