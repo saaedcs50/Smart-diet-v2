@@ -31,6 +31,7 @@ import {
   deleteCoachServerSession,
 } from './utils/coachServer';
 import { StorageKeys } from './utils/storageKeys';
+import { onStorageScopeChanged } from './utils/storageScope';
 import {
   loadSeasonalActivation,
   saveSeasonalActivation,
@@ -121,6 +122,33 @@ export default function App() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  // Account changes switch the storage namespace. Clear any in-memory health
+  // data and open patient-specific UI immediately to prevent cross-account flash.
+  useEffect(() => onStorageScopeChanged(() => {
+    const today = getTodayDateString();
+    setCurrentDate(today);
+    setActiveTab('today');
+    setPlan(loadPlanFromStorage());
+    setDay(loadDayLog(today));
+    setNotificationSettings(loadNotificationSettings());
+    setIsDarkMode(() => {
+      const saved = localStorage.getItem(StorageKeys.darkMode());
+      return saved !== null
+        ? saved === 'true'
+        : !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    });
+    setShowOnboarding(localStorage.getItem(StorageKeys.onboardingSeen()) !== 'true');
+    setCoachSessionUnlocked(isCoachSessionUnlocked());
+    setToastMessage(null);
+    setShowImportModal(false);
+    setShowReportModal(false);
+    setShowStoryCard(false);
+    setShowCompareModal(false);
+    setComparePhotos([]);
+    setShowInstallGuide(false);
+    setShowNotificationsModal(false);
+  }), []);
 
   const navigateTo = (path: string) => {
     window.history.pushState({}, '', path);
