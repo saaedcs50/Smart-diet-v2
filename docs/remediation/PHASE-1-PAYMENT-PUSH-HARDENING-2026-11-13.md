@@ -59,7 +59,11 @@ Remaining Advisor findings after the change:
 - Performance: seven pre-existing unused-index informational findings remain; no indexes were removed.
 - Health: no findings.
 
-Production was not modified. The Production migration ledger is still intentionally untouched.
+Production database and Edge Function deployments were not modified.
+
+**Additional Production finding (2026-11-13):** Production has an active `notify` Edge Function (version 3, JWT verification enabled). Its deployed source still sends `JSON.stringify({ title, body })` directly to the Push endpoint and has no server-side delivery kill switch. The PR adds a server-side fail-closed guard to repository source, but that guard is **not active in Production until the Edge Function is deployed**. Production mitigation is deliberately left pending explicit authorization because it will disable the currently deployed endpoint. Do not treat the browser-side disabled flag as sufficient server protection.
+
+The Production migration ledger remains intentionally untouched.
 
 ## Acceptance criteria
 
