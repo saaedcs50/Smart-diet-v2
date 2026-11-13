@@ -59,6 +59,8 @@ import { AdherenceSection } from './adherence/AdherenceSection';
 import { registerFcmToken, isFcmConfigured, isPushDeliveryEnabled, notifyPatient } from './fcm';
 import { getSupabase } from './supabase';
 import { bindLocalDataToPatient, getLocalDataBindingStatus, type LocalDataBindingStatus } from './localDataOwnership';
+import { copyLegacyPatientDataToUser } from '../utils/storageKeys';
+import { withStorageScope } from '../utils/storageScope';
 import { DoctorExportButtons } from './DoctorExportButtons';
 import { summarizePatientDayLog } from './patientDashboardMetrics';
 
@@ -599,9 +601,13 @@ function SyncSection({ patientUid }: { patientUid: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState(() => {
-    if (['mismatch', 'unavailable'].includes(getLocalDataBindingStatus(patientUid))) return EMPTY_LOCAL_SYNC_SUMMARY;
+    const initialBinding = getLocalDataBindingStatus(patientUid);
+    if (['mismatch', 'unavailable'].includes(initialBinding)) return EMPTY_LOCAL_SYNC_SUMMARY;
     try {
-      return summarizeSnapshot(readLocalSnapshot());
+      const snapshot = initialBinding === 'unbound'
+        ? withStorageScope('local', readLocalSnapshot)
+        : readLocalSnapshot();
+      return summarizeSnapshot(snapshot);
     } catch {
       return EMPTY_LOCAL_SYNC_SUMMARY;
     }
@@ -620,9 +626,20 @@ function SyncSection({ patientUid }: { patientUid: string }) {
       return;
     }
     try {
-      setSummary(summarizeSnapshot(readLocalSnapshot()));
+      if (nextBinding === 'matched') {
+        // The same account was bound by the previous app version. Move only
+        // the approved patient-data keys into this UID namespace, never photos
+        // or coach credentials, and never overwrite newer UID-scoped records.
+        copyLegacyPatientDataToUser(patientUid);
+        setSummary(summarizeSnapshot(readLocalSnapshot()));
+      } else {
+        // Unbound legacy data is shown for review only; no copy happens until
+        // the patient explicitly confirms ownership in the UI.
+        setSummary(summarizeSnapshot(withStorageScope('local', readLocalSnapshot)));
+      }
     } catch {
       setSummary(EMPTY_LOCAL_SYNC_SUMMARY);
+      setError('تعذّر قراءة البيانات المحلية بأمان؛ لم يتم نقل أو رفع أي بيانات.');
     }
   }, [patientUid]);
 
@@ -656,6 +673,8 @@ function SyncSection({ patientUid }: { patientUid: string }) {
         bindLocalDataToPatient(patientUid);
         setBindingStatus('matched');
       }
+      // Idempotent local-only copy. Cloud upload remains separately consented.
+      copyLegacyPatientDataToUser(patientUid);
       const snapshot = readLocalSnapshot();
       setSummary(summarizeSnapshot(snapshot));
       const result = await migrateLocalToCloud(snapshot, patientUid, patientUid);
