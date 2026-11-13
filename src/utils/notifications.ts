@@ -90,10 +90,11 @@ export interface SystemStatusInfo {
  supportsTriggers: boolean;
 }
 
-const STORAGE_KEY = StorageKeys.notificationSettings();
-const LAST_WATER_NOTIF_KEY = StorageKeys.lastWaterNotif();
-const FIRED_TODAY_KEY = StorageKeys.firedNotifsToday(); // JSON { date, keys }
-const LAST_APP_BOOT_KEY = StorageKeys.lastAppBoot();
+// Resolve keys when accessed so account switching cannot retain the previous UID's bucket.
+const STORAGE_KEY = () => StorageKeys.notificationSettings();
+const LAST_WATER_NOTIF_KEY = () => StorageKeys.lastWaterNotif();
+const FIRED_TODAY_KEY = () => StorageKeys.firedNotifsToday(); // JSON { date, keys }
+const LAST_APP_BOOT_KEY = () => StorageKeys.lastAppBoot();
 
 export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
  enabled: false,
@@ -271,7 +272,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 export function loadNotificationSettings(): NotificationSettings {
  if (typeof window === 'undefined') return DEFAULT_NOTIFICATION_SETTINGS;
  try {
- const raw = localStorage.getItem(STORAGE_KEY);
+ const raw = localStorage.getItem(STORAGE_KEY());
  if (!raw) return DEFAULT_NOTIFICATION_SETTINGS;
  const parsed = JSON.parse(raw);
  return {
@@ -326,7 +327,7 @@ export function loadNotificationSettings(): NotificationSettings {
 export function saveNotificationSettings(settings: NotificationSettings): void {
  if (typeof window === 'undefined') return;
  try {
- localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+ localStorage.setItem(STORAGE_KEY(), JSON.stringify(settings));
  } catch (e) {
  console.error('Failed to save notification settings:', e);
  }
@@ -639,7 +640,7 @@ export function checkAndTriggerReminders(
 
  let firedKeys: Record<string, boolean> = {};
  try {
- const raw = localStorage.getItem(FIRED_TODAY_KEY);
+ const raw = localStorage.getItem(FIRED_TODAY_KEY());
  if (raw) {
  const parsed = JSON.parse(raw);
  if (parsed.date === todayDateStr) {
@@ -651,14 +652,14 @@ export function checkAndTriggerReminders(
  const markKeyFired = (key: string) => {
  firedKeys[key] = true;
  try {
- localStorage.setItem(FIRED_TODAY_KEY, JSON.stringify({ date: todayDateStr, keys: firedKeys }));
+ localStorage.setItem(FIRED_TODAY_KEY(), JSON.stringify({ date: todayDateStr, keys: firedKeys }));
  } catch (e) {}
  };
 
  // 1. Water Reminders
  if (settings.waterReminders.enabled) {
  if (currentHour >= settings.waterReminders.startHour && currentHour <= settings.waterReminders.endHour) {
- const lastWaterTime = Number(localStorage.getItem(LAST_WATER_NOTIF_KEY) || '0');
+ const lastWaterTime = Number(localStorage.getItem(LAST_WATER_NOTIF_KEY()) || '0');
  const intervalMs = settings.waterReminders.intervalMinutes * 60 * 1000;
  const nowMs = Date.now();
 
@@ -670,7 +671,7 @@ export function checkAndTriggerReminders(
  settings.sound,
  'water'
  );
- localStorage.setItem(LAST_WATER_NOTIF_KEY, String(nowMs));
+ localStorage.setItem(LAST_WATER_NOTIF_KEY(), String(nowMs));
  }
  }
  }
@@ -964,7 +965,7 @@ export function getMissedRemindersOnBoot(
 
  let firedKeys: Record<string, boolean> = {};
  try {
- const raw = localStorage.getItem(FIRED_TODAY_KEY);
+ const raw = localStorage.getItem(FIRED_TODAY_KEY());
  if (raw) {
  const parsed = JSON.parse(raw);
  if (parsed.date === todayDateStr) {
@@ -1026,7 +1027,7 @@ export function getMissedRemindersOnBoot(
 
  // Store last app boot timestamp
  try {
- localStorage.setItem(LAST_APP_BOOT_KEY, String(Date.now()));
+ localStorage.setItem(LAST_APP_BOOT_KEY(), String(Date.now()));
  } catch (e) {}
 
  return missed;
