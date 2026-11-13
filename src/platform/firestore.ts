@@ -96,6 +96,8 @@ export interface PatientDoc {
 export type SubscriptionPlan = 'permanent' | 'monthly' | 'annual';
 export type SubscriptionStatus = 'active' | 'grace' | 'expired';
 export interface PaymentRecord {
+  /** Stable idempotency key added by the atomic payment-request RPC. */
+  requestId?: string;
   method: 'instapay' | 'vodafone_cash';
   amount: number;
   currency: 'EGP';
