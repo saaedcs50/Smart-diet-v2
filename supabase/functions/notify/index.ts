@@ -7,7 +7,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
-import { PUSH_DELIVERY_ENABLED } from './pushGate.ts';
+import { createPushDisabledResponse, PUSH_DELIVERY_ENABLED } from './pushGate.ts';
 
 const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY') ?? '';
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') ?? '';
@@ -129,16 +129,7 @@ serve(async (req: Request) => {
 
   // Defense in depth: deny direct calls until RFC 8291 payload encryption is implemented.
   if (!PUSH_DELIVERY_ENABLED) {
-    return new Response(JSON.stringify({
-      ok: false,
-      error: 'الإشعارات متوقفة حتى تنفيذ تشفير Web Push RFC 8291',
-    }), {
-      status: 503,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    return createPushDisabledResponse();
   }
 
   try {
