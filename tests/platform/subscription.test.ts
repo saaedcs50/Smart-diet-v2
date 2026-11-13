@@ -1,7 +1,16 @@
-// اختبارات وحدة لمنطق الاشتراك (الدوال الخالصة).
+// اختبارات وحدة لمنطق الاشتراك وواجهة RPC الآمنة لطلبات التجديد.
 
-import { describe, it, expect } from 'vitest';
-import { daysUntilExpiry } from '../../src/platform/subscription';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('../../src/platform/supabase', () => ({
+  getSupabase: vi.fn(),
+}));
+
+import { getSupabase } from '../../src/platform/supabase';
+import {
+  daysUntilExpiry,
+  submitActivationRequest,
+} from '../../src/platform/subscription';
 import type { ClinicSubscriptionDoc } from '../../src/platform/subscription';
 
 function subWithExpiry(daysFromNow: number): ClinicSubscriptionDoc {
@@ -33,5 +42,48 @@ describe('subscription — daysUntilExpiry', () => {
     const days = daysUntilExpiry(subWithExpiry(-2));
     expect(days).not.toBeNull();
     expect(days!).toBeLessThanOrEqual(0);
+  });
+});
+
+describe('submitActivationRequest', () => {
+  it('uses the atomic RPC and never reads/writes the payment array in the browser', async () => {
+    const rpc = vi.fn().mockResolvedValue({ error: null });
+    vi.mocked(getSupabase).mockReturnValue({
+      rpc,
+    } as unknown as ReturnType<typeof getSupabase>);
+
+    await submitActivationRequest('clinic-test', {
+      requestId: '8c16f214-d4ec-4ff5-9e87-5f9e6a5ac310',
+      method: 'instapay',
+      amount: 250,
+      reference: 'TRANSFER-123',
+      note: 'renewal',
+    });
+
+    expect(rpc).toHaveBeenCalledOnce();
+    expect(rpc).toHaveBeenCalledWith('submit_clinic_payment_request', {
+      p_clinic_id: 'clinic-test',
+      p_request_id: '8c16f214-d4ec-4ff5-9e87-5f9e6a5ac310',
+      p_method: 'instapay',
+      p_amount: 250,
+      p_reference: 'TRANSFER-123',
+      p_note: 'renewal',
+    });
+  });
+
+  it('surfaces database authorization and validation errors', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      error: { message: 'Only an enabled clinic admin may submit a payment request' },
+    });
+    vi.mocked(getSupabase).mockReturnValue({
+      rpc,
+    } as unknown as ReturnType<typeof getSupabase>);
+
+    await expect(submitActivationRequest('clinic-test', {
+      requestId: '8c16f214-d4ec-4ff5-9e87-5f9e6a5ac310',
+      method: 'instapay',
+      amount: 250,
+      reference: 'TRANSFER-123',
+    })).rejects.toThrow('Only an enabled clinic admin');
   });
 });
