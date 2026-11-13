@@ -3,7 +3,6 @@ import {
   getStorageScope,
   setStorageScope,
   setStorageScopeForUser,
-  storageScopePrefix,
   withStorageScope,
 } from '../src/utils/storageScope';
 import { legacyNs, ns, StorageKeys } from '../src/utils/storageKeys';
