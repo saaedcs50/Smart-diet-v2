@@ -1372,7 +1372,6 @@ function PlatformShell() {
       {user && profile && !profile.disabled && !profileMissing && profile.role !== 'owner' && (
         <SubscriptionGate
           clinicId={profile.clinicId}
-          uid={profile.uid}
           role={profile.role}
         >
           {route.view === 'patient' && (
