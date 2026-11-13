@@ -265,7 +265,7 @@ BEGIN
     -- Reuse of an idempotency key with changed data is not a successful retry.
     IF v_existing ->> 'submittedBy' IS DISTINCT FROM v_uid::text
        OR v_existing ->> 'method' IS DISTINCT FROM p_method
-       OR v_existing ->> 'amount' IS DISTINCT FROM p_amount::text
+       OR v_existing -> 'amount' IS DISTINCT FROM to_jsonb(p_amount)
        OR v_existing ->> 'reference' IS DISTINCT FROM v_reference
        OR coalesce(v_existing ->> 'note', '') IS DISTINCT FROM v_note THEN
       RAISE EXCEPTION 'Request ID was already used with different payment data'
