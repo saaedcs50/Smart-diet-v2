@@ -1,5 +1,5 @@
 import { PhotoRecord } from '../types';
-import { StorageKeys, LEGACY_PHOTO_DB } from './storageKeys';
+import { StorageKeys } from './storageKeys';
 
 const DB_VERSION = 1;
 const STORE_NAME = 'progress_photos';
@@ -23,47 +23,10 @@ function openNamedPhotoDB(name: string): Promise<IDBDatabase> {
   });
 }
 
-async function migratePhotosFromLegacyIfNeeded(newDb: IDBDatabase): Promise<void> {
-  const newName = StorageKeys.photoDbName();
-  if (newName === LEGACY_PHOTO_DB) return;
-  try {
-    const countReq = newDb.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).count();
-    const count: number = await new Promise((resolve, reject) => {
-      countReq.onsuccess = () => resolve(countReq.result as number);
-      countReq.onerror = () => reject(countReq.error);
-    });
-    if (count > 0) return;
-
-    const legacy = await openNamedPhotoDB(LEGACY_PHOTO_DB);
-    const all: PhotoRecord[] = await new Promise((resolve, reject) => {
-      const req = legacy.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).getAll();
-      req.onsuccess = () => resolve((req.result || []) as PhotoRecord[]);
-      req.onerror = () => reject(req.error);
-    });
-    if (!all.length) {
-      legacy.close();
-      return;
-    }
-    await new Promise<void>((resolve, reject) => {
-      const tx = newDb.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      for (const rec of all) {
-        const { id: _id, ...rest } = rec as PhotoRecord & { id?: number };
-        store.add(rest);
-      }
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-    legacy.close();
-  } catch {
-    // legacy DB may not exist
-  }
-}
-
 async function openPhotoDB(): Promise<IDBDatabase> {
-  const db = await openNamedPhotoDB(StorageKeys.photoDbName());
-  await migratePhotosFromLegacyIfNeeded(db);
-  return db;
+  // Each platform account gets a separate database. Never auto-copy historical
+  // photos into another account's bucket; the unscoped legacy DB stays intact.
+  return openNamedPhotoDB(StorageKeys.photoDbName());
 }
 
 export async function addPhotoToDB(record: Omit<PhotoRecord, 'id'>): Promise<number> {
