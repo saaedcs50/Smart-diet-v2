@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { PUSH_DELIVERY_ENABLED as SERVER_PUSH_DELIVERY_ENABLED } from '../../supabase/functions/notify/pushGate';
 import {
   isFcmConfigured,
   isPushDeliveryEnabled,
@@ -9,6 +10,7 @@ import {
 describe('Web Push safety gate', () => {
   it('keeps delivery disabled until RFC 8291 encryption is implemented', () => {
     expect(isPushDeliveryEnabled()).toBe(false);
+    expect(SERVER_PUSH_DELIVERY_ENABLED).toBe(false);
     expect(isFcmConfigured()).toBe(false);
   });
 
