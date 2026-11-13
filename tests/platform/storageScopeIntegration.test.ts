@@ -47,6 +47,7 @@ describe('account-scoped local data integration', () => {
   it('does not automatically migrate legacy photos into an authenticated account bucket', () => {
     expect(indexedDbSource).toContain("getStorageScope() === 'local'");
     expect(indexedDbSource).toContain('migrateLegacyPhotosToCurrentUser');
-    expect(indexedDbSource).toContain("if (!getStorageScope().startsWith('user:'))");
+    expect(indexedDbSource).toContain("if (!activeScope.startsWith('user:'))");
+    expect(indexedDbSource).toContain("getLocalDataBindingStatus(patientUid) !== 'matched'");
   });
 });
