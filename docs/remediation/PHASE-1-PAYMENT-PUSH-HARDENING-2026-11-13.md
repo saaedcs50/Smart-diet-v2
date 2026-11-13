@@ -43,6 +43,8 @@ Only clinic admins are shown the renewal submission form. Coaches and patients a
 The migration was applied to Supabase Staging only. Its recorded versions are:
 - `20261113020248_atomic_clinic_payment_requests`
 - `20261113020409_consolidate_clinic_subscription_update_policy`
+- `20261113021000_harden_payment_request_idempotency`
+- `20261113021200_fix_payment_request_jsonb_keys`
 
 Transaction-scoped tests using the existing synthetic Staging admin identity verified:
 - one payment request is appended;
@@ -50,9 +52,15 @@ Transaction-scoped tests using the existing synthetic Staging admin identity ver
 - `submittedBy` matches `auth.uid()`;
 - a different second pending request is rejected;
 - a direct admin attempt to change subscription status is rejected; and
-- a coach cannot call the payment submission RPC.
+- a coach cannot call the payment submission RPC;
+- a cross-clinic request is rejected;
+- a retry with the same request UUID and identical payload is idempotent;
+- reusing the same UUID with changed payment data is rejected;
+- two concurrent requests with different UUIDs serialize, so only one pending request is accepted;
+- direct append attempts cannot backdate `submittedAt` or add extra JSON fields; and
+- the submitter ID is derived from `auth.uid()`.
 
-Each test transaction ended with `ROLLBACK`; a follow-up check found no smoke-test request ID persisted. The owner's existing UPDATE policy and the new admin payment-request policy were consolidated into one UPDATE policy after Supabase Performance Advisor reported multiple permissive policies. The follow-up Advisor run no longer reports that finding.
+Each test transaction ended with `ROLLBACK`. The concurrent-call smoke test used a temporary Staging row, which was explicitly removed afterward. Follow-up queries confirmed no smoke-test payment rows remained. The owner's existing UPDATE policy and the new admin payment-request policy were consolidated into one UPDATE policy after Supabase Performance Advisor reported multiple permissive policies. The follow-up Advisor run no longer reports that finding.
 
 Remaining Advisor findings after the change:
 - Security: leaked-password protection remains disabled (pre-existing project setting; not changed here).
