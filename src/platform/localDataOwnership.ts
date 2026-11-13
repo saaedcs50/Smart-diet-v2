@@ -76,6 +76,19 @@ export function getLocalDataBindingStatus(
   }
 }
 
+/** True when the legacy device dataset is already associated with any patient account. */
+export function hasLegacyLocalDataBinding(
+  provided?: OwnershipStore,
+): boolean {
+  const store = resolveStore(provided);
+  if (!store) return true; // fail closed: unknown ownership is treated as bound
+  try {
+    return readBinding(store) !== null;
+  } catch {
+    return true;
+  }
+}
+
 /**
  * Binds the current local dataset to one patient after explicit user
  * confirmation in the UI. The binding is immutable from the app; a different
