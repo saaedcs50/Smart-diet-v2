@@ -1,5 +1,5 @@
 import { BRAND } from '../config/brand';
-import { getStorageScope, storageScopePrefix } from './storageScope';
+import { storageScopePrefix } from './storageScope';
 
 /**
  * عزل بيانات كل عيادة على نفس الجهاز.
