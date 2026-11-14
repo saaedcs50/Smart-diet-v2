@@ -66,6 +66,8 @@ import { DoctorExportButtons } from './DoctorExportButtons';
 import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
 import { countSkippedPatientMeals, summarizePatientDayLog } from './patientDashboardMetrics';
 import { PatientProgressCharts } from './PatientProgressCharts';
+import { PatientTagsEditor } from './PatientTagsEditor';
+import type { PatientTag } from './patientTags';
 import { ClinicSummaryExportButtons } from './ClinicSummaryExportButtons';
 import type { PatientProgressSummary } from './patientProgressSummary';
 import { normalizeBodySearchQuery } from '../utils/bodySearch';
@@ -225,12 +227,14 @@ const ghostButtonClass =
 type PatientListSort = 'name' | 'plan' | 'lastLog' | 'completion' | 'weightChange';
 type PatientPlanFilter = 'all' | 'withPlan' | 'withoutPlan';
 type PatientActivityFilter = 'all' | 'active30' | 'followUp' | 'noLog30';
+type PatientTagFilter = 'all' | string;
 
 function filterAndSortPatients(
   patients: Array<{ uid: string; doc: PatientDoc }>,
   query: string,
   planFilter: PatientPlanFilter,
   activityFilter: PatientActivityFilter,
+  tagFilter: PatientTagFilter,
   sort: PatientListSort,
   progressByUid: Record<string, PatientProgressSummary>,
 ): Array<{ uid: string; doc: PatientDoc }> {
@@ -238,17 +242,20 @@ function filterAndSortPatients(
   return patients
     .filter(({ uid, doc }) => {
       const matchesQuery = !normalizedQuery ||
-        normalizeBodySearchQuery(doc.profile.clientName ?? '').includes(normalizedQuery);
+        normalizeBodySearchQuery(doc.profile.clientName ?? '').includes(normalizedQuery) ||
+        (doc.tags ?? []).some((tag) => normalizeBodySearchQuery(tag.label).includes(normalizedQuery));
       const hasPlan = Boolean(doc.plan);
       const matchesPlan = planFilter === 'all' ||
         (planFilter === 'withPlan' && hasPlan) ||
         (planFilter === 'withoutPlan' && !hasPlan);
       const progress = progressByUid[uid];
+      const matchesTag = tagFilter === 'all' ||
+        (doc.tags ?? []).some((tag) => normalizeBodySearchQuery(tag.label) === tagFilter);
       const matchesActivity = activityFilter === 'all' ||
         (activityFilter === 'active30' && progress?.hasLogWithin30Days === true) ||
         (activityFilter === 'followUp' && progress?.needsFollowUp === true) ||
         (activityFilter === 'noLog30' && progress?.hasLogWithin30Days === false);
-      return matchesQuery && matchesPlan && matchesActivity;
+      return matchesQuery && matchesPlan && matchesTag && matchesActivity;
     })
     .sort((a, b) => {
       const progressA = progressByUid[a.uid];
@@ -281,6 +288,19 @@ function filterAndSortPatients(
         'ar',
       );
     });
+}
+
+function collectPatientTagOptions(
+  patients: Array<{ uid: string; doc: PatientDoc }>,
+): PatientTag[] {
+  const byLabel = new Map<string, PatientTag>();
+  for (const patient of patients) {
+    for (const tag of patient.doc.tags ?? []) {
+      const key = normalizeBodySearchQuery(tag.label);
+      if (key && !byLabel.has(key)) byLabel.set(key, tag);
+    }
+  }
+  return [...byLabel.values()].sort((a, b) => a.label.localeCompare(b.label, 'ar'));
 }
 
 function PatientProgressLine({
@@ -339,6 +359,9 @@ function PatientListControls({
   onPlanFilterChange,
   activityFilter,
   onActivityFilterChange,
+  tagFilter,
+  onTagFilterChange,
+  tagOptions,
   resultCount,
 }: {
   query: string;
@@ -349,6 +372,9 @@ function PatientListControls({
   onPlanFilterChange: (value: PatientPlanFilter) => void;
   activityFilter: PatientActivityFilter;
   onActivityFilterChange: (value: PatientActivityFilter) => void;
+  tagFilter: PatientTagFilter;
+  onTagFilterChange: (value: PatientTagFilter) => void;
+  tagOptions: PatientTag[];
   resultCount: number;
 }) {
   return (
@@ -405,6 +431,21 @@ function PatientListControls({
           </select>
         </label>
       </div>
+      <label className="mt-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+        فلترة حسب الوسم
+        <select
+          value={tagFilter}
+          onChange={(event) => onTagFilterChange(event.target.value)}
+          className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+        >
+          <option value="all">كل الوسوم</option>
+          {tagOptions.map((tag) => (
+            <option key={normalizeBodySearchQuery(tag.label)} value={normalizeBodySearchQuery(tag.label)}>
+              {tag.label}
+            </option>
+          ))}
+        </select>
+      </label>
       <p className="mt-2 text-[11px] text-slate-500" role="status">
         عدد النتائج: {resultCount}
       </p>
@@ -1390,6 +1431,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   const [patientSort, setPatientSort] = useState<PatientListSort>('name');
   const [patientPlanFilter, setPatientPlanFilter] = useState<PatientPlanFilter>('all');
   const [patientActivityFilter, setPatientActivityFilter] = useState<PatientActivityFilter>('all');
+  const [patientTagFilter, setPatientTagFilter] = useState<PatientTagFilter>('all');
   const [progressByUid, setProgressByUid] = useState<Record<string, PatientProgressSummary>>({});
   const [progressError, setProgressError] = useState<string | null>(null);
 
@@ -1453,6 +1495,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     patientQuery,
     patientPlanFilter,
     patientActivityFilter,
+    patientTagFilter,
     patientSort,
     progressByUid,
   );
@@ -1559,6 +1602,9 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
           onPlanFilterChange={setPatientPlanFilter}
           activityFilter={patientActivityFilter}
           onActivityFilterChange={setPatientActivityFilter}
+          tagFilter={patientTagFilter}
+          onTagFilterChange={setPatientTagFilter}
+          tagOptions={collectPatientTagOptions(patients)}
           resultCount={visiblePatients.length}
         />
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل المرضى…</p>}
@@ -1574,28 +1620,37 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         )}
         <ul className="mt-3 flex flex-col gap-2">
           {visiblePatients.map(({ uid: patientUid, doc }) => (
-            <li key={patientUid} className="flex items-center gap-2">
-              <button
-                className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
-                onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
-              >
-                <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
-                <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
-              </button>
-              <select
-                className={`${inputClass} w-auto`}
-                aria-label={`طبيب ${doc.profile.clientName}`}
-                value={doc.invitedBy && coachUids.has(doc.invitedBy) ? doc.invitedBy : ''}
-                disabled={assigningUid === patientUid}
-                onChange={(event) => void assign(patientUid, event.target.value === '' ? null : event.target.value)}
-              >
-                <option value="">بلا طبيب</option>
-                {coaches.map((coach) => (
-                  <option key={coach.uid} value={coach.uid}>
-                    {coach.doc.displayName ?? coach.doc.email ?? 'طبيب بلا اسم'}
-                  </option>
+            <li key={patientUid} className="rounded-xl border border-slate-200 p-2 dark:border-slate-700">
+              <div className="flex items-center gap-2">
+                <button
+                  className="min-w-0 flex-1 rounded-xl px-2 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800"
+                  onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
+                >
+                  <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
+                  <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
+                </button>
+                <select
+                  className={`${inputClass} w-auto max-w-[9rem]`}
+                  aria-label={`طبيب ${doc.profile.clientName}`}
+                  value={doc.invitedBy && coachUids.has(doc.invitedBy) ? doc.invitedBy : ''}
+                  disabled={assigningUid === patientUid}
+                  onChange={(event) => void assign(patientUid, event.target.value === '' ? null : event.target.value)}
+                >
+                  <option value="">بلا طبيب</option>
+                  {coaches.map((coach) => (
+                    <option key={coach.uid} value={coach.uid}>
+                      {coach.doc.displayName ?? coach.doc.email ?? 'طبيب بلا اسم'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <PatientTagsEditor
+                patientUid={patientUid}
+                tags={doc.tags}
+                onSaved={(savedUid, tags) => setPatients((current) => current.map((item) =>
+                  item.uid === savedUid ? { ...item, doc: { ...item.doc, tags } } : item
                 ))}
-              </select>
+              />
             </li>
           ))}
         </ul>
@@ -1615,6 +1670,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const [patientSort, setPatientSort] = useState<PatientListSort>('name');
   const [patientPlanFilter, setPatientPlanFilter] = useState<PatientPlanFilter>('all');
   const [patientActivityFilter, setPatientActivityFilter] = useState<PatientActivityFilter>('all');
+  const [patientTagFilter, setPatientTagFilter] = useState<PatientTagFilter>('all');
   const [progressByUid, setProgressByUid] = useState<Record<string, PatientProgressSummary>>({});
   const [progressError, setProgressError] = useState<string | null>(null);
 
@@ -1659,6 +1715,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
     patientQuery,
     patientPlanFilter,
     patientActivityFilter,
+    patientTagFilter,
     patientSort,
     progressByUid,
   );
@@ -1700,6 +1757,9 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
           onPlanFilterChange={setPatientPlanFilter}
           activityFilter={patientActivityFilter}
           onActivityFilterChange={setPatientActivityFilter}
+          tagFilter={patientTagFilter}
+          onTagFilterChange={setPatientTagFilter}
+          tagOptions={collectPatientTagOptions(patients)}
           resultCount={visiblePatients.length}
         />
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل عملائي…</p>}
@@ -1713,14 +1773,21 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         )}
         <ul className="mt-3 flex flex-col gap-2">
           {visiblePatients.map(({ uid: patientUid, doc }) => (
-            <li key={patientUid}>
+            <li key={patientUid} className="rounded-xl border border-slate-200 p-2 dark:border-slate-700">
               <button
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
+                className="w-full rounded-xl px-2 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800"
                 onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
               >
                 <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
                 <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
               </button>
+              <PatientTagsEditor
+                patientUid={patientUid}
+                tags={doc.tags}
+                onSaved={(savedUid, tags) => setPatients((current) => current.map((item) =>
+                  item.uid === savedUid ? { ...item, doc: { ...item.doc, tags } } : item
+                ))}
+              />
             </li>
           ))}
         </ul>
