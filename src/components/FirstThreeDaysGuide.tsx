@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Bell, Check, ChevronDown, Scale, Utensils } from 'lucide-react';
 import type { PlanConfig } from '../types';
 import { getAllStoredDayLogs } from '../utils/storage';
@@ -36,22 +36,23 @@ export const FirstThreeDaysGuide: React.FC<FirstThreeDaysGuideProps> = ({
     }
   }), []);
 
-  const notificationsEnabled = useMemo(() => {
-    try {
-      return typeof Notification !== 'undefined' &&
-        getNotificationPermission() === 'granted' &&
-        loadNotificationSettings().enabled;
-    } catch {
-      return false;
-    }
-  }, []);
+  // Re-read on every parent render so permission, settings, and a newly
+  // recorded weight are reflected immediately after the user changes them.
+  let notificationsEnabled = false;
+  try {
+    notificationsEnabled = typeof Notification !== 'undefined' &&
+      getNotificationPermission() === 'granted' &&
+      loadNotificationSettings().enabled;
+  } catch {
+    notificationsEnabled = false;
+  }
 
-  const progress = useMemo(() => getFirstThreeDaysGuideState({
+  const progress = getFirstThreeDaysGuideState({
     todayDate,
     dayLogs: getAllStoredDayLogs(),
     notificationsEnabled,
     mealViewed,
-  }), [todayDate, notificationsEnabled, mealViewed]);
+  });
 
   if (!progress.visible || !plan.meals?.length) return null;
 
