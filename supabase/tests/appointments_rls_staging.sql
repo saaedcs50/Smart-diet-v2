@@ -137,5 +137,6 @@ BEGIN
   END IF;
 END;
 $test$;
-
 ROLLBACK;
+
+SELECT 'appointments_rls_staging: PASS' AS result;
