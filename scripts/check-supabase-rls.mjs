@@ -13,6 +13,7 @@ const requiredTables = [
   'adherence_scores',
   'fcm_tokens',
   'consents',
+  'appointments',
 ];
 
 const migrationDir = path.resolve('supabase/migrations');
@@ -54,14 +55,11 @@ const expectedStagingMigrations = [
   '20261109073735_restrict_remaining_public_policies.sql',
   '20261109074419_consolidate_remaining_rls_policies.sql',
   '20261109074506_split_platform_config_read.sql',
+  '20261114064838_clinic_appointments.sql',
+  '20261114064903_appointments_created_by_idx.sql',
 ];
 const missingStagingMigrations = expectedStagingMigrations
   .filter((name) => !migrationFiles.includes(name));
-const rlsManifest = await readFile(
-  path.join(migrationDir, '20261109072730_explicit_rls_all_platform_tables.sql'),
-  'utf8',
-);
-
 const policyStatements = [...allSql.matchAll(/CREATE\s+POLICY\b[\s\S]*?;/gi)]
   .map((match) => match[0]);
 
@@ -80,7 +78,8 @@ for (const table of requiredTables) {
     'ALTER\\s+TABLE\\s+public\\.' + table + '\\s+ENABLE\\s+ROW\\s+LEVEL\\s+SECURITY',
     'i',
   );
-  if (!rlsPattern.test(rlsManifest)) {
+  // Tables may be introduced by later migrations; inspect the full migration history.
+  if (!rlsPattern.test(allSql)) {
     failures.push(table + ': explicit ENABLE ROW LEVEL SECURITY statement missing');
   }
 
