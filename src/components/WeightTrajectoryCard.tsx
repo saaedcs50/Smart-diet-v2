@@ -14,9 +14,9 @@ interface WeightTrajectoryCardProps {
  * المسار استرشادي فقط — ليس وعدًا طبيًا.
  */
 export const WeightTrajectoryCard: React.FC<WeightTrajectoryCardProps> = ({ plan }) => {
-  // plan في الاعتماديات قصدًا: أي حفظ خطة/يوم جديد يعيد قراءة السجلات
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const logs = useMemo(() => getAllStoredDayLogs(), [plan]);
+  // Re-read the account-scoped day logs whenever the parent renders.
+  // This reflects a newly saved weight even when the plan is unchanged.
+  const logs = getAllStoredDayLogs();
   const trajectory = useMemo(
     () => buildTrajectory(logs, plan.startWeight, plan.targetWeight),
     [logs, plan.startWeight, plan.targetWeight]

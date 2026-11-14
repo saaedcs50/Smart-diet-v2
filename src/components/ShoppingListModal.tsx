@@ -13,6 +13,7 @@ import {
   buildShoppingShareText,
 } from '../utils/shoppingList';
 import { getTodayDateString } from '../utils/storage';
+import { EmptyState } from './EmptyState';
 import { openWhatsAppShare } from '../utils/whatsapp';
 
 interface ShoppingListModalProps {
@@ -121,13 +122,11 @@ export const ShoppingListModal: React.FC<ShoppingListModalProps> = ({ isOpen, on
         </div>
 
         {visibleItems.length === 0 ? (
-          <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-dashed border-slate-300 dark:border-slate-600 text-center space-y-2">
-            <ShoppingCart className="w-8 h-8 mx-auto text-slate-400" />
-            <p className="text-sm font-black text-slate-700 dark:text-slate-200">القائمة فارغة</p>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              لا توجد عناصر في وجبات الخطة الحالية. أضِف عناصر من لوحة الأخصائية أو أضِف بنودًا يدوية هنا.
-            </p>
-          </div>
+          <EmptyState
+            icon={ShoppingCart}
+            title="القائمة فارغة"
+            description="لا توجد عناصر في وجبات الخطة الحالية. أضِف عناصر من لوحة الأخصائية أو أضِف بنودًا يدوية هنا."
+          />
         ) : (
           <ul className="space-y-1.5 max-h-[45vh] overflow-y-auto pl-1">
             {visibleItems.map((item) => (

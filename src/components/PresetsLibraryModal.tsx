@@ -26,6 +26,7 @@ import {
  AlertTriangle
 } from 'lucide-react';
 import { PlanConfig } from '../types';
+import { EmptyState } from './EmptyState';
 import { 
  PlanPreset, 
  getAllPresets, 
@@ -369,12 +370,11 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  </div>
 
  {filteredPresets.length === 0 && (
- <div className="text-center py-12 space-y-3">
- <div className="w-12 h-12 rounded-full text-slate-400 flex items-center justify-center mx-auto">
- <FolderHeart className="w-6 h-6" />
- </div>
- <p className="text-sm font-bold text-slate-500">لا توجد قوالب في هذا التصنيف</p>
- </div>
+ <EmptyState
+  icon={FolderHeart}
+  title="لا توجد قوالب في هذا التصنيف"
+  description="اختر تصنيفًا آخر أو أزل البحث الحالي لعرض القوالب المتاحة."
+ />
  )}
  </div>
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, MailPlus } from 'lucide-react';
+import { EmptyState } from '../components/EmptyState';
 import {
   canReopenInvitationForStaff,
   listClinicInvitations,
@@ -108,7 +109,13 @@ export const InvitationManager: React.FC<InvitationManagerProps> = ({
       {error && <p role="alert" className="mt-3 text-xs font-bold text-red-600">{error}</p>}
       {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل الدعوات…</p>}
       {!loading && !error && invitations.length === 0 && (
-        <p className="mt-3 text-sm text-slate-500">لا توجد دعوات مسجلة حتى الآن.</p>
+        <div className="mt-3">
+          <EmptyState
+            icon={MailPlus}
+            title="لا توجد دعوات مسجلة حتى الآن"
+            description="ستظهر هنا الدعوات التي أُنشئت ضمن نطاق صلاحيات حسابك."
+          />
+        </div>
       )}
 
       {invitations.length > 0 && (

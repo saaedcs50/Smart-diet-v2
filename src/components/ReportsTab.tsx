@@ -25,6 +25,7 @@ import { openWhatsAppShare } from '../utils/whatsapp';
 import { BRAND } from '../config/brand';
 import { ShoppingListModal } from './ShoppingListModal';
 import { MilestonesSection } from './MilestonesSection';
+import { WeightTrajectoryCard } from './WeightTrajectoryCard';
 import { computeWeeklyFocusProgress, formatWeeklyFocusSummary } from '../utils/weeklyFocus';
 
 interface ReportsTabProps {
@@ -222,6 +223,9 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
  </div>
  </div>
  </div>
+
+ {/* Batch 2.2: expected versus actual weight trajectory */}
+ <WeightTrajectoryCard plan={plan} />
 
  {/* 2. Visual Bar Trend Graph */}
  <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-5 transition-colors space-y-4">
