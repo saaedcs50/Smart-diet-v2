@@ -69,7 +69,7 @@ import { PatientProgressCharts } from './PatientProgressCharts';
 import { PatientTagsEditor } from './PatientTagsEditor';
 import type { PatientTag } from './patientTags';
 import { ClinicSummaryExportButtons } from './ClinicSummaryExportButtons';
-import type { PatientProgressSummary } from './patientProgressSummary';
+import { isWithinLastCalendarDays, type PatientProgressSummary } from './patientProgressSummary';
 import { normalizeBodySearchQuery } from '../utils/bodySearch';
 
 type Route =
@@ -303,6 +303,18 @@ function collectPatientTagOptions(
   return [...byLabel.values()].sort((a, b) => a.label.localeCompare(b.label, 'ar'));
 }
 
+function meanMetric(values: Array<number | null | undefined>): number | null {
+  const valid = values.filter((value): value is number =>
+    typeof value === 'number' && Number.isFinite(value),
+  );
+  if (valid.length === 0) return null;
+  return Math.round((valid.reduce((sum, value) => sum + value, 0) / valid.length) * 10) / 10;
+}
+
+function formatPercent(value: number | null): string {
+  return value == null ? '—' : `${value.toLocaleString('en-US', { maximumFractionDigits: 1 })}%`;
+}
+
 function PatientProgressLine({
   summary,
   plan,
@@ -344,7 +356,7 @@ function PatientProgressLine({
       {targetDifference != null ? ` · الفرق عن الهدف ${targetDifference > 0 ? '+' : ''}${targetDifference} كجم` : ''}
       <br />
       الماء: {summary.currentWaterMl ?? '—'} / {typeof waterGoal === 'number' ? waterGoal : '—'} مل
-      {' · '}إكمال الوجبات/المهام آخر 7 أيام: {summary.completion7d == null ? '—' : `${summary.completion7d}%`}
+      {' · '}إكمال الوجبات/الماء/المهام آخر 7 أيام: {summary.completion7d == null ? '—' : `${summary.completion7d}%`}
       {summary.completion7d != null ? ` في ${summary.completionDays7d} أيام مسجلة` : ''}
     </span>
   );
@@ -1514,17 +1526,55 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   };
 
   const patientsWithPlan = patients.filter((patient) => Boolean(patient.doc.plan)).length;
+  const activeDoctors = coaches.filter((coach) => !coach.doc.disabled).length;
+  const progressRows = patients.map((patient) => progressByUid[patient.uid]).filter(Boolean);
+  const activePatients30 = progressRows.filter((item) => item.hasLogWithin30Days).length;
+  const followUpPatients = progressRows.filter((item) => item.needsFollowUp).length;
+  const newPatientFiles7 = patients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 7)).length;
+  const newPatientFiles30 = patients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 30)).length;
+  const loggedToday = progressRows.filter((item) => item.daysSinceLastLog === 0).length;
+  const loggedThisWeek = progressRows.filter((item) => item.daysSinceLastLog != null && item.daysSinceLastLog <= 6).length;
+  const clinicCompletion7d = meanMetric(progressRows.map((item) => item.completion7d));
+  const clinicWeightProgress = meanMetric(progressRows.map((item) => item.weightTargetProgressPercent));
+  const clinicLatestProgressAvailable = !loading && !progressError;
+  const loggedTodayRate = patients.length ? Math.round((loggedToday / patients.length) * 100) : null;
+  const loggedWeekRate = patients.length ? Math.round((loggedThisWeek / patients.length) * 100) : null;
+
+  const doctorMetrics = summary.perDoctor.map((doctor) => {
+    const assignedPatients = patients.filter((patient) => patient.doc.invitedBy === doctor.uid);
+    const assignedProgress = assignedPatients
+      .map((patient) => progressByUid[patient.uid])
+      .filter(Boolean);
+    const activityDates = assignedProgress
+      .map((item) => item.lastLogDate)
+      .filter((value): value is string => typeof value === 'string')
+      .sort((a, b) => b.localeCompare(a));
+    return {
+      ...doctor,
+      activePatients: assignedProgress.filter((item) => item.hasLogWithin30Days).length,
+      newFiles7: assignedPatients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 7)).length,
+      newFiles30: assignedPatients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 30)).length,
+      averageCompletion: meanMetric(assignedProgress.map((item) => item.completion7d)),
+      needsFollowUp: assignedProgress.filter((item) => item.needsFollowUp).length,
+      lastActivity: activityDates[0] ?? null,
+    };
+  });
 
   return (
     <div className="flex flex-col gap-4">
       <SubscriptionCard clinicId={clinicId} />
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <DashboardMetric label="مرضى العيادة" value={loading ? '—' : patients.length} note="ضمن نطاق عيادتك فقط" />
-        <DashboardMetric label="الأطباء" value={loading ? '—' : coaches.length} note="حسابات الطبيب النشطة في القائمة" />
-        <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة على قاعدة المنصة" />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+        <DashboardMetric label="إجمالي المرضى" value={loading ? '—' : patients.length} note="مرضى العيادة ضمن RLS" />
+        <DashboardMetric label="الأطباء النشطون" value={loading ? '—' : activeDoctors} note="حسابات طبيب غير معطّلة" />
+        <DashboardMetric label="المرضى النشطون" value={clinicLatestProgressAvailable ? activePatients30 : '—'} note="لديهم سجل خلال آخر 30 يومًا" />
+        <DashboardMetric label="ملفات جديدة (7 / 30 يومًا)" value={clinicLatestProgressAvailable ? `${newPatientFiles7} / ${newPatientFiles30}` : '—'} note="حسب إنشاء سجل المريض؛ ليس تاريخ قبول الدعوة" />
+        <DashboardMetric label="خطط سحابية" value={loading ? '—' : patientsWithPlan} note="مرضى لديهم خطة محفوظة" />
+        <DashboardMetric label="سجّلوا اليوم" value={clinicLatestProgressAvailable ? `${loggedTodayRate ?? 0}%` : '—'} note={clinicLatestProgressAvailable ? `${loggedToday} من ${patients.length} مريضًا` : 'تعذّر تحميل المؤشرات'} />
+        <DashboardMetric label="سجّلوا آخر 7 أيام" value={clinicLatestProgressAvailable ? `${loggedWeekRate ?? 0}%` : '—'} note={clinicLatestProgressAvailable ? `${loggedThisWeek} من ${patients.length} مريضًا` : 'تعذّر تحميل المؤشرات'} />
+        <DashboardMetric label="متوسط إكمال 7 أيام" value={clinicLatestProgressAvailable ? formatPercent(clinicCompletion7d) : '—'} note="وجبات + ماء + بنود قائمة؛ الأيام القابلة للمقارنة فقط" />
+        <DashboardMetric label="متوسط التقدم نحو الهدف" value={clinicLatestProgressAvailable ? formatPercent(clinicWeightProgress) : '—'} note="من وزن البداية نحو الوزن المستهدف؛ القيم المتاحة فقط" />
+        <DashboardMetric label="يحتاجون متابعة" value={clinicLatestProgressAvailable ? followUpPatients : '—'} note="لا سجل منذ 3 أيام أو أكثر، أو بلا سجل خلال 30 يومًا" />
         <DashboardMetric label="بلا طبيب معيّن" value={loading ? '—' : summary.unassignedCount} note="يمكن تعيينهم من قائمة المرضى" />
-        <DashboardMetric label="يحتاجون متابعة" value={loading || progressError ? '—' : Object.values(progressByUid).filter((item) => item.needsFollowUp).length} note="لا سجل منذ 3 أيام أو أكثر" />
-        <DashboardMetric label="نشطون آخر 30 يومًا" value={loading || progressError ? '—' : Object.values(progressByUid).filter((item) => item.hasLogWithin30Days).length} note="لديهم سجل خلال آخر 30 يومًا" />
       </div>
       <ClinicSummaryExportButtons
         clinicId={clinicId}
@@ -1558,17 +1608,48 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         {!loading && !error && coaches.length === 0 && (
           <p className="mt-3 text-sm text-slate-500">لا يوجد أطباء بعد — ادعُ طبيبًا من نموذج الدعوة بالأسفل.</p>
         )}
+        <p className="mt-2 text-[11px] leading-5 text-slate-500">
+          «الجدد» هنا ملفات مرضى أُنشئت خلال 7/30 يومًا؛ جدول الدعوات لا يحتفظ بتاريخ القبول، لذلك لا ننسب تاريخ إنشاء الدعوة إلى تاريخ القبول.
+        </p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="min-w-[920px] w-full border-collapse text-right text-xs">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-500 dark:border-slate-700">
+                <th className="px-2 py-2">الطبيب</th>
+                <th className="px-2 py-2">المرضى</th>
+                <th className="px-2 py-2">نشطون 30 يومًا</th>
+                <th className="px-2 py-2">جدد 7 / 30</th>
+                <th className="px-2 py-2">متوسط إكمال 7 أيام</th>
+                <th className="px-2 py-2">بلا سجل 3+ أيام</th>
+                <th className="px-2 py-2">آخر نشاط</th>
+              </tr>
+            </thead>
+            <tbody>
+              {doctorMetrics.map((doctor) => (
+                <tr key={doctor.uid} className="border-b border-slate-100 dark:border-slate-800">
+                  <td className="px-2 py-2">
+                    <button
+                      className="font-bold text-indigo-700 underline underline-offset-2 dark:text-indigo-300"
+                      onClick={() => setFilter({ doctorUid: doctor.uid })}
+                    >
+                      {doctor.displayName}
+                    </button>
+                    {coaches.find((item) => item.uid === doctor.uid)?.doc.disabled && (
+                      <span className="mr-1 text-[10px] text-amber-700">موقوف</span>
+                    )}
+                  </td>
+                  <td className="px-2 py-2 tabular-nums">{doctor.count}</td>
+                  <td className="px-2 py-2 tabular-nums">{clinicLatestProgressAvailable ? doctor.activePatients : '—'}</td>
+                  <td className="px-2 py-2 tabular-nums">{clinicLatestProgressAvailable ? `${doctor.newFiles7} / ${doctor.newFiles30}` : '—'}</td>
+                  <td className="px-2 py-2 tabular-nums">{clinicLatestProgressAvailable ? formatPercent(doctor.averageCompletion) : '—'}</td>
+                  <td className="px-2 py-2 tabular-nums">{clinicLatestProgressAvailable ? doctor.needsFollowUp : '—'}</td>
+                  <td className="px-2 py-2 tabular-nums">{doctor.lastActivity ?? '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         <ul className="mt-3 flex flex-col gap-2">
-          {summary.perDoctor.map((doctor) => (
-            <li key={doctor.uid}>
-              <button
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
-                onClick={() => setFilter({ doctorUid: doctor.uid })}
-              >
-                {doctor.displayName} — {doctor.count} {doctor.count === 1 ? 'عميل' : 'عملاء'}
-              </button>
-            </li>
-          ))}
           <li>
             <button
               className="w-full rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
@@ -1710,6 +1791,14 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   }, [clinicId, uid]);
 
   const patientsWithPlan = patients.filter((patient) => Boolean(patient.doc.plan)).length;
+  const coachProgressRows = patients.map((patient) => progressByUid[patient.uid]).filter(Boolean);
+  const coachActive30 = coachProgressRows.filter((item) => item.hasLogWithin30Days).length;
+  const coachNew30 = patients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 30)).length;
+  const coachLoggedToday = coachProgressRows.filter((item) => item.daysSinceLastLog === 0).length;
+  const coachFollowUp = coachProgressRows.filter((item) => item.needsFollowUp).length;
+  const coachCompletion7d = meanMetric(coachProgressRows.map((item) => item.completion7d));
+  const coachMeanWeightChange = meanMetric(coachProgressRows.map((item) => item.weightChangeKg));
+  const coachMetricsAvailable = !loading && !progressError;
   const visiblePatients = filterAndSortPatients(
     patients,
     patientQuery,
@@ -1723,11 +1812,15 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <DashboardMetric label="عملائي" value={loading ? '—' : patients.length} note="المرضى الذين دعوتهم أنت فقط" />
+        <DashboardMetric label="مرضاي" value={loading ? '—' : patients.length} note="المرضى المسندون إليّ فقط" />
+        <DashboardMetric label="نشطون آخر 30 يومًا" value={coachMetricsAvailable ? coachActive30 : '—'} note="لديهم سجل خلال آخر 30 يومًا" />
+        <DashboardMetric label="ملفات جديدة هذا الشهر" value={loading ? '—' : coachNew30} note="حسب إنشاء سجل المريض، لا تاريخ قبول الدعوة" />
+        <DashboardMetric label="سجّلوا اليوم" value={coachMetricsAvailable ? coachLoggedToday : '—'} note="مرضى لديهم سجل بتاريخ اليوم" />
+        <DashboardMetric label="متوسط إكمال آخر 7 أيام" value={coachMetricsAvailable ? formatPercent(coachCompletion7d) : '—'} note="وجبات + ماء + بنود القائمة" />
+        <DashboardMetric label="بلا سجل منذ 3+ أيام" value={coachMetricsAvailable ? coachFollowUp : '—'} note="يشمل من لا سجل لهم خلال 30 يومًا" />
+        <DashboardMetric label="متوسط تغيّر الوزن" value={coachMetricsAvailable && coachMeanWeightChange != null ? `${coachMeanWeightChange > 0 ? '+' : ''}${coachMeanWeightChange} كجم` : '—'} note="فرق وصفي عن وزن بداية الخطة؛ القيم المتاحة فقط" />
         <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة سحابيًا" />
         <DashboardMetric label="يحتاجون إعداد خطة" value={loading ? '—' : patients.length - patientsWithPlan} note="لا توجد لهم خطة سحابية بعد" />
-        <DashboardMetric label="يحتاجون متابعة" value={loading ? '—' : Object.values(progressByUid).filter((item) => item.needsFollowUp).length} note="لا سجل منذ 3 أيام أو أكثر" />
-        <DashboardMetric label="نشطون آخر 30 يومًا" value={loading ? '—' : Object.values(progressByUid).filter((item) => item.hasLogWithin30Days).length} note="لديهم سجل خلال آخر 30 يومًا" />
       </div>
       <RecentActivityCard
         title="آخر نشاط مرضاي"

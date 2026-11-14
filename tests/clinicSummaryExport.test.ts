@@ -55,6 +55,7 @@ const progress: Record<string, PatientProgressSummary> = {
     currentWeightKg: 87.5,
     currentWaterMl: 1750,
     weightChangeKg: -2.5,
+    weightTargetProgressPercent: 25,
   },
 };
 
@@ -68,7 +69,7 @@ describe('clinic summary export', () => {
     expect(header).toContain('الطبيب المعين');
     expect(header).toContain('آخر تسجيل');
     expect(header).toContain('الماء في أحدث سجل (مل)');
-    expect(header).toContain('متوسط إكمال الوجبات/المهام آخر 7 أيام (%)');
+    expect(header).toContain('متوسط إكمال الوجبات/الماء/المهام آخر 7 أيام (%)');
     expect(row).toContain('د. أحمد');
     expect(row).toContain('2026-11-14');
     expect(row).toContain(1750);
@@ -100,7 +101,7 @@ describe('clinic summary export', () => {
     const sheets = buildClinicSummarySheets(patients, staff, {});
     const [header, row] = sheets[0].rows;
     const statusColumn = header.indexOf('حالة النشاط');
-    const completionColumn = header.indexOf('متوسط إكمال الوجبات/المهام آخر 7 أيام (%)');
+    const completionColumn = header.indexOf('متوسط إكمال الوجبات/الماء/المهام آخر 7 أيام (%)');
     expect(row[statusColumn]).toBe('المؤشرات غير متاحة');
     expect(row[completionColumn]).toBeNull();
   });

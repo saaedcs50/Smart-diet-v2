@@ -13,7 +13,7 @@ export interface PatientProgressSummary {
   daysSinceLastLog: number | null;
   hasLogWithin30Days: boolean;
   needsFollowUp: boolean;
-  /** Mean meal/checklist completion across recorded, comparable days in the last 7 days. */
+  /** Mean meal, water and checklist completion across comparable recorded days in the last 7 days. */
   completion7d: number | null;
   completionDays7d: number;
   /** Latest explicitly recorded weight in the queried window. */
@@ -22,6 +22,8 @@ export interface PatientProgressSummary {
   currentWaterMl: number | null;
   /** Current recorded weight minus the plan's starting weight; descriptive, not evaluative. */
   weightChangeKg: number | null;
+  /** Clamped 0–100 progress from start weight toward target, when all three exist. */
+  weightTargetProgressPercent: number | null;
 }
 
 export function localDateKey(date: Date): string {
@@ -29,6 +31,21 @@ export function localDateKey(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+/** True when a timestamp falls within the latest N local calendar days, including today. */
+export function isWithinLastCalendarDays(
+  timestamp: string | undefined,
+  days: number,
+  today = new Date(),
+): boolean {
+  if (!timestamp || !Number.isFinite(days) || days < 1) return false;
+  const date = new Date(timestamp);
+  if (!Number.isFinite(date.getTime())) return false;
+  const cutoff = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  cutoff.setDate(cutoff.getDate() - (Math.floor(days) - 1));
+  const createdKey = localDateKey(date);
+  return createdKey >= localDateKey(cutoff) && createdKey <= localDateKey(today);
 }
 
 function parseLocalDate(dateKey: string): Date | null {
@@ -52,6 +69,22 @@ function calendarDaysBetween(older: Date, newer: Date): number {
 function average(values: number[]): number | null {
   if (values.length === 0) return null;
   return Math.round((values.reduce((total, value) => total + value, 0) / values.length) * 10) / 10;
+}
+
+export function calculateWeightTargetProgress(
+  startWeight: number | null | undefined,
+  currentWeight: number | null | undefined,
+  targetWeight: number | null | undefined,
+): number | null {
+  if (
+    typeof startWeight !== 'number' || !Number.isFinite(startWeight) || startWeight <= 0 ||
+    typeof currentWeight !== 'number' || !Number.isFinite(currentWeight) || currentWeight <= 0 ||
+    typeof targetWeight !== 'number' || !Number.isFinite(targetWeight) || targetWeight <= 0 ||
+    startWeight === targetWeight
+  ) return null;
+
+  const rawProgress = ((currentWeight - startWeight) / (targetWeight - startWeight)) * 100;
+  return Math.round(Math.max(0, Math.min(100, rawProgress)) * 10) / 10;
 }
 
 /**
@@ -94,6 +127,13 @@ export function summarizePatientProgress(
     if (summary.plannedTasks != null && summary.plannedTasks > 0) {
       dayParts.push(Math.min(100, (summary.completedTasks / summary.plannedTasks) * 100));
     }
+    const waterGoal = plan?.dailyWaterGoalMl ?? plan?.waterGoalMl;
+    if (
+      typeof waterGoal === 'number' && Number.isFinite(waterGoal) && waterGoal > 0 &&
+      typeof entry.log.water === 'number' && Number.isFinite(entry.log.water) && entry.log.water >= 0
+    ) {
+      dayParts.push(Math.min(100, (entry.log.water / waterGoal) * 100));
+    }
     if (dayParts.length > 0) {
       comparableDays.add(entry.date);
       completionParts.push(...dayParts);
@@ -117,6 +157,11 @@ export function summarizePatientProgress(
       ? Math.round((currentWeightKg - startWeight) * 10) / 10
       : null;
 
+  const weightTargetProgressPercent = calculateWeightTargetProgress(
+    plan?.startWeight,
+    currentWeightKg,
+    plan?.targetWeight,
+  );
   const hasLogWithin30Days = ordered.length > 0;
   const latestWater = latest?.log.water;
   const currentWaterMl =
@@ -133,5 +178,6 @@ export function summarizePatientProgress(
     currentWeightKg,
     currentWaterMl,
     weightChangeKg,
+    weightTargetProgressPercent,
   };
 }
