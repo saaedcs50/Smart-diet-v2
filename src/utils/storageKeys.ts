@@ -56,6 +56,8 @@ export const StorageKeys = {
   intakeDraft: () => ns('intake_draft'),
   /** Batch 3.3: سجل تفعيل القالب الموسمي (يشمل لقطة إعدادات الماء قبل التفعيل) */
   seasonalActivation: () => ns('seasonal_activation'),
+  accessibilityLargeText: () => ns('accessibility_large_text'),
+  accessibilityHighContrast: () => ns('accessibility_high_contrast'),
   darkMode: () => ns('dark_mode'),
   onboardingSeen: () => ns('onboarding_seen'),
   coachOnboardingSeen: () => ns('coach_onboarding_seen'),

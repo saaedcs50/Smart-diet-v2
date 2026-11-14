@@ -17,7 +17,9 @@ import {
  AlertTriangle,
  HeartPulse,
  CheckCircle2,
- Pill
+ Pill,
+ Search,
+ X
 } from 'lucide-react';
 import { PlanConfig, DayLog, PhotoRecord } from '../types';
 import { calculateBMI, calculateWHtR, findLatestWeight } from '../utils/calculations';
@@ -29,6 +31,8 @@ import { WeightTrajectoryCard } from './WeightTrajectoryCard';
 import { MilestonesSection } from './MilestonesSection';
 import { HelpButton } from './FeatureHelpModal';
 import { brandCopy } from '../config/brand';
+import { matchesBodySearch } from '../utils/bodySearch';
+import { getLabTestMeta } from '../utils/labTracking';
 
 interface BodyTabProps {
  plan: PlanConfig;
@@ -51,6 +55,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
 }) => {
  const [dayPhotos, setDayPhotos] = useState<PhotoRecord[]>([]);
  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+ const [searchQuery, setSearchQuery] = useState('');
 
  // Load photos for this date
  useEffect(() => {
@@ -128,9 +133,89 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  targetProgressPercent = Math.min(100, Math.max(0, Math.round((lostSoFar / totalToLose) * 100)));
  }
 
+ // Instant search matches the visible sections rather than changing or filtering patient data.
+ const searchActive = searchQuery.trim().length > 0;
+ const showWeightBanner = matchesBodySearch(searchQuery, [
+  'الوزن الصباحي والهدف', 'وزن اليوم', 'وزن بداية الرحلة', 'الهدف المطلوب', 'خسارة الوزن',
+  day.weight, startWeight, targetWeight,
+ ]);
+ const showTrajectory = matchesBodySearch(searchQuery, [
+  'الوزن المتوقع مقابل الفعلي', 'المسار المتوقع', 'معدل نزول الوزن',
+ ]);
+ const showIndicators = matchesBodySearch(searchQuery, [
+  'مؤشر كتلة الجسم', 'BMI', 'نسبة الوسط للطول', 'WHtR',
+ ]);
+ const showCycle = matchesBodySearch(searchQuery, [
+  'الدورة الشهرية', 'تغيرات الوزن', 'مرحلة الدورة',
+ ]);
+ const medicalSearchFields = [
+  'الملف الطبي والحالات المسجلة', 'التشخيصات المسجلة', 'محظورات وحساسية الطعام',
+  ...(plan.medicalConditions?.conditions || []).flatMap((item) => [item.label, item.notes]),
+  ...(plan.medicalConditions?.allergies || []),
+  plan.medicalConditions?.customConditionNotes,
+ ];
+ const showMedical = matchesBodySearch(searchQuery, medicalSearchFields);
+ const showMilestones = matchesBodySearch(searchQuery, [
+  'الإنجازات', 'المعالم', 'الشارات', 'الأهداف المحققة',
+ ]);
+ const measurementSearchFields = [
+  'قياسات الجسم بالمتر', 'محيط الجسم', 'الوسط', 'الخصر', 'محيط الصدر',
+  'الأرداف', 'الهيبس', 'الذراع', 'الفخذ', 'الرقبة', 'waist', 'chest', 'hips',
+  day.meas?.waist, day.meas?.chest, day.meas?.hips, day.meas?.arm, day.meas?.thigh, day.meas?.neck,
+ ];
+ const showBodyMeasurements = matchesBodySearch(searchQuery, measurementSearchFields);
+ const labEntries = plan.labTracking?.entries || [];
+ const labSearchFields = labEntries.flatMap((entry) => {
+  const meta = getLabTestMeta(entry.testId, entry.customName);
+  return [
+   entry.testId, entry.customName, meta.nameAr, meta.shortName,
+   entry.value, entry.unit, entry.date, entry.note,
+  ];
+ });
+ const labTitleMatches = matchesBodySearch(searchQuery, [
+  'سجل التحاليل والمؤشرات الحيوية', 'التحاليل', 'التحاليل الطبية',
+  'نتائج المعامل', 'السكر', 'الدهون', 'الفيتامينات',
+ ]);
+ const showLabs = labTitleMatches || matchesBodySearch(searchQuery, labSearchFields);
+ const showPhotos = matchesBodySearch(searchQuery, [
+  'معرض صور التطور الشخصي', 'صور التقدم', 'مقارنة قبل وبعد', 'صور الجسم',
+ ]);
+ const hasSearchMatch = [
+  showWeightBanner, showTrajectory, showIndicators, showCycle, showMedical,
+  showMilestones, showBodyMeasurements, showLabs, showPhotos,
+ ].some(Boolean);
+
+
  return (
  <div className="space-y-4 pb-12 animate-in fade-in duration-150">
+  <section className="rounded-3xl border border-peacock-pale bg-[var(--app-card)] p-3 dark:border-peacock-ink/40" aria-label="البحث في الجسم والقياسات">
+   <label htmlFor="body-tab-search" className="mb-2 block text-xs font-bold text-brand-secondary-text dark:text-peacock-teal-light">بحث سريع في الجسم والقياسات</label>
+   <div className="flex items-center gap-2 rounded-2xl border border-peacock-pale bg-[var(--app-bg)] px-3 dark:border-peacock-ink/40">
+    <Search className="h-4 w-4 shrink-0 text-brand-secondary-text dark:text-peacock-teal-light" aria-hidden="true" />
+    <input
+     id="body-tab-search"
+     type="search"
+     value={searchQuery}
+     onChange={(event) => setSearchQuery(event.target.value)}
+     placeholder="ابحث عن الوزن أو الخصر أو تحليل السكر..."
+     className="min-h-11 w-full bg-transparent text-sm text-brand-text outline-none placeholder:text-slate-500 dark:text-peacock-pale"
+     aria-describedby="body-tab-search-help"
+    />
+    {searchActive && (
+     <button type="button" onClick={() => setSearchQuery('')} aria-label="مسح البحث" className="rounded-lg p-1.5 text-brand-secondary-text hover:bg-[var(--app-card)] dark:text-peacock-teal-light">
+      <X className="h-4 w-4" />
+     </button>
+    )}
+   </div>
+   <p id="body-tab-search-help" className="mt-2 text-[11px] text-brand-secondary-text dark:text-peacock-teal-light">يعرض الأقسام المطابقة فورًا. لا يغيّر السجلات أو يحذف أي بيانات.</p>
+  </section>
+  {searchActive && !hasSearchMatch && (
+   <div role="status" className="rounded-2xl border border-dashed border-slate-300 bg-[var(--app-card)] p-5 text-center text-sm font-bold text-slate-600 dark:border-slate-700 dark:text-slate-300">
+    لا توجد نتائج مطابقة لعبارة «{searchQuery}». جرّب كلمة مثل الوزن أو الخصر أو التحاليل.
+   </div>
+  )}
  {/* 1. Weight & Target Progress Banner */}
+ {showWeightBanner && (
  <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-5 transition-colors space-y-4">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2.5">
@@ -225,11 +310,13 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  </div>
  )}
  </div>
+ )}
 
  {/* Batch 2.2: الوزن المتوقع مقابل الفعلي */}
- <WeightTrajectoryCard plan={plan} />
+ {showTrajectory && <WeightTrajectoryCard plan={plan} />}
 
  {/* 2. Clinical Indicators (BMI & WHtR) */}
+ {showIndicators && (
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
  {/* BMI Card */}
  <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-4 space-y-1.5">
@@ -253,9 +340,10 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  <p className={`text-xs font-bold ${whtr.color}`}>{whtr.label}</p>
  </div>
  </div>
+ )}
 
  {/* 2.3 Menstrual Cycle & Weight Fluctuation Context */}
- {plan.cycleTracking?.enabled && (() => {
+ {showCycle && plan.cycleTracking?.enabled && (() => {
  const cycleInfo = getCycleInfo(plan.cycleTracking, currentDate);
  const weightAvgInfo = getWeightVsRecentAverage(currentDate, currentWeight);
 
@@ -314,7 +402,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  })()}
 
  {/* 2.5 Medical Conditions & Diagnoses Card (Client View) */}
- {plan.medicalConditions?.showToClient!== false &&
+ {showMedical && plan.medicalConditions?.showToClient!== false &&
  ((plan.medicalConditions?.conditions && plan.medicalConditions.conditions.length > 0) ||
  (plan.medicalConditions?.allergies && plan.medicalConditions.allergies.length > 0) ||
  plan.medicalConditions?.customConditionNotes) && (
@@ -425,9 +513,10 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  )}
 
  {/* Batch 2.3: بطاقة إنجازات مختصرة */}
- <MilestonesSection plan={plan} compact onNotify={onNotify} />
+ {showMilestones && <MilestonesSection plan={plan} compact onNotify={onNotify} />}
 
  {/* 3. Body Circumferences */}
+ {showBodyMeasurements && (
  <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-5 transition-colors space-y-3">
  <div className="flex items-center gap-2.5">
  <div className="w-9 h-9 rounded-2xl text-brand-secondary dark:text-peacock-teal-light flex items-center justify-center font-bold text-sm">
@@ -586,17 +675,20 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  </div>
  </div>
  </div>
+ )}
 
  {/* 4. Lab Tests Tracker */}
- {isSectionVisible(plan, 'labTracker') && (
+ {showLabs && isSectionVisible(plan, 'labTracker') && (
  <LabTrackerSection
  plan={plan}
  onUpdatePlan={onUpdatePlan || (() => {})}
  onNotify={onNotify}
+ searchQuery={labTitleMatches ? '' : searchQuery}
  />
  )}
 
  {/* 5. Private Progress Photos Gallery */}
+ {showPhotos && (
  <div className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-5 transition-colors space-y-4">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2.5">
@@ -675,6 +767,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  </p>
  )}
  </div>
+ )}
  </div>
  );
 };

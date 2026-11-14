@@ -17,6 +17,7 @@ import {
 import { PlanConfig } from '../types';
 import { BRAND } from '../config/brand';
 import { BrandLogo } from './BrandLogo';
+import { AccessibilityMenu } from './AccessibilityMenu';
 
 interface NavbarProps {
  plan: PlanConfig;
@@ -135,6 +136,9 @@ export const Navbar: React.FC<NavbarProps> = ({
  <Archive className="w-4 h-4" />
  <span className="hidden sm:inline">نسخ واستيراد</span>
  </button>
+
+ {/* Account-scoped accessibility preferences */}
+ <AccessibilityMenu />
 
  {/* Notifications */}
  <button

@@ -202,11 +202,11 @@ export const WaterTracker: React.FC<WaterTrackerProps> = ({ plan, day, onUpdateD
 
         <button
           type="button"
-          onClick={() => handleAddWater(750)}
+          onClick={() => handleAddWater(1000)}
           className="py-2.5 px-2 rounded-2xl bg-sky-50 dark:bg-sky-950/30 hover:bg-sky-100 dark:hover:bg-sky-900/40 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800/80 font-bold text-xs transition-all flex flex-col items-center gap-0.5 cursor-pointer shadow-xs hover:scale-[1.02]"
         >
-          <span className="text-xs font-black">+750 مل</span>
-          <span className="text-[11px] text-sky-600/70 dark:text-sky-300/70 font-medium">مطارة رياضية</span>
+          <span className="text-xs font-black">+1000 مل</span>
+          <span className="text-[11px] text-sky-600/70 dark:text-sky-300/70 font-medium">لتر ماء</span>
         </button>
       </div>
 
