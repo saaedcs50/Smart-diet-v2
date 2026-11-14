@@ -101,6 +101,55 @@ BEGIN
 END;
 $test$;
 
+-- Invitation lifecycle: the invitee can consume, but cannot reopen their own invitation.
+SELECT set_config(
+  'request.jwt.claims',
+  '{"sub":"f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8","email":"rls-coach-matrix@example.test","role":"authenticated"}',
+  true
+);
+DO $test$
+DECLARE n integer; reopen_blocked boolean := false;
+BEGIN
+  UPDATE public.invitations
+  SET status = 'consumed'
+  WHERE email = 'rls-coach-matrix@example.test' AND status = 'pending';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN RAISE EXCEPTION 'invitee: pending invitation could not be consumed'; END IF;
+
+  BEGIN
+    UPDATE public.invitations
+    SET status = 'pending'
+    WHERE email = 'rls-coach-matrix@example.test' AND status = 'consumed';
+    GET DIAGNOSTICS n = ROW_COUNT;
+    reopen_blocked := n = 0;
+  EXCEPTION WHEN OTHERS THEN
+    reopen_blocked := true;
+  END;
+  IF NOT reopen_blocked THEN
+    RAISE EXCEPTION 'invitee: consumed invitation was unexpectedly reopened';
+  END IF;
+END;
+$test$;
+
+-- The creating coach may reopen their own consumed patient invitation.
+SELECT set_config(
+  'request.jwt.claims',
+  '{"sub":"809f256f-0a4c-4b1e-af92-a26dd21d7623","role":"authenticated"}',
+  true
+);
+DO $test$
+DECLARE n integer;
+BEGIN
+  UPDATE public.invitations
+  SET status = 'pending'
+  WHERE email = 'rls-coach-matrix@example.test'
+    AND status = 'consumed'
+    AND created_by = '809f256f-0a4c-4b1e-af92-a26dd21d7623';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN RAISE EXCEPTION 'coach: own consumed patient invitation could not be reopened'; END IF;
+END;
+$test$;
+
 -- PATIENT clinic-a: own patient/day data, no clinic subscription table or payments.
 SELECT set_config('request.jwt.claim.sub','f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8',true);
 DO $test$
