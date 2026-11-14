@@ -69,7 +69,7 @@ import { PatientProgressCharts } from './PatientProgressCharts';
 import { PatientTagsEditor } from './PatientTagsEditor';
 import type { PatientTag } from './patientTags';
 import { ClinicSummaryExportButtons } from './ClinicSummaryExportButtons';
-import { localDateKey, type PatientProgressSummary } from './patientProgressSummary';
+import { isWithinLastCalendarDays, type PatientProgressSummary } from './patientProgressSummary';
 import { normalizeBodySearchQuery } from '../utils/bodySearch';
 
 type Route =
@@ -301,16 +301,6 @@ function collectPatientTagOptions(
     }
   }
   return [...byLabel.values()].sort((a, b) => a.label.localeCompare(b.label, 'ar'));
-}
-
-function isCreatedWithinDays(createdAt: string | undefined, days: number, today = new Date()): boolean {
-  if (!createdAt || !Number.isFinite(days) || days < 1) return false;
-  const parsed = new Date(createdAt);
-  if (!Number.isFinite(parsed.getTime())) return false;
-  const cutoff = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  cutoff.setDate(cutoff.getDate() - (Math.floor(days) - 1));
-  const createdKey = localDateKey(parsed);
-  return createdKey >= localDateKey(cutoff) && createdKey <= localDateKey(today);
 }
 
 function meanMetric(values: Array<number | null | undefined>): number | null {
@@ -1540,8 +1530,8 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   const progressRows = patients.map((patient) => progressByUid[patient.uid]).filter(Boolean);
   const activePatients30 = progressRows.filter((item) => item.hasLogWithin30Days).length;
   const followUpPatients = progressRows.filter((item) => item.needsFollowUp).length;
-  const newPatientFiles7 = patients.filter((patient) => isCreatedWithinDays(patient.doc.createdAt, 7)).length;
-  const newPatientFiles30 = patients.filter((patient) => isCreatedWithinDays(patient.doc.createdAt, 30)).length;
+  const newPatientFiles7 = patients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 7)).length;
+  const newPatientFiles30 = patients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 30)).length;
   const loggedToday = progressRows.filter((item) => item.daysSinceLastLog === 0).length;
   const loggedThisWeek = progressRows.filter((item) => item.daysSinceLastLog != null && item.daysSinceLastLog <= 6).length;
   const clinicCompletion7d = meanMetric(progressRows.map((item) => item.completion7d));
@@ -1562,8 +1552,8 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     return {
       ...doctor,
       activePatients: assignedProgress.filter((item) => item.hasLogWithin30Days).length,
-      newFiles7: assignedPatients.filter((patient) => isCreatedWithinDays(patient.doc.createdAt, 7)).length,
-      newFiles30: assignedPatients.filter((patient) => isCreatedWithinDays(patient.doc.createdAt, 30)).length,
+      newFiles7: assignedPatients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 7)).length,
+      newFiles30: assignedPatients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 30)).length,
       averageCompletion: meanMetric(assignedProgress.map((item) => item.completion7d)),
       needsFollowUp: assignedProgress.filter((item) => item.needsFollowUp).length,
       lastActivity: activityDates[0] ?? null,
@@ -1803,7 +1793,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const patientsWithPlan = patients.filter((patient) => Boolean(patient.doc.plan)).length;
   const coachProgressRows = patients.map((patient) => progressByUid[patient.uid]).filter(Boolean);
   const coachActive30 = coachProgressRows.filter((item) => item.hasLogWithin30Days).length;
-  const coachNew30 = patients.filter((patient) => isCreatedWithinDays(patient.doc.createdAt, 30)).length;
+  const coachNew30 = patients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 30)).length;
   const coachLoggedToday = coachProgressRows.filter((item) => item.daysSinceLastLog === 0).length;
   const coachFollowUp = coachProgressRows.filter((item) => item.needsFollowUp).length;
   const coachCompletion7d = meanMetric(coachProgressRows.map((item) => item.completion7d));
