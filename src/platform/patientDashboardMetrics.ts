@@ -24,3 +24,9 @@ export function summarizePatientDayLog(
     plannedTasks: plan ? plan.checklist.length : null,
   };
 }
+
+
+/** Counts meals explicitly marked as skipped by the patient (type: none). */
+export function countSkippedPatientMeals(log: Pick<DayLog, 'meals'>): number {
+  return Object.values(log.meals ?? {}).filter((meal) => meal.type === 'none').length;
+}
