@@ -1,0 +1,129 @@
+import type { DayLog, PlanConfig } from '../types';
+import { summarizePatientDayLog } from './patientDashboardMetrics';
+
+export interface PatientProgressEntry {
+  date: string;
+  log: DayLog;
+}
+
+export interface PatientProgressSummary {
+  /** Latest log date that falls within the queried 30-day window. */
+  lastLogDate: string | null;
+  /** Number of calendar days since last log; null means no log in the last 30 days. */
+  daysSinceLastLog: number | null;
+  hasLogWithin30Days: boolean;
+  needsFollowUp: boolean;
+  /** Mean meal/checklist completion across recorded, comparable days in the last 7 days. */
+  completion7d: number | null;
+  completionDays7d: number;
+  /** Latest explicitly recorded weight in the queried window. */
+  currentWeightKg: number | null;
+  /** Current recorded weight minus the plan's starting weight; descriptive, not evaluative. */
+  weightChangeKg: number | null;
+}
+
+export function localDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function parseLocalDate(dateKey: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return null;
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) return null;
+  return date;
+}
+
+function calendarDaysBetween(older: Date, newer: Date): number {
+  const olderUtc = Date.UTC(older.getFullYear(), older.getMonth(), older.getDate());
+  const newerUtc = Date.UTC(newer.getFullYear(), newer.getMonth(), newer.getDate());
+  return Math.max(0, Math.round((newerUtc - olderUtc) / 86_400_000));
+}
+
+function average(values: number[]): number | null {
+  if (values.length === 0) return null;
+  return Math.round((values.reduce((total, value) => total + value, 0) / values.length) * 10) / 10;
+}
+
+/**
+ * Builds operational follow-up indicators from the supplied, role-scoped
+ * recent day logs. No log in 30 days is represented as missing activity,
+ * not fabricated as a zero-compliance score.
+ */
+export function summarizePatientProgress(
+  entries: PatientProgressEntry[],
+  plan: PlanConfig | null,
+  today: Date = new Date(),
+): PatientProgressSummary {
+  const todayKey = localDateKey(today);
+  const cutoff = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  cutoff.setDate(cutoff.getDate() - 29);
+  const cutoffKey = localDateKey(cutoff);
+
+  const ordered = entries
+    .filter((entry) => parseLocalDate(entry.date) !== null)
+    .filter((entry) => entry.date >= cutoffKey && entry.date <= todayKey)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const latest = ordered[ordered.length - 1] ?? null;
+  const lastDate = latest ? parseLocalDate(latest.date) : null;
+  const daysSinceLastLog = lastDate ? calendarDaysBetween(lastDate, today) : null;
+
+  const weekCutoff = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  weekCutoff.setDate(weekCutoff.getDate() - 6);
+  const weekCutoffKey = localDateKey(weekCutoff);
+  const weekEntries = ordered.filter((entry) => entry.date >= weekCutoffKey);
+
+  const completionParts: number[] = [];
+  const comparableDays = new Set<string>();
+  for (const entry of weekEntries) {
+    const summary = summarizePatientDayLog(entry.log, plan);
+    const dayParts: number[] = [];
+    if (summary.plannedMeals != null && summary.plannedMeals > 0) {
+      dayParts.push(Math.min(100, (summary.recordedMeals / summary.plannedMeals) * 100));
+    }
+    if (summary.plannedTasks != null && summary.plannedTasks > 0) {
+      dayParts.push(Math.min(100, (summary.completedTasks / summary.plannedTasks) * 100));
+    }
+    if (dayParts.length > 0) {
+      comparableDays.add(entry.date);
+      completionParts.push(...dayParts);
+    }
+  }
+
+  let currentWeightKg: number | null = null;
+  for (let index = ordered.length - 1; index >= 0; index -= 1) {
+    const weight = ordered[index].log.weight;
+    if (typeof weight === 'number' && Number.isFinite(weight) && weight > 0) {
+      currentWeightKg = weight;
+      break;
+    }
+  }
+  const startWeight = plan?.startWeight;
+  const weightChangeKg =
+    currentWeightKg != null &&
+    typeof startWeight === 'number' &&
+    Number.isFinite(startWeight) &&
+    startWeight > 0
+      ? Math.round((currentWeightKg - startWeight) * 10) / 10
+      : null;
+
+  const hasLogWithin30Days = ordered.length > 0;
+  return {
+    lastLogDate: latest?.date ?? null,
+    daysSinceLastLog,
+    hasLogWithin30Days,
+    needsFollowUp: !hasLogWithin30Days || (daysSinceLastLog != null && daysSinceLastLog >= 3),
+    completion7d: average(completionParts),
+    completionDays7d: comparableDays.size,
+    currentWeightKg,
+    weightChangeKg,
+  };
+}

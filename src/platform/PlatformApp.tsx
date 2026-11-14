@@ -29,6 +29,7 @@ import {
   listClinicStaffEntries,
   listDayLogEntries,
   listRecentDayLogActivity,
+  listPatientProgressSummaries,
   listDoctorPatients,
   saveConsent,
   summarizeDoctors,
@@ -65,6 +66,8 @@ import { DoctorExportButtons } from './DoctorExportButtons';
 import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
 import { summarizePatientDayLog } from './patientDashboardMetrics';
 import { PatientProgressCharts } from './PatientProgressCharts';
+import type { PatientProgressSummary } from './patientProgressSummary';
+import { normalizeBodySearchQuery } from '../utils/bodySearch';
 
 type Route =
   | { view: 'login' }
@@ -197,36 +200,80 @@ const buttonClass =
 const ghostButtonClass =
   'rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 dark:border-slate-700 dark:text-slate-200';
 
-type PatientListSort = 'name' | 'plan';
+type PatientListSort = 'name' | 'plan' | 'lastLog' | 'completion' | 'weightChange';
 type PatientPlanFilter = 'all' | 'withPlan' | 'withoutPlan';
+type PatientActivityFilter = 'all' | 'active30' | 'followUp' | 'noLog30';
 
 function filterAndSortPatients(
   patients: Array<{ uid: string; doc: PatientDoc }>,
   query: string,
   planFilter: PatientPlanFilter,
+  activityFilter: PatientActivityFilter,
   sort: PatientListSort,
+  progressByUid: Record<string, PatientProgressSummary>,
 ): Array<{ uid: string; doc: PatientDoc }> {
-  const normalizedQuery = query.trim().toLocaleLowerCase('ar');
+  const normalizedQuery = normalizeBodySearchQuery(query);
   return patients
-    .filter(({ doc }) => {
+    .filter(({ uid, doc }) => {
       const matchesQuery = !normalizedQuery ||
-        (doc.profile.clientName ?? '').toLocaleLowerCase('ar').includes(normalizedQuery);
+        normalizeBodySearchQuery(doc.profile.clientName ?? '').includes(normalizedQuery);
       const hasPlan = Boolean(doc.plan);
       const matchesPlan = planFilter === 'all' ||
         (planFilter === 'withPlan' && hasPlan) ||
         (planFilter === 'withoutPlan' && !hasPlan);
-      return matchesQuery && matchesPlan;
+      const progress = progressByUid[uid];
+      const matchesActivity = activityFilter === 'all' ||
+        (activityFilter === 'active30' && progress?.hasLogWithin30Days === true) ||
+        (activityFilter === 'followUp' && progress?.needsFollowUp === true) ||
+        (activityFilter === 'noLog30' && progress?.hasLogWithin30Days === false);
+      return matchesQuery && matchesPlan && matchesActivity;
     })
     .sort((a, b) => {
+      const progressA = progressByUid[a.uid];
+      const progressB = progressByUid[b.uid];
       if (sort === 'plan') {
-        const planDifference = Number(Boolean(b.doc.plan)) - Number(Boolean(a.doc.plan));
-        if (planDifference !== 0) return planDifference;
+        const difference = Number(Boolean(b.doc.plan)) - Number(Boolean(a.doc.plan));
+        if (difference !== 0) return difference;
+      } else if (sort === 'lastLog') {
+        const dateA = progressA?.lastLogDate ?? '';
+        const dateB = progressB?.lastLogDate ?? '';
+        if (dateA !== dateB) return dateB.localeCompare(dateA);
+      } else if (sort === 'completion') {
+        const valueA = progressA?.completion7d;
+        const valueB = progressB?.completion7d;
+        if (valueA == null && valueB != null) return 1;
+        if (valueB == null && valueA != null) return -1;
+        if (valueA != null && valueB != null && valueA !== valueB) return valueB - valueA;
+      } else if (sort === 'weightChange') {
+        const valueA = progressA?.weightChangeKg;
+        const valueB = progressB?.weightChangeKg;
+        if (valueA == null && valueB != null) return 1;
+        if (valueB == null && valueA != null) return -1;
+        if (valueA != null && valueB != null) {
+          const difference = Math.abs(valueB) - Math.abs(valueA);
+          if (difference !== 0) return difference;
+        }
       }
       return (a.doc.profile.clientName ?? '').localeCompare(
         b.doc.profile.clientName ?? '',
         'ar',
       );
     });
+}
+
+function PatientProgressLine({ summary }: { summary?: PatientProgressSummary }) {
+  if (!summary) {
+    return <span className="mt-1 block text-[11px] font-normal text-slate-500">مؤشرات النشاط غير متاحة حاليًا.</span>;
+  }
+  return (
+    <span className="mt-1 block text-[11px] font-normal leading-5 text-slate-500">
+      آخر تسجيل: {summary.lastLogDate ?? 'لا يوجد خلال 30 يومًا'}
+      {summary.daysSinceLastLog != null ? ` — منذ ${summary.daysSinceLastLog} يوم` : ''}
+      {' · '}إكمال آخر 7 أيام (وجبات/مهام): {summary.completion7d == null ? '—' : `${summary.completion7d}%`}
+      {summary.completion7d != null ? ` في ${summary.completionDays7d} أيام مسجلة` : ''}
+      {' · '}تغير الوزن: {summary.weightChangeKg == null ? '—' : `${summary.weightChangeKg > 0 ? '+' : ''}${summary.weightChangeKg} كجم`}
+    </span>
+  );
 }
 
 function PatientListControls({
@@ -236,6 +283,8 @@ function PatientListControls({
   onSortChange,
   planFilter,
   onPlanFilterChange,
+  activityFilter,
+  onActivityFilterChange,
   resultCount,
 }: {
   query: string;
@@ -244,6 +293,8 @@ function PatientListControls({
   onSortChange: (value: PatientListSort) => void;
   planFilter: PatientPlanFilter;
   onPlanFilterChange: (value: PatientPlanFilter) => void;
+  activityFilter: PatientActivityFilter;
+  onActivityFilterChange: (value: PatientActivityFilter) => void;
   resultCount: number;
 }) {
   return (
@@ -259,7 +310,7 @@ function PatientListControls({
         placeholder="اكتب اسم المريض..."
         className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
       />
-      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
         <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
           ترتيب حسب
           <select
@@ -269,6 +320,9 @@ function PatientListControls({
           >
             <option value="name">الاسم (أ-ي)</option>
             <option value="plan">أصحاب الخطط أولًا</option>
+            <option value="lastLog">آخر تسجيل (الأحدث)</option>
+            <option value="completion">إكمال 7 أيام (الأعلى)</option>
+            <option value="weightChange">مقدار تغير الوزن</option>
           </select>
         </label>
         <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
@@ -283,14 +337,29 @@ function PatientListControls({
             <option value="withoutPlan">بلا خطة سحابية</option>
           </select>
         </label>
+        <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+          حالة النشاط
+          <select
+            value={activityFilter}
+            onChange={(event) => onActivityFilterChange(event.target.value as PatientActivityFilter)}
+            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+          >
+            <option value="all">كل حالات النشاط</option>
+            <option value="active30">سجّل خلال 30 يومًا</option>
+            <option value="followUp">يحتاج متابعة (3+ أيام)</option>
+            <option value="noLog30">لا سجل خلال 30 يومًا</option>
+          </select>
+        </label>
       </div>
       <p className="mt-2 text-[11px] text-slate-500" role="status">
         عدد النتائج: {resultCount}
       </p>
+      <p className="mt-1 text-[10px] leading-4 text-slate-500">
+        نسبة الإكمال متوسط حسابي للوجبات والمهام في الأيام المسجلة فقط، وليست درجة الالتزام السريري. تغير الوزن فرق وصفي عن وزن البداية.
+      </p>
     </div>
   );
 }
-
 
 // ---------------------------------------------------------------------------
 // الدخول
@@ -1266,12 +1335,17 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   const [patientQuery, setPatientQuery] = useState('');
   const [patientSort, setPatientSort] = useState<PatientListSort>('name');
   const [patientPlanFilter, setPatientPlanFilter] = useState<PatientPlanFilter>('all');
+  const [patientActivityFilter, setPatientActivityFilter] = useState<PatientActivityFilter>('all');
+  const [progressByUid, setProgressByUid] = useState<Record<string, PatientProgressSummary>>({});
+  const [progressError, setProgressError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setActivity([]);
     setActivityError(null);
+    setProgressByUid({});
+    setProgressError(null);
     Promise.all([
       listClinicStaffEntries(clinicId),
       listClinicPatientEntries(clinicId),
@@ -1286,6 +1360,12 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
           if (!cancelled) setActivity(recent);
         } catch (caught: unknown) {
           if (!cancelled) setActivityError(errorText(caught));
+        }
+        try {
+          const progress = await listPatientProgressSummaries(entries);
+          if (!cancelled) setProgressByUid(progress);
+        } catch (caught: unknown) {
+          if (!cancelled) setProgressError(errorText(caught));
         }
       })
       .catch((caught: unknown) => {
@@ -1318,7 +1398,9 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     }),
     patientQuery,
     patientPlanFilter,
+    patientActivityFilter,
     patientSort,
+    progressByUid,
   );
 
   const assign = async (patientUid: string, coachUid: string | null) => {
@@ -1339,11 +1421,13 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   return (
     <div className="flex flex-col gap-4">
       <SubscriptionCard clinicId={clinicId} />
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <DashboardMetric label="مرضى العيادة" value={loading ? '—' : patients.length} note="ضمن نطاق عيادتك فقط" />
         <DashboardMetric label="الأطباء" value={loading ? '—' : coaches.length} note="حسابات الطبيب النشطة في القائمة" />
         <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة على قاعدة المنصة" />
         <DashboardMetric label="بلا طبيب معيّن" value={loading ? '—' : summary.unassignedCount} note="يمكن تعيينهم من قائمة المرضى" />
+        <DashboardMetric label="يحتاجون متابعة" value={loading || progressError ? '—' : Object.values(progressByUid).filter((item) => item.needsFollowUp).length} note="لا سجل منذ 3 أيام أو أكثر" />
+        <DashboardMetric label="نشطون آخر 30 يومًا" value={loading || progressError ? '—' : Object.values(progressByUid).filter((item) => item.hasLogWithin30Days).length} note="لديهم سجل خلال آخر 30 يومًا" />
       </div>
       <RecentActivityCard
         title="آخر نشاط المرضى"
@@ -1408,14 +1492,17 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
           onSortChange={setPatientSort}
           planFilter={patientPlanFilter}
           onPlanFilterChange={setPatientPlanFilter}
+          activityFilter={patientActivityFilter}
+          onActivityFilterChange={setPatientActivityFilter}
           resultCount={visiblePatients.length}
         />
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل المرضى…</p>}
         {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
         {assignError && <p className="mt-3 text-sm font-bold text-red-600">{assignError}</p>}
+        {progressError && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">تعذّر تحميل مؤشرات النشاط: {progressError}</p>}
         {!loading && !error && visiblePatients.length === 0 && (
           <p className="mt-3 text-sm text-slate-500">
-            {patientQuery.trim() || patientPlanFilter !== 'all'
+            {patientQuery.trim() || patientPlanFilter !== 'all' || patientActivityFilter !== 'all'
               ? 'لا توجد نتائج مطابقة للبحث أو التصفية.'
               : 'لا يوجد مرضى في هذا العرض.'}
           </p>
@@ -1427,7 +1514,8 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
                 className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
                 onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
               >
-                {doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}
+                <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
+                <PatientProgressLine summary={progressByUid[patientUid]} />
               </button>
               <select
                 className={`${inputClass} w-auto`}
@@ -1461,12 +1549,17 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const [patientQuery, setPatientQuery] = useState('');
   const [patientSort, setPatientSort] = useState<PatientListSort>('name');
   const [patientPlanFilter, setPatientPlanFilter] = useState<PatientPlanFilter>('all');
+  const [patientActivityFilter, setPatientActivityFilter] = useState<PatientActivityFilter>('all');
+  const [progressByUid, setProgressByUid] = useState<Record<string, PatientProgressSummary>>({});
+  const [progressError, setProgressError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setActivity([]);
     setActivityError(null);
+    setProgressByUid({});
+    setProgressError(null);
     listDoctorPatients(clinicId, uid)
       .then(async (entries) => {
         if (cancelled) return;
@@ -1476,6 +1569,12 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
           if (!cancelled) setActivity(recent);
         } catch (caught: unknown) {
           if (!cancelled) setActivityError(errorText(caught));
+        }
+        try {
+          const progress = await listPatientProgressSummaries(entries);
+          if (!cancelled) setProgressByUid(progress);
+        } catch (caught: unknown) {
+          if (!cancelled) setProgressError(errorText(caught));
         }
       })
       .catch((caught: unknown) => {
@@ -1494,7 +1593,9 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
     patients,
     patientQuery,
     patientPlanFilter,
+    patientActivityFilter,
     patientSort,
+    progressByUid,
   );
 
   return (
@@ -1503,6 +1604,8 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         <DashboardMetric label="عملائي" value={loading ? '—' : patients.length} note="المرضى الذين دعوتهم أنت فقط" />
         <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة سحابيًا" />
         <DashboardMetric label="يحتاجون إعداد خطة" value={loading ? '—' : patients.length - patientsWithPlan} note="لا توجد لهم خطة سحابية بعد" />
+        <DashboardMetric label="يحتاجون متابعة" value={loading ? '—' : Object.values(progressByUid).filter((item) => item.needsFollowUp).length} note="لا سجل منذ 3 أيام أو أكثر" />
+        <DashboardMetric label="نشطون آخر 30 يومًا" value={loading ? '—' : Object.values(progressByUid).filter((item) => item.hasLogWithin30Days).length} note="لديهم سجل خلال آخر 30 يومًا" />
       </div>
       <RecentActivityCard
         title="آخر نشاط مرضاي"
@@ -1527,10 +1630,13 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
           onSortChange={setPatientSort}
           planFilter={patientPlanFilter}
           onPlanFilterChange={setPatientPlanFilter}
+          activityFilter={patientActivityFilter}
+          onActivityFilterChange={setPatientActivityFilter}
           resultCount={visiblePatients.length}
         />
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل عملائي…</p>}
         {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
+        {progressError && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">تعذّر تحميل مؤشرات النشاط: {progressError}</p>}
         {!loading && !error && patients.length === 0 && (
           <p className="mt-3 text-sm text-slate-500">لا يوجد عملاء بعد — أنشئ دعوة لمريضك الأول بالأسفل، وسيظهر هنا تلقائيًا بعد تسجيله.</p>
         )}
@@ -1544,7 +1650,8 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
                 onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
               >
-                {doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}
+                <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
+                <PatientProgressLine summary={progressByUid[patientUid]} />
               </button>
             </li>
           ))}
