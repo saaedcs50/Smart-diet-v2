@@ -4,6 +4,7 @@ import {
   invitationIdForEmail,
   parseInvitation,
   validateInvitationForUser,
+  canReopenInvitationForStaff,
   type Invitation,
 } from '../../src/platform/invitations';
 
@@ -34,6 +35,13 @@ describe('parseInvitation', () => {
 
   it('يرفض حالة غير pending/consumed', () => {
     expect(parseInvitation({ ...base, status: 'expired' })).toBeNull();
+  });
+
+  it('يحفظ وقت الإنشاء من صيغة Supabase snake_case', () => {
+    expect(parseInvitation({ ...base, created_at: '2026-11-14T06:00:00Z' })).toEqual({
+      ...base,
+      createdAt: '2026-11-14T06:00:00Z',
+    });
   });
 
   it('يرفض بريدًا فارغًا أو عيادة فارغة', () => {
@@ -214,5 +222,52 @@ describe.skip('registerWithInvitation — patient document (Firebase mocks — s
       path: 'invitations/patient-x@example.com',
       data: { status: 'consumed' },
     });
+  });
+});
+
+
+describe('canReopenInvitationForStaff', () => {
+  const consumed = { ...base, status: 'consumed' as const };
+
+  it('allows an admin to reopen a consumed clinic invitation', () => {
+    expect(canReopenInvitationForStaff(consumed, {
+      uid: 'admin-a',
+      role: 'admin',
+      clinicId: 'clinic-a',
+    })).toBe(true);
+  });
+
+  it('allows a coach to reopen only their own patient invitation', () => {
+    expect(canReopenInvitationForStaff(consumed, {
+      uid: 'admin-a',
+      role: 'coach',
+      clinicId: 'clinic-a',
+    })).toBe(true);
+    expect(canReopenInvitationForStaff(
+      { ...consumed, createdBy: 'other-coach' },
+      { uid: 'coach-a', role: 'coach', clinicId: 'clinic-a' },
+    )).toBe(false);
+    expect(canReopenInvitationForStaff(
+      { ...consumed, role: 'coach' },
+      { uid: 'admin-a', role: 'coach', clinicId: 'clinic-a' },
+    )).toBe(false);
+  });
+
+  it('rejects other clinics, patients, and already-pending invitations', () => {
+    expect(canReopenInvitationForStaff(consumed, {
+      uid: 'admin-a',
+      role: 'admin',
+      clinicId: 'clinic-b',
+    })).toBe(false);
+    expect(canReopenInvitationForStaff(base, {
+      uid: 'admin-a',
+      role: 'admin',
+      clinicId: 'clinic-a',
+    })).toBe(false);
+    expect(canReopenInvitationForStaff(consumed, {
+      uid: 'patient-x',
+      role: 'patient',
+      clinicId: 'clinic-a',
+    })).toBe(false);
   });
 });

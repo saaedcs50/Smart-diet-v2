@@ -21,7 +21,7 @@ import {
  Search,
  X
 } from 'lucide-react';
-import { PlanConfig, DayLog, PhotoRecord } from '../types';
+import { PlanConfig, DayLog, PhotoRecord, DailyHealthMetrics } from '../types';
 import { calculateBMI, calculateWHtR, findLatestWeight } from '../utils/calculations';
 import { savePhotoToDB, getPhotosForDate, deletePhotoFromDB, processAndCompressImage, compressImageWithStats } from '../utils/indexedDB';
 import { getCycleInfo, getWeightVsRecentAverage, WEIGHT_FLUCTUATION_NOTE } from '../utils/cycleTracking';
@@ -105,6 +105,22 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  }
  };
 
+ const updateDailyHealthMetric = (
+  field: keyof DailyHealthMetrics,
+  rawValue: string,
+ ) => {
+  const value = rawValue.trim() === '' ? null : Number(rawValue);
+  if (value !== null && (!Number.isFinite(value) || value < 0)) return;
+  if (field === 'bodyFatPercent' && value !== null && value > 100) return;
+  onUpdateDay({
+   ...day,
+   healthMetrics: {
+    ...day.healthMetrics,
+    [field]: value,
+   },
+  });
+ };
+
  const currentWeight = day.weight || null;
  const startWeight = plan.startWeight || null;
  const targetWeight = plan.targetWeight || null;
@@ -164,6 +180,15 @@ export const BodyTab: React.FC<BodyTabProps> = ({
   day.meas?.waist, day.meas?.chest, day.meas?.hips, day.meas?.arm, day.meas?.thigh, day.meas?.neck,
  ];
  const showBodyMeasurements = matchesBodySearch(searchQuery, measurementSearchFields);
+ const dailyHealthMetricFields = [
+  'المؤشرات الصحية اليومية', 'نسبة الدهون', 'دهون الجسم', 'سكر الدم',
+  'جلوكوز الدم', 'ضغط الدم', 'body fat', 'blood glucose', 'blood pressure',
+  day.healthMetrics?.bodyFatPercent,
+  day.healthMetrics?.bloodGlucoseMgDl,
+  day.healthMetrics?.systolicBloodPressureMmHg,
+  day.healthMetrics?.diastolicBloodPressureMmHg,
+ ];
+ const showDailyHealthMetrics = matchesBodySearch(searchQuery, dailyHealthMetricFields);
  const labEntries = plan.labTracking?.entries || [];
  const labSearchFields = labEntries.flatMap((entry) => {
   const meta = getLabTestMeta(entry.testId, entry.customName);
@@ -182,7 +207,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  ]);
  const hasSearchMatch = [
   showWeightBanner, showTrajectory, showIndicators, showCycle, showMedical,
-  showMilestones, showBodyMeasurements, showLabs, showPhotos,
+  showMilestones, showBodyMeasurements, showDailyHealthMetrics, showLabs, showPhotos,
  ].some(Boolean);
 
 
@@ -675,6 +700,79 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  </div>
  </div>
  </div>
+ )}
+
+ {/* Daily health readings — recorded only, never interpreted as a diagnosis. */}
+ {showDailyHealthMetrics && (
+  <section className="bg-[var(--app-card)] border border-peacock-pale dark:border-peacock-ink/40 rounded-3xl p-5 space-y-3">
+   <div className="flex items-center gap-2.5">
+    <div className="w-9 h-9 rounded-2xl text-brand-secondary dark:text-peacock-teal-light flex items-center justify-center">
+     <HeartPulse className="w-4 h-4" />
+    </div>
+    <div>
+     <h3 className="font-bold text-brand-text dark:text-peacock-pale text-sm">المؤشرات الصحية اليومية</h3>
+     <p className="text-[11px] text-brand-secondary-text dark:text-peacock-teal-light">تُحفظ مع سجل يوم {currentDate}</p>
+    </div>
+   </div>
+   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <label className="block text-xs font-bold text-brand-secondary-text dark:text-peacock-teal-light">
+     نسبة دهون الجسم (%)
+     <input
+      type="number"
+      min="0"
+      max="100"
+      step="0.1"
+      inputMode="decimal"
+      value={day.healthMetrics?.bodyFatPercent ?? ''}
+      onChange={(event) => updateDailyHealthMetric('bodyFatPercent', event.target.value)}
+      placeholder="مثال: 28.5"
+      className="mt-1 w-full text-sm font-bold p-3 rounded-xl border border-peacock-pale dark:border-peacock-ink/40 bg-[var(--app-bg)] text-brand-text dark:text-peacock-pale"
+     />
+    </label>
+    <label className="block text-xs font-bold text-brand-secondary-text dark:text-peacock-teal-light">
+     سكر الدم (mg/dL)
+     <input
+      type="number"
+      min="0"
+      step="1"
+      inputMode="numeric"
+      value={day.healthMetrics?.bloodGlucoseMgDl ?? ''}
+      onChange={(event) => updateDailyHealthMetric('bloodGlucoseMgDl', event.target.value)}
+      placeholder="مثال: 105"
+      className="mt-1 w-full text-sm font-bold p-3 rounded-xl border border-peacock-pale dark:border-peacock-ink/40 bg-[var(--app-bg)] text-brand-text dark:text-peacock-pale"
+     />
+    </label>
+    <label className="block text-xs font-bold text-brand-secondary-text dark:text-peacock-teal-light">
+     ضغط الدم الانقباضي (mmHg)
+     <input
+      type="number"
+      min="0"
+      step="1"
+      inputMode="numeric"
+      value={day.healthMetrics?.systolicBloodPressureMmHg ?? ''}
+      onChange={(event) => updateDailyHealthMetric('systolicBloodPressureMmHg', event.target.value)}
+      placeholder="مثال: 120"
+      className="mt-1 w-full text-sm font-bold p-3 rounded-xl border border-peacock-pale dark:border-peacock-ink/40 bg-[var(--app-bg)] text-brand-text dark:text-peacock-pale"
+     />
+    </label>
+    <label className="block text-xs font-bold text-brand-secondary-text dark:text-peacock-teal-light">
+     ضغط الدم الانبساطي (mmHg)
+     <input
+      type="number"
+      min="0"
+      step="1"
+      inputMode="numeric"
+      value={day.healthMetrics?.diastolicBloodPressureMmHg ?? ''}
+      onChange={(event) => updateDailyHealthMetric('diastolicBloodPressureMmHg', event.target.value)}
+      placeholder="مثال: 80"
+      className="mt-1 w-full text-sm font-bold p-3 rounded-xl border border-peacock-pale dark:border-peacock-ink/40 bg-[var(--app-bg)] text-brand-text dark:text-peacock-pale"
+     />
+    </label>
+   </div>
+   <p className="text-[11px] leading-relaxed text-brand-secondary-text dark:text-peacock-teal-light">
+    هذه خانات لتسجيل القراءات فقط؛ لا يقدم التطبيق تشخيصًا أو تفسيرًا طبيًا لها. راجع القراءات مع المختص.
+   </p>
+  </section>
  )}
 
  {/* 4. Lab Tests Tracker */}

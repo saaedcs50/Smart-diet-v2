@@ -19,6 +19,7 @@ SET LOCAL ROLE authenticated;
 
 -- OWNER: complete platform visibility and owner-only update paths.
 SELECT set_config('request.jwt.claim.sub','0b8b9208-bd7f-4d26-9613-e35dd277d066',true);
+SELECT set_config('request.jwt.claims','{"sub":"0b8b9208-bd7f-4d26-9613-e35dd277d066","role":"authenticated"}',true);
 DO $test$
 DECLARE n integer;
 BEGIN
@@ -40,6 +41,7 @@ $test$;
 
 -- ADMIN clinic-a: clinic-scoped visibility, but no clinic metadata/owner control.
 SELECT set_config('request.jwt.claim.sub','71d0a9c0-d539-487e-8d32-8af4dd7d5120',true);
+SELECT set_config('request.jwt.claims','{"sub":"71d0a9c0-d539-487e-8d32-8af4dd7d5120","role":"authenticated"}',true);
 DO $test$
 DECLARE n integer;
 BEGIN
@@ -69,6 +71,7 @@ $test$;
 
 -- COACH clinic-a: only the patient assigned to this coach is visible/editable.
 SELECT set_config('request.jwt.claim.sub','809f256f-0a4c-4b1e-af92-a26dd21d7623',true);
+SELECT set_config('request.jwt.claims','{"sub":"809f256f-0a4c-4b1e-af92-a26dd21d7623","role":"authenticated"}',true);
 DO $test$
 DECLARE n integer;
 BEGIN
@@ -101,8 +104,59 @@ BEGIN
 END;
 $test$;
 
+-- Invitation lifecycle: the invitee can consume, but cannot reopen their own invitation.
+SELECT set_config(
+  'request.jwt.claims',
+  '{"sub":"f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8","email":"rls-coach-matrix@example.test","role":"authenticated"}',
+  true
+);
+DO $test$
+DECLARE n integer; reopen_blocked boolean := false;
+BEGIN
+  UPDATE public.invitations
+  SET status = 'consumed'
+  WHERE email = 'rls-coach-matrix@example.test' AND status = 'pending';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN RAISE EXCEPTION 'invitee: pending invitation could not be consumed'; END IF;
+
+  BEGIN
+    UPDATE public.invitations
+    SET status = 'pending'
+    WHERE email = 'rls-coach-matrix@example.test' AND status = 'consumed';
+    GET DIAGNOSTICS n = ROW_COUNT;
+    reopen_blocked := n = 0;
+  EXCEPTION WHEN OTHERS THEN
+    reopen_blocked := true;
+  END;
+  IF NOT reopen_blocked THEN
+    RAISE EXCEPTION 'invitee: consumed invitation was unexpectedly reopened';
+  END IF;
+END;
+$test$;
+
+-- The creating coach may reopen their own consumed patient invitation.
+SELECT set_config('request.jwt.claim.sub','809f256f-0a4c-4b1e-af92-a26dd21d7623',true);
+SELECT set_config(
+  'request.jwt.claims',
+  '{"sub":"809f256f-0a4c-4b1e-af92-a26dd21d7623","role":"authenticated"}',
+  true
+);
+DO $test$
+DECLARE n integer;
+BEGIN
+  UPDATE public.invitations
+  SET status = 'pending'
+  WHERE email = 'rls-coach-matrix@example.test'
+    AND status = 'consumed'
+    AND created_by = '809f256f-0a4c-4b1e-af92-a26dd21d7623';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN RAISE EXCEPTION 'coach: own consumed patient invitation could not be reopened'; END IF;
+END;
+$test$;
+
 -- PATIENT clinic-a: own patient/day data, no clinic subscription table or payments.
 SELECT set_config('request.jwt.claim.sub','f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8',true);
+SELECT set_config('request.jwt.claims','{"sub":"f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8","role":"authenticated"}',true);
 DO $test$
 DECLARE n integer; gate_status text;
 BEGIN
@@ -136,6 +190,7 @@ $test$;
 
 -- PATIENT clinic-b: own patient row only, no clinic-a day logs or subscription data.
 SELECT set_config('request.jwt.claim.sub','d4391923-54a7-4c5a-94b5-3782ff7d1e79',true);
+SELECT set_config('request.jwt.claims','{"sub":"d4391923-54a7-4c5a-94b5-3782ff7d1e79","role":"authenticated"}',true);
 DO $test$
 DECLARE gate_status text;
 BEGIN
@@ -160,6 +215,7 @@ UPDATE public.profiles SET disabled=true
 WHERE id='809f256f-0a4c-4b1e-af92-a26dd21d7623';
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','809f256f-0a4c-4b1e-af92-a26dd21d7623',true);
+SELECT set_config('request.jwt.claims','{"sub":"809f256f-0a4c-4b1e-af92-a26dd21d7623","role":"authenticated"}',true);
 DO $test$
 BEGIN
   IF (SELECT count(*) FROM public.patients) <> 0 THEN RAISE EXCEPTION 'disabled coach: patients visible'; END IF;
@@ -179,6 +235,7 @@ WHERE id='809f256f-0a4c-4b1e-af92-a26dd21d7623';
 UPDATE public.clinics SET status='suspended' WHERE id='clinic-a';
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','809f256f-0a4c-4b1e-af92-a26dd21d7623',true);
+SELECT set_config('request.jwt.claims','{"sub":"809f256f-0a4c-4b1e-af92-a26dd21d7623","role":"authenticated"}',true);
 DO $test$
 BEGIN
   IF (SELECT count(*) FROM public.patients) <> 0 THEN RAISE EXCEPTION 'suspended clinic: patients visible'; END IF;
@@ -193,6 +250,7 @@ $test$;
 RESET ROLE;
 SET LOCAL ROLE anon;
 SELECT set_config('request.jwt.claim.sub','',true);
+SELECT set_config('request.jwt.claims','{"role":"anon"}',true);
 DO $test$
 BEGIN
   IF (SELECT count(*) FROM public.platform_config) <> 1 THEN

@@ -67,6 +67,7 @@ import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
 import { countSkippedPatientMeals, summarizePatientDayLog } from './patientDashboardMetrics';
 import { PatientProgressCharts } from './PatientProgressCharts';
 import { PatientTagsEditor } from './PatientTagsEditor';
+import { InvitationManager } from './InvitationManager';
 import type { PatientTag } from './patientTags';
 import { ClinicSummaryExportButtons } from './ClinicSummaryExportButtons';
 import { isWithinLastCalendarDays, type PatientProgressSummary } from './patientProgressSummary';
@@ -1322,6 +1323,13 @@ function PatientDetail({
                     {daySummary.plannedTasks != null && <span>مهام مكتملة: {daySummary.completedTasks} / {daySummary.plannedTasks}</span>}
                     {log.sleepHours != null && <span>النوم: {log.sleepHours} ساعة</span>}
                     {log.quality && <span>جودة النوم: {log.quality}</span>}
+                    {log.healthMetrics?.bodyFatPercent != null && <span>دهون الجسم: {log.healthMetrics.bodyFatPercent}%</span>}
+                    {log.healthMetrics?.bloodGlucoseMgDl != null && <span>سكر الدم: {log.healthMetrics.bloodGlucoseMgDl} mg/dL</span>}
+                    {(log.healthMetrics?.systolicBloodPressureMmHg != null || log.healthMetrics?.diastolicBloodPressureMmHg != null) && (
+                      <span>
+                        ضغط الدم: {log.healthMetrics?.systolicBloodPressureMmHg ?? '—'}/{log.healthMetrics?.diastolicBloodPressureMmHg ?? '—'} mmHg
+                      </span>
+                    )}
                   </div>
                 </li>
               );
@@ -1737,6 +1745,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         </ul>
       </Card>
       <InviteForm clinicId={clinicId} createdBy={uid} isAdmin />
+      <InvitationManager clinicId={clinicId} uid={uid} isAdmin />
     </div>
   );
 }
@@ -1891,6 +1900,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         doctorName={doctorName}
       />
       <InviteForm clinicId={clinicId} createdBy={uid} isAdmin={false} />
+      <InvitationManager clinicId={clinicId} uid={uid} isAdmin={false} />
     </div>
   );
 }

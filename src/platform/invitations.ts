@@ -66,6 +66,9 @@ export function parseInvitation(data: unknown): Invitation | null {
     clinicId,
     createdBy,
     status,
+    ...(typeof (record.createdAt ?? record.created_at) === 'string'
+      ? { createdAt: (record.createdAt ?? record.created_at) as string }
+      : {}),
   };
 }
 
@@ -117,6 +120,44 @@ export async function createInvitation(input: {
   return id;
 }
 
+export async function listClinicInvitations(
+  clinicId: string,
+  options?: { createdBy?: string; role?: 'patient' | 'coach' | 'admin' },
+): Promise<Invitation[]> {
+  let query = getSupabase()
+    .from('invitations')
+    .select('email, role, clinic_id, created_by, status, created_at')
+    .eq('clinic_id', clinicId);
+
+  if (options?.createdBy) query = query.eq('created_by', options.createdBy);
+  if (options?.role) query = query.eq('role', options.role);
+
+  const { data, error } = await query
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) throw new Error(error.message);
+
+  return (data ?? [])
+    .map(parseInvitation)
+    .filter((item): item is Invitation => item !== null);
+}
+
+/** Mirrors the staff-side UI eligibility; RLS and the database trigger remain authoritative. */
+export function canReopenInvitationForStaff(
+  invitation: Invitation,
+  actor: { uid: string; role: PlatformRole; clinicId: string },
+): boolean {
+  if (invitation.status !== 'consumed') return false;
+  if (actor.role === 'owner') return true;
+  if (actor.clinicId !== invitation.clinicId) return false;
+  if (actor.role === 'admin') {
+    return invitation.role === 'coach' || invitation.role === 'patient';
+  }
+  return actor.role === 'coach' &&
+    invitation.role === 'patient' &&
+    invitation.createdBy === actor.uid;
+}
+
 export async function consumeInvitation(email: string): Promise<void> {
   const { error } = await getSupabase()
     .from('invitations')
@@ -127,11 +168,17 @@ export async function consumeInvitation(email: string): Promise<void> {
 
 // إعادة دعوة: طاقم العيادة يعيد دعوة مستهلكة إلى pending.
 export async function reopenInvitation(email: string): Promise<void> {
-  const { error } = await getSupabase()
+  const { data, error } = await getSupabase()
     .from('invitations')
     .update({ status: 'pending' })
-    .eq('email', invitationIdForEmail(email));
+    .eq('email', invitationIdForEmail(email))
+    .eq('status', 'consumed')
+    .select('email')
+    .maybeSingle();
   if (error) throw new Error(error.message);
+  if (!data) {
+    throw new Error('الدعوة غير مستهلكة أو لا تملك صلاحية إعادة فتحها.');
+  }
 }
 
 // ينشئ ملف المستخدم من دعوة صالحة بعد المصادقة.

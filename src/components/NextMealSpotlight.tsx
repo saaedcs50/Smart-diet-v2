@@ -64,7 +64,7 @@ export const NextMealSpotlight: React.FC<NextMealSpotlightProps> = ({
 
   if (allMealsLogged) {
     return (
-      <div className="bg-gradient-to-br from-peacock-blue/10 via-peacock-blue/5 to-transparent border border-peacock-teal-light/60 dark:border-peacock-indigo-deep/60 rounded-3xl p-4 sm:p-5 flex items-center justify-between gap-3 transition-all">
+      <div id="next-meal-spotlight" className="bg-gradient-to-br from-peacock-blue/10 via-peacock-blue/5 to-transparent border border-peacock-teal-light/60 dark:border-peacock-indigo-deep/60 rounded-3xl p-4 sm:p-5 flex items-center justify-between gap-3 transition-all">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-peacock-blue text-white flex items-center justify-center shrink-0 shadow-sm shadow-peacock-blue/20">
             <CheckCircle2 className="w-5 h-5" />
@@ -83,7 +83,7 @@ export const NextMealSpotlight: React.FC<NextMealSpotlightProps> = ({
   }
 
   return (
-    <div className="bg-gradient-to-br from-white via-rose-50/20 to-peacock-mist/20 dark:from-slate-900 dark:via-rose-950/10 dark:to-peacock-ink-deep/10 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-5 shadow-sm transition-all space-y-3.5">
+    <div id="next-meal-spotlight" className="bg-gradient-to-br from-white via-rose-50/20 to-peacock-mist/20 dark:from-slate-900 dark:via-rose-950/10 dark:to-peacock-ink-deep/10 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-5 shadow-sm transition-all space-y-3.5">
       {/* Header Badge */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">

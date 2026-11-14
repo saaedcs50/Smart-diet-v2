@@ -17,6 +17,7 @@ import {
 import { PlanConfig, DayLog } from '../types';
 import { BRAND } from '../config/brand';
 import { ScoreBreakdown } from '../utils/calculations';
+import { GoalProgressStrip } from './GoalProgressStrip';
 import { isSectionVisible, loadDayLog, getTodayDateString, parseLocalDate, getAllStoredDayLogs } from '../utils/storage';
 import { buildCopiedDayLog, getCopySummary, hasCopyableContent, isDayEmptyOrPartial } from '../utils/dayCopy';
 import { shouldShowCelebration, markCelebrationShown } from '../utils/celebration';
@@ -64,6 +65,7 @@ import { getCycleInfo } from '../utils/cycleTracking';
 import { getTodayFastingStatus } from '../utils/fasting';
 import { HelpButton } from './FeatureHelpModal';
 import { CardCustomizerModal } from './CardCustomizerModal';
+import { FirstThreeDaysGuide } from './FirstThreeDaysGuide';
 
 interface TodayTabProps {
   plan: PlanConfig;
@@ -214,6 +216,18 @@ export const TodayTab: React.FC<TodayTabProps> = ({
           <span className="hidden sm:inline">تخصيص العرض</span>
         </button>
       </div>
+
+      {/* 1.1 Persistent target and seven-day adherence strip */}
+      <GoalProgressStrip plan={plan} currentDate={currentDate} day={day} />
+
+      {/* Getting started: first three active days for new clients */}
+      {isToday && (
+        <FirstThreeDaysGuide
+          todayDate={todayStr}
+          plan={plan}
+          onOpenNotifications={onOpenNotifications}
+        />
+      )}
 
       {/* 2. Apple Fitness / iOS Style Horizontal Week Strip Calendar */}
       {onDateChange && (
