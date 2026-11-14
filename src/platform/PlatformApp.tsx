@@ -1426,8 +1426,8 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         <DashboardMetric label="الأطباء" value={loading ? '—' : coaches.length} note="حسابات الطبيب النشطة في القائمة" />
         <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة على قاعدة المنصة" />
         <DashboardMetric label="بلا طبيب معيّن" value={loading ? '—' : summary.unassignedCount} note="يمكن تعيينهم من قائمة المرضى" />
-        <DashboardMetric label="يحتاجون متابعة" value={loading ? '—' : Object.values(progressByUid).filter((item) => item.needsFollowUp).length} note="لا سجل منذ 3 أيام أو أكثر" />
-        <DashboardMetric label="نشطون آخر 30 يومًا" value={loading ? '—' : Object.values(progressByUid).filter((item) => item.hasLogWithin30Days).length} note="لديهم سجل خلال آخر 30 يومًا" />
+        <DashboardMetric label="يحتاجون متابعة" value={loading || progressError ? '—' : Object.values(progressByUid).filter((item) => item.needsFollowUp).length} note="لا سجل منذ 3 أيام أو أكثر" />
+        <DashboardMetric label="نشطون آخر 30 يومًا" value={loading || progressError ? '—' : Object.values(progressByUid).filter((item) => item.hasLogWithin30Days).length} note="لديهم سجل خلال آخر 30 يومًا" />
       </div>
       <RecentActivityCard
         title="آخر نشاط المرضى"
