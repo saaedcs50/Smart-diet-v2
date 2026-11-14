@@ -67,6 +67,7 @@ import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
 import { countSkippedPatientMeals, summarizePatientDayLog } from './patientDashboardMetrics';
 import { PatientProgressCharts } from './PatientProgressCharts';
 import { PatientTagsEditor } from './PatientTagsEditor';
+import { InvitationManager } from './InvitationManager';
 import type { PatientTag } from './patientTags';
 import { ClinicSummaryExportButtons } from './ClinicSummaryExportButtons';
 import { isWithinLastCalendarDays, type PatientProgressSummary } from './patientProgressSummary';
@@ -1744,6 +1745,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         </ul>
       </Card>
       <InviteForm clinicId={clinicId} createdBy={uid} isAdmin />
+      <InvitationManager clinicId={clinicId} uid={uid} isAdmin />
     </div>
   );
 }
@@ -1898,6 +1900,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         doctorName={doctorName}
       />
       <InviteForm clinicId={clinicId} createdBy={uid} isAdmin={false} />
+      <InvitationManager clinicId={clinicId} uid={uid} isAdmin={false} />
     </div>
   );
 }
