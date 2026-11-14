@@ -2,6 +2,31 @@ import type { DayLog } from '../types';
 import { hasAnyDayActivity } from './streakReminder';
 import { parseLocalDate } from './storage';
 
+export function getFirstActivityDate(
+  dayLogs: Record<string, DayLog>,
+  todayDate: string,
+): string | null {
+  return Object.entries(dayLogs)
+    .filter(([date, log]) => date <= todayDate && hasAnyDayActivity(log))
+    .map(([date]) => date)
+    .sort((a, b) => a.localeCompare(b))[0] ?? null;
+}
+
+export function isValidFirstDaysStartDate(
+  value: string | undefined,
+  todayDate: string,
+): value is string {
+  if (!value || value.length !== 10 || value[4] !== '-' || value[7] !== '-' || value > todayDate) return false;
+  const digits = value.slice(0, 4) + value.slice(5, 7) + value.slice(8, 10);
+  if (![...digits].every((digit) => digit >= '0' && digit <= '9')) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const parsed = parseLocalDate(value);
+  return Number.isFinite(parsed.getTime()) &&
+    parsed.getFullYear() === year &&
+    parsed.getMonth() + 1 === month &&
+    parsed.getDate() === day;
+}
+
 export interface FirstThreeDaysGuideState {
   visible: boolean;
   startDate: string;
@@ -20,16 +45,16 @@ export interface FirstThreeDaysGuideState {
 export function getFirstThreeDaysGuideState(input: {
   todayDate: string;
   dayLogs: Record<string, DayLog>;
+  startedAtDate?: string;
   notificationsEnabled: boolean;
   mealViewed: boolean;
 }): FirstThreeDaysGuideState {
   const today = parseLocalDate(input.todayDate);
   const validToday = Number.isFinite(today.getTime());
-  const firstActivityDate = Object.entries(input.dayLogs)
-    .filter(([date, log]) => date <= input.todayDate && hasAnyDayActivity(log))
-    .map(([date]) => date)
-    .sort((a, b) => a.localeCompare(b))[0];
-  const startDate = firstActivityDate ?? input.todayDate;
+  const firstActivityDate = getFirstActivityDate(input.dayLogs, input.todayDate);
+  const startDate = isValidFirstDaysStartDate(input.startedAtDate, input.todayDate)
+    ? input.startedAtDate
+    : firstActivityDate ?? input.todayDate;
   const start = parseLocalDate(startDate);
 
   const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());

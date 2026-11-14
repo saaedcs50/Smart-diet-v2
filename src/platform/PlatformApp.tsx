@@ -1310,6 +1310,9 @@ function PatientDetail({
           <ul className="mt-3 flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-200">
             {entries.slice(0, visibleEntryCount).map(({ date, log }) => {
               const daySummary = summarizePatientDayLog(log, plan);
+              const mealNotes = Object.entries(log.meals ?? {}).filter(
+                ([, mealLog]) => typeof mealLog.reason === 'string' && mealLog.reason.trim().length > 0,
+              );
               return (
                 <li key={date} className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1331,6 +1334,17 @@ function PatientDetail({
                       </span>
                     )}
                   </div>
+                  {mealNotes.length > 0 && (
+                    <div className="mt-2 rounded-lg bg-amber-50/70 p-2.5 text-xs text-slate-700 dark:bg-amber-950/20 dark:text-slate-200">
+                      <p className="mb-1 font-bold">ملاحظات الوجبات:</p>
+                      <ul className="space-y-1">
+                        {mealNotes.map(([mealId, mealLog]) => {
+                          const mealName = plan?.meals?.find((item) => item.id === mealId)?.name ?? mealId;
+                          return <li key={mealId}><strong>{mealName}:</strong> {mealLog.reason}</li>;
+                        })}
+                      </ul>
+                    </div>
+                  )}
                 </li>
               );
             })}

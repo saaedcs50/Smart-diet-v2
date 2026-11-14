@@ -60,4 +60,66 @@ describe('first three days starter guide', () => {
     });
     expect(state.weightLogged).toBe(false);
   });
+
+  it('keeps the onboarding window anchored to its persisted start date before any activity exists', () => {
+    const state = getFirstThreeDaysGuideState({
+      todayDate: '2026-11-14',
+      startedAtDate: '2026-11-12',
+      dayLogs: {},
+      notificationsEnabled: false,
+      mealViewed: false,
+    });
+    expect(state.startDate).toBe('2026-11-12');
+    expect(state.dayNumber).toBe(3);
+    expect(state.visible).toBe(true);
+  });
+
+  it('does not restart the onboarding window when the first activity is logged later', () => {
+    const logs = {
+      '2026-11-14': { ...createEmptyDayLog(), weight: 82 },
+    };
+    const state = getFirstThreeDaysGuideState({
+      todayDate: '2026-11-14',
+      startedAtDate: '2026-11-12',
+      dayLogs: logs,
+      notificationsEnabled: false,
+      mealViewed: false,
+    });
+    expect(state.startDate).toBe('2026-11-12');
+    expect(state.dayNumber).toBe(3);
+  });
+
+  it('hides after the persisted three-day window ends even if no activity was recorded', () => {
+    const state = getFirstThreeDaysGuideState({
+      todayDate: '2026-11-15',
+      startedAtDate: '2026-11-12',
+      dayLogs: {},
+      notificationsEnabled: false,
+      mealViewed: false,
+    });
+    expect(state.dayNumber).toBe(4);
+    expect(state.visible).toBe(false);
+  });
+
+  it('rejects impossible and future persisted dates', () => {
+    const impossible = getFirstThreeDaysGuideState({
+      todayDate: '2026-11-14',
+      startedAtDate: '2026-02-31',
+      dayLogs: {},
+      notificationsEnabled: false,
+      mealViewed: false,
+    });
+    expect(impossible.startDate).toBe('2026-11-14');
+    expect(impossible.dayNumber).toBe(1);
+
+    const future = getFirstThreeDaysGuideState({
+      todayDate: '2026-11-14',
+      startedAtDate: '2026-11-15',
+      dayLogs: {},
+      notificationsEnabled: false,
+      mealViewed: false,
+    });
+    expect(future.startDate).toBe('2026-11-14');
+    expect(future.dayNumber).toBe(1);
+  });
 });
