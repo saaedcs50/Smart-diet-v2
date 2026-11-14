@@ -111,6 +111,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  ) => {
   const value = rawValue.trim() === '' ? null : Number(rawValue);
   if (value !== null && (!Number.isFinite(value) || value < 0)) return;
+  if (field === 'bodyFatPercent' && value !== null && value > 100) return;
   onUpdateDay({
    ...day,
    healthMetrics: {

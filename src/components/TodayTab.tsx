@@ -17,6 +17,7 @@ import {
 import { PlanConfig, DayLog } from '../types';
 import { BRAND } from '../config/brand';
 import { ScoreBreakdown } from '../utils/calculations';
+import { GoalProgressStrip } from './GoalProgressStrip';
 import { isSectionVisible, loadDayLog, getTodayDateString, parseLocalDate, getAllStoredDayLogs } from '../utils/storage';
 import { buildCopiedDayLog, getCopySummary, hasCopyableContent, isDayEmptyOrPartial } from '../utils/dayCopy';
 import { shouldShowCelebration, markCelebrationShown } from '../utils/celebration';
@@ -214,6 +215,9 @@ export const TodayTab: React.FC<TodayTabProps> = ({
           <span className="hidden sm:inline">تخصيص العرض</span>
         </button>
       </div>
+
+      {/* 1.1 Persistent target and seven-day adherence strip */}
+      <GoalProgressStrip plan={plan} currentDate={currentDate} day={day} />
 
       {/* 2. Apple Fitness / iOS Style Horizontal Week Strip Calendar */}
       {onDateChange && (
