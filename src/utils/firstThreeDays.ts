@@ -13,7 +13,7 @@ export function getFirstActivityDate(
 }
 
 function isValidStartDate(value: string | undefined, todayDate: string): value is string {
-  if (!value || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value) || value > todayDate) return false;
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value) || value > todayDate) return false;
   return Number.isFinite(parseLocalDate(value).getTime());
 }
 

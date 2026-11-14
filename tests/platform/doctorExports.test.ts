@@ -20,7 +20,7 @@ function fixture(name = 'Patient A'): DoctorExportPatient {
     targetWaist: 80,
     freezeDaysPerMonth: 2,
     scoreWeights: {},
-    meals: [{ name: 'Breakfast', items: 'Eggs and toast' }],
+    meals: [{ id: 'breakfast', name: 'Breakfast', items: 'Eggs and toast' }],
     checklist: [{ label: 'Drink water' }],
     supplements: [],
     tips: [],
@@ -175,7 +175,7 @@ describe('doctor data exports', () => {
     const mealNotesIndex = dailyHeader.indexOf('Meal notes (JSON)');
     expect(JSON.parse(String(dailyRow[mealNotesIndex]))).toEqual([{
       mealId: 'breakfast',
-      mealName: 'breakfast',
+      mealName: 'Breakfast',
       note: 'أكلت بره: كشري',
     }]);
     expect(dailyRow[dailyHeader.indexOf('Body fat (%)')]).toBe(31.4);
