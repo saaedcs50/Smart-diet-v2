@@ -33,6 +33,21 @@ export function localDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+/** True when a timestamp falls within the latest N local calendar days, including today. */
+export function isWithinLastCalendarDays(
+  timestamp: string | undefined,
+  days: number,
+  today = new Date(),
+): boolean {
+  if (!timestamp || !Number.isFinite(days) || days < 1) return false;
+  const date = new Date(timestamp);
+  if (!Number.isFinite(date.getTime())) return false;
+  const cutoff = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  cutoff.setDate(cutoff.getDate() - (Math.floor(days) - 1));
+  const createdKey = localDateKey(date);
+  return createdKey >= localDateKey(cutoff) && createdKey <= localDateKey(today);
+}
+
 function parseLocalDate(dateKey: string): Date | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return null;
   const [year, month, day] = dateKey.split('-').map(Number);
