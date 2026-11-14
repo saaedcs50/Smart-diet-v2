@@ -64,6 +64,7 @@ import { withStorageScope } from '../utils/storageScope';
 import { DoctorExportButtons } from './DoctorExportButtons';
 import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
 import { summarizePatientDayLog } from './patientDashboardMetrics';
+import { PatientProgressCharts } from './PatientProgressCharts';
 
 type Route =
   | { view: 'login' }
@@ -929,6 +930,7 @@ function PatientDetail({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [shownUid, setShownUid] = useState(patientUid);
+  const [visibleEntryCount, setVisibleEntryCount] = useState(30);
 
   // إعادة تعيين أثناء التصيير عند تبديل المريض (نمط React المدعوم
   // «ضبط الحالة أثناء التصيير») — حتى لا تعرض بيانات المريض السابق
@@ -938,6 +940,7 @@ function PatientDetail({
     setDoc(null);
     setPlan(null);
     setEntries([]);
+    setVisibleEntryCount(30);
     setError(null);
     setLoading(true);
   }
@@ -1024,6 +1027,7 @@ function PatientDetail({
           <p className="mt-3 text-sm text-slate-500">لا توجد خطة سحابية بعد لهذا المريض.</p>
         )}
       </Card>
+      <PatientProgressCharts entries={entries} plan={plan} />
       <Card>
         <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
           سجلات الأيام ({entries.length})
@@ -1032,7 +1036,7 @@ function PatientDetail({
           <p className="mt-2 text-sm text-slate-500">لا توجد سجلات أيام سحابية بعد.</p>
         ) : (
           <ul className="mt-3 flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-200">
-            {entries.slice(0, 30).map(({ date, log }) => {
+            {entries.slice(0, visibleEntryCount).map(({ date, log }) => {
               const daySummary = summarizePatientDayLog(log, plan);
               return (
                 <li key={date} className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
@@ -1052,6 +1056,15 @@ function PatientDetail({
               );
             })}
           </ul>
+        )}
+        {entries.length > visibleEntryCount && (
+          <button
+            type="button"
+            onClick={() => setVisibleEntryCount((count) => Math.min(entries.length, count + 30))}
+            className="mt-3 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 dark:border-slate-700 dark:text-slate-200"
+          >
+            عرض 30 سجلًا إضافيًا ({entries.length - visibleEntryCount} متبقٍ)
+          </button>
         )}
       </Card>
       <AdherenceSection
