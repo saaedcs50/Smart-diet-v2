@@ -89,6 +89,7 @@ export interface PatientDoc {
   profile: { clientName: string };
   plan?: PlanConfig;
   invitedBy?: string;
+  createdAt?: string;
   tags?: PatientTag[];
   updatedAt?: string;
   updatedBy?: string;
@@ -318,6 +319,7 @@ function rowToPatientDoc(row: Record<string, unknown>): PatientDoc {
   };
   if (row.plan != null) doc.plan = row.plan as PlanConfig;
   if (row.invited_by != null) doc.invitedBy = row.invited_by as string;
+  if (typeof row.created_at === 'string') doc.createdAt = row.created_at;
   doc.tags = normalizePatientTags(row.tags);
   return doc;
 }
