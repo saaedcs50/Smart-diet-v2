@@ -16,7 +16,9 @@ export function isValidFirstDaysStartDate(
   value: string | undefined,
   todayDate: string,
 ): value is string {
-  if (!value || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value) || value > todayDate) return false;
+  if (!value || value.length !== 10 || value[4] !== '-' || value[7] !== '-' || value > todayDate) return false;
+  const digits = value.slice(0, 4) + value.slice(5, 7) + value.slice(8, 10);
+  if (![...digits].every((digit) => digit >= '0' && digit <= '9')) return false;
   const [year, month, day] = value.split('-').map(Number);
   const parsed = parseLocalDate(value);
   return Number.isFinite(parsed.getTime()) &&
