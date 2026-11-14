@@ -1620,28 +1620,37 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         )}
         <ul className="mt-3 flex flex-col gap-2">
           {visiblePatients.map(({ uid: patientUid, doc }) => (
-            <li key={patientUid} className="flex items-center gap-2">
-              <button
-                className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
-                onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
-              >
-                <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
-                <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
-              </button>
-              <select
-                className={`${inputClass} w-auto`}
-                aria-label={`طبيب ${doc.profile.clientName}`}
-                value={doc.invitedBy && coachUids.has(doc.invitedBy) ? doc.invitedBy : ''}
-                disabled={assigningUid === patientUid}
-                onChange={(event) => void assign(patientUid, event.target.value === '' ? null : event.target.value)}
-              >
-                <option value="">بلا طبيب</option>
-                {coaches.map((coach) => (
-                  <option key={coach.uid} value={coach.uid}>
-                    {coach.doc.displayName ?? coach.doc.email ?? 'طبيب بلا اسم'}
-                  </option>
+            <li key={patientUid} className="rounded-xl border border-slate-200 p-2 dark:border-slate-700">
+              <div className="flex items-center gap-2">
+                <button
+                  className="min-w-0 flex-1 rounded-xl px-2 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800"
+                  onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
+                >
+                  <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
+                  <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
+                </button>
+                <select
+                  className={`${inputClass} w-auto max-w-[9rem]`}
+                  aria-label={`طبيب ${doc.profile.clientName}`}
+                  value={doc.invitedBy && coachUids.has(doc.invitedBy) ? doc.invitedBy : ''}
+                  disabled={assigningUid === patientUid}
+                  onChange={(event) => void assign(patientUid, event.target.value === '' ? null : event.target.value)}
+                >
+                  <option value="">بلا طبيب</option>
+                  {coaches.map((coach) => (
+                    <option key={coach.uid} value={coach.uid}>
+                      {coach.doc.displayName ?? coach.doc.email ?? 'طبيب بلا اسم'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <PatientTagsEditor
+                patientUid={patientUid}
+                tags={doc.tags}
+                onSaved={(savedUid, tags) => setPatients((current) => current.map((item) =>
+                  item.uid === savedUid ? { ...item, doc: { ...item.doc, tags } } : item
                 ))}
-              </select>
+              />
             </li>
           ))}
         </ul>
@@ -1764,14 +1773,21 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         )}
         <ul className="mt-3 flex flex-col gap-2">
           {visiblePatients.map(({ uid: patientUid, doc }) => (
-            <li key={patientUid}>
+            <li key={patientUid} className="rounded-xl border border-slate-200 p-2 dark:border-slate-700">
               <button
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
+                className="w-full rounded-xl px-2 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800"
                 onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
               >
                 <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
                 <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
               </button>
+              <PatientTagsEditor
+                patientUid={patientUid}
+                tags={doc.tags}
+                onSaved={(savedUid, tags) => setPatients((current) => current.map((item) =>
+                  item.uid === savedUid ? { ...item, doc: { ...item.doc, tags } } : item
+                ))}
+              />
             </li>
           ))}
         </ul>
