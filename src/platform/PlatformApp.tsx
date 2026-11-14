@@ -366,7 +366,7 @@ function PatientProgressLine({
       {targetDifference != null ? ` · الفرق عن الهدف ${targetDifference > 0 ? '+' : ''}${targetDifference} كجم` : ''}
       <br />
       الماء: {summary.currentWaterMl ?? '—'} / {typeof waterGoal === 'number' ? waterGoal : '—'} مل
-      {' · '}إكمال الوجبات/المهام آخر 7 أيام: {summary.completion7d == null ? '—' : `${summary.completion7d}%`}
+      {' · '}إكمال الوجبات/الماء/المهام آخر 7 أيام: {summary.completion7d == null ? '—' : `${summary.completion7d}%`}
       {summary.completion7d != null ? ` في ${summary.completionDays7d} أيام مسجلة` : ''}
     </span>
   );
