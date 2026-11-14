@@ -60,6 +60,8 @@ export const StorageKeys = {
   accessibilityHighContrast: () => ns('accessibility_high_contrast'),
   darkMode: () => ns('dark_mode'),
   onboardingSeen: () => ns('onboarding_seen'),
+  /** إقرار العميل بأنه اطّلع على الوجبة التالية ضمن دليل أول ثلاثة أيام */
+  firstDaysMealViewed: () => ns('first_days_meal_viewed'),
   coachOnboardingSeen: () => ns('coach_onboarding_seen'),
   coachSessionToken: () => ns('coach_session_token'),
   coachUnlocked: () => ns('coach_unlocked'),

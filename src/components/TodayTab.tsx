@@ -65,6 +65,7 @@ import { getCycleInfo } from '../utils/cycleTracking';
 import { getTodayFastingStatus } from '../utils/fasting';
 import { HelpButton } from './FeatureHelpModal';
 import { CardCustomizerModal } from './CardCustomizerModal';
+import { FirstThreeDaysGuide } from './FirstThreeDaysGuide';
 
 interface TodayTabProps {
   plan: PlanConfig;
@@ -218,6 +219,15 @@ export const TodayTab: React.FC<TodayTabProps> = ({
 
       {/* 1.1 Persistent target and seven-day adherence strip */}
       <GoalProgressStrip plan={plan} currentDate={currentDate} day={day} />
+
+      {/* Getting started: first three active days for new clients */}
+      {isToday && (
+        <FirstThreeDaysGuide
+          todayDate={todayStr}
+          plan={plan}
+          onOpenNotifications={onOpenNotifications}
+        />
+      )}
 
       {/* 2. Apple Fitness / iOS Style Horizontal Week Strip Calendar */}
       {onDateChange && (
