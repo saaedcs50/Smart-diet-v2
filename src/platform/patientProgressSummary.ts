@@ -13,7 +13,7 @@ export interface PatientProgressSummary {
   daysSinceLastLog: number | null;
   hasLogWithin30Days: boolean;
   needsFollowUp: boolean;
-  /** Mean meal/checklist completion across recorded, comparable days in the last 7 days. */
+  /** Mean meal, water and checklist completion across comparable recorded days in the last 7 days. */
   completion7d: number | null;
   completionDays7d: number;
   /** Latest explicitly recorded weight in the queried window. */
