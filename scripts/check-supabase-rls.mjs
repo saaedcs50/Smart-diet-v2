@@ -78,7 +78,8 @@ for (const table of requiredTables) {
     'ALTER\\s+TABLE\\s+public\\.' + table + '\\s+ENABLE\\s+ROW\\s+LEVEL\\s+SECURITY',
     'i',
   );
-  // Tables may be introduced by later migrations; inspect the full migration history.\n  if (!rlsPattern.test(allSql)) {
+  // Tables may be introduced by later migrations; inspect the full migration history.
+  if (!rlsPattern.test(allSql)) {
     failures.push(table + ': explicit ENABLE ROW LEVEL SECURITY statement missing');
   }
 
