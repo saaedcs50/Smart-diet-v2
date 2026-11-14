@@ -216,6 +216,18 @@ function csvSafe(value: ExportCell): string {
   if (/[",\\r\\n]/.test(text)) text = '"' + text.replace(/"/g, '""') + '"';
   return text;
 }
+/** Export one or more worksheet-style tables as a UTF-8 CSV. */
+export function buildCsvFromSheets(sheets: ExportSheet[]): string {
+  const rows: ExportCell[][] = [];
+  for (const sheet of sheets) {
+    if (sheet.rows.length === 0) continue;
+    if (rows.length > 0) rows.push([]);
+    if (sheets.length > 1) rows.push([sheet.name]);
+    rows.push(...sheet.rows);
+  }
+  return '\uFEFF' + rows.map((row) => row.map(csvSafe).join(',')).join('\r\n');
+}
+
 export function buildDoctorCsv(patients: DoctorExportPatient[]): string {
   const [patientsSheet, daySheet] = buildDoctorExportSheets(patients);
   const dayHeader = daySheet.rows[0];
@@ -388,8 +400,7 @@ function zipStore(files: Array<{ name: string; content: string }>): Uint8Array {
   return output;
 }
 
-export function buildDoctorXlsx(patients: DoctorExportPatient[]): Uint8Array {
-  const sheets = buildDoctorExportSheets(patients);
+export function buildXlsxFromSheets(sheets: ExportSheet[]): Uint8Array {
   const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
@@ -420,6 +431,10 @@ export function buildDoctorXlsx(patients: DoctorExportPatient[]): Uint8Array {
     })),
   ];
   return zipStore(files);
+}
+
+export function buildDoctorXlsx(patients: DoctorExportPatient[]): Uint8Array {
+  return buildXlsxFromSheets(buildDoctorExportSheets(patients));
 }
 
 export function buildDoctorPdfHtml(patients: DoctorExportPatient[], clinicName: string, doctorName: string): string {
