@@ -283,17 +283,49 @@ function filterAndSortPatients(
     });
 }
 
-function PatientProgressLine({ summary }: { summary?: PatientProgressSummary }) {
+function PatientProgressLine({
+  summary,
+  plan,
+}: {
+  summary?: PatientProgressSummary;
+  plan?: PlanConfig;
+}) {
   if (!summary) {
     return <span className="mt-1 block text-[11px] font-normal text-slate-500">مؤشرات النشاط غير متاحة حاليًا.</span>;
   }
+
+  const status = !summary.hasLogWithin30Days
+    ? { label: 'خامل — لا سجل خلال 30 يومًا', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }
+    : summary.needsFollowUp
+      ? { label: 'يحتاج متابعة', className: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200' }
+      : { label: 'نشط', className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200' };
+
+  const startWeight = typeof plan?.startWeight === 'number' && Number.isFinite(plan.startWeight)
+    ? plan.startWeight
+    : null;
+  const targetWeight = typeof plan?.targetWeight === 'number' && Number.isFinite(plan.targetWeight)
+    ? plan.targetWeight
+    : null;
+  const targetDifference = summary.currentWeightKg != null && targetWeight != null
+    ? Math.round((summary.currentWeightKg - targetWeight) * 10) / 10
+    : null;
+  const waterGoal = plan?.dailyWaterGoalMl ?? plan?.waterGoalMl;
+
   return (
-    <span className="mt-1 block text-[11px] font-normal leading-5 text-slate-500">
+    <span className="mt-1 block text-[11px] font-normal leading-5 text-slate-600 dark:text-slate-300">
+      <span className={`mb-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${status.className}`}>
+        {status.label}
+      </span>
+      <br />
       آخر تسجيل: {summary.lastLogDate ?? 'لا يوجد خلال 30 يومًا'}
       {summary.daysSinceLastLog != null ? ` — منذ ${summary.daysSinceLastLog} يوم` : ''}
-      {' · '}إكمال آخر 7 أيام (وجبات/مهام): {summary.completion7d == null ? '—' : `${summary.completion7d}%`}
+      <br />
+      الوزن (بداية ← حالي ← هدف): {startWeight ?? '—'} ← {summary.currentWeightKg ?? '—'} ← {targetWeight ?? '—'} كجم
+      {targetDifference != null ? ` · الفرق عن الهدف ${targetDifference > 0 ? '+' : ''}${targetDifference} كجم` : ''}
+      <br />
+      الماء: {summary.currentWaterMl ?? '—'} / {typeof waterGoal === 'number' ? waterGoal : '—'} مل
+      {' · '}إكمال الوجبات/المهام آخر 7 أيام: {summary.completion7d == null ? '—' : `${summary.completion7d}%`}
       {summary.completion7d != null ? ` في ${summary.completionDays7d} أيام مسجلة` : ''}
-      {' · '}تغير الوزن: {summary.weightChangeKg == null ? '—' : `${summary.weightChangeKg > 0 ? '+' : ''}${summary.weightChangeKg} كجم`}
     </span>
   );
 }
@@ -1548,7 +1580,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
                 onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
               >
                 <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
-                <PatientProgressLine summary={progressByUid[patientUid]} />
+                <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
               </button>
               <select
                 className={`${inputClass} w-auto`}
@@ -1687,7 +1719,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
                 onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
               >
                 <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
-                <PatientProgressLine summary={progressByUid[patientUid]} />
+                <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
               </button>
             </li>
           ))}
