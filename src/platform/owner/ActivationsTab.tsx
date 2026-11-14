@@ -8,6 +8,7 @@ import {
   type PendingActivation,
 } from '../owner';
 import type { SubscriptionPlan } from '../firestore';
+import { EmptyState } from '../../components/EmptyState';
 
 const PLAN_LABELS: Record<SubscriptionPlan, string> = {
   permanent: 'دائم',
@@ -94,10 +95,11 @@ export function ActivationsTab() {
           {error}
         </p>
       )}
-      {items.length === 0 && (
-        <p className="p-4 text-center text-sm text-slate-500">
-          لا توجد طلبات تفعيل معلقة.
-        </p>
+      {!loading && !error && items.length === 0 && (
+        <EmptyState
+          title="لا توجد طلبات تفعيل معلّقة"
+          description="ستظهر هنا طلبات تفعيل اشتراكات العيادات عند إرسالها."
+        />
       )}
       {items.map((a) => {
         const k = key(a);

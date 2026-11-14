@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listAllClinics, type ClinicSummary } from '../owner';
 import type { PaymentRecord } from '../firestore';
+import { EmptyState } from '../../components/EmptyState';
 
 type Filter = 'all' | 'pending' | 'approved' | 'rejected';
 
@@ -124,9 +125,11 @@ export function PaymentHistoryTab() {
       {loading ? (
         <p className="p-6 text-center text-sm text-slate-500">جارٍ تحميل السجل…</p>
       ) : filtered.length === 0 ? (
-        <p className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900">
-          لا توجد سجلات في هذا التصنيف.
-        </p>
+        <EmptyState
+          title="لا توجد سجلات في هذا التصنيف"
+          description="اختر تصنيفًا آخر أو عد إلى عرض جميع عمليات الدفع."
+          className="mt-3"
+        />
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
           {filtered.map((item) => (

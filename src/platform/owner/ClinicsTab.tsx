@@ -10,6 +10,7 @@ import {
 } from '../owner';
 import type { SubscriptionPlan } from '../firestore';
 import { daysRemaining } from '../ownerDashboard';
+import { EmptyState } from '../../components/EmptyState';
 
 const PLAN_LABELS: Record<SubscriptionPlan, string> = {
   permanent: 'دائم',
@@ -220,24 +221,20 @@ export function ClinicsTab() {
       {loading ? (
         <p className="p-6 text-center text-sm text-slate-500">جارٍ تحميل العيادات…</p>
       ) : clinics.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-900">
-          <h3 className="font-bold text-slate-900 dark:text-slate-100">لا توجد عيادات بعد</h3>
-          <p className="mt-2 text-sm text-slate-500">أنشئ أول عيادة من تبويب «عيادة جديدة»؛ ستظهر هنا بعد نجاح الحفظ.</p>
-        </div>
+        <EmptyState
+          title="لا توجد عيادات بعد"
+          description="أنشئ أول عيادة من تبويب «عيادة جديدة»؛ ستظهر هنا بعد نجاح الحفظ."
+        />
       ) : visibleClinics.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center dark:border-slate-800 dark:bg-slate-900">
-          <p className="text-sm font-bold text-slate-800 dark:text-slate-100">لا توجد نتائج مطابقة</p>
-          <button
-            type="button"
-            onClick={() => {
-              setQuery('');
-              setStatusFilter('all');
-            }}
-            className="mt-3 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold dark:border-slate-700"
-          >
-            مسح البحث والتصفية
-          </button>
-        </div>
+        <EmptyState
+          title="لا توجد نتائج مطابقة"
+          description="غيّر كلمات البحث أو أعد ضبط حالة الاشتراك."
+          actionLabel="مسح البحث والتصفية"
+          onAction={() => {
+            setQuery('');
+            setStatusFilter('all');
+          }}
+        />
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-xs text-slate-500">عرض {visibleClinics.length} من {clinics.length} عيادة.</p>
