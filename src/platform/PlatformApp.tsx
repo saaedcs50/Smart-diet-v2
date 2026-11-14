@@ -66,6 +66,7 @@ import { DoctorExportButtons } from './DoctorExportButtons';
 import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
 import { summarizePatientDayLog } from './patientDashboardMetrics';
 import { PatientProgressCharts } from './PatientProgressCharts';
+import { ClinicSummaryExportButtons } from './ClinicSummaryExportButtons';
 import type { PatientProgressSummary } from './patientProgressSummary';
 import { normalizeBodySearchQuery } from '../utils/bodySearch';
 
@@ -1429,6 +1430,14 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         <DashboardMetric label="يحتاجون متابعة" value={loading || progressError ? '—' : Object.values(progressByUid).filter((item) => item.needsFollowUp).length} note="لا سجل منذ 3 أيام أو أكثر" />
         <DashboardMetric label="نشطون آخر 30 يومًا" value={loading || progressError ? '—' : Object.values(progressByUid).filter((item) => item.hasLogWithin30Days).length} note="لديهم سجل خلال آخر 30 يومًا" />
       </div>
+      <ClinicSummaryExportButtons
+        clinicId={clinicId}
+        patients={patients}
+        staff={coaches}
+        progressByUid={progressByUid}
+        loading={loading}
+        progressAvailable={!loading && !progressError}
+      />
       <RecentActivityCard
         title="آخر نشاط المرضى"
         activity={activity}

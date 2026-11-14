@@ -66,6 +66,7 @@ describe('patient progress follow-up summaries', () => {
     expect(summary.completionDays7d).toBe(1);
     expect(summary.currentWeightKg).toBe(87.5);
     expect(summary.weightChangeKg).toBe(-2.5);
+    expect(summary.currentWaterMl).toBe(0);
   });
 
   it('ignores malformed dates and dates outside the 30-day window', () => {
