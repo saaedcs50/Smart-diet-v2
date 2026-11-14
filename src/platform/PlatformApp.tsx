@@ -67,6 +67,7 @@ import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
 import { summarizePatientDayLog } from './patientDashboardMetrics';
 import { PatientProgressCharts } from './PatientProgressCharts';
 import type { PatientProgressSummary } from './patientProgressSummary';
+import { normalizeBodySearchQuery } from '../utils/bodySearch';
 
 type Route =
   | { view: 'login' }
@@ -211,11 +212,11 @@ function filterAndSortPatients(
   sort: PatientListSort,
   progressByUid: Record<string, PatientProgressSummary>,
 ): Array<{ uid: string; doc: PatientDoc }> {
-  const normalizedQuery = query.trim().toLocaleLowerCase('ar');
+  const normalizedQuery = normalizeBodySearchQuery(query);
   return patients
     .filter(({ uid, doc }) => {
       const matchesQuery = !normalizedQuery ||
-        (doc.profile.clientName ?? '').toLocaleLowerCase('ar').includes(normalizedQuery);
+        normalizeBodySearchQuery(doc.profile.clientName ?? '').includes(normalizedQuery);
       const hasPlan = Boolean(doc.plan);
       const matchesPlan = planFilter === 'all' ||
         (planFilter === 'withPlan' && hasPlan) ||
@@ -268,7 +269,7 @@ function PatientProgressLine({ summary }: { summary?: PatientProgressSummary }) 
     <span className="mt-1 block text-[11px] font-normal leading-5 text-slate-500">
       آخر تسجيل: {summary.lastLogDate ?? 'لا يوجد خلال 30 يومًا'}
       {summary.daysSinceLastLog != null ? ` — منذ ${summary.daysSinceLastLog} يوم` : ''}
-      {' · '}إكمال الوجبات/المهام: {summary.completion7d == null ? '—' : `${summary.completion7d}%`}
+      {' · '}إكمال آخر 7 أيام (وجبات/مهام): {summary.completion7d == null ? '—' : `${summary.completion7d}%`}
       {summary.completion7d != null ? ` في ${summary.completionDays7d} أيام مسجلة` : ''}
       {' · '}تغير الوزن: {summary.weightChangeKg == null ? '—' : `${summary.weightChangeKg > 0 ? '+' : ''}${summary.weightChangeKg} كجم`}
     </span>
@@ -1501,7 +1502,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         {progressError && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">تعذّر تحميل مؤشرات النشاط: {progressError}</p>}
         {!loading && !error && visiblePatients.length === 0 && (
           <p className="mt-3 text-sm text-slate-500">
-            {patientQuery.trim() || patientPlanFilter !== 'all'
+            {patientQuery.trim() || patientPlanFilter !== 'all' || patientActivityFilter !== 'all'
               ? 'لا توجد نتائج مطابقة للبحث أو التصفية.'
               : 'لا يوجد مرضى في هذا العرض.'}
           </p>
