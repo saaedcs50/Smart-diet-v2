@@ -68,7 +68,7 @@ describe('clinic summary export', () => {
     expect(header).toContain('الطبيب المعين');
     expect(header).toContain('آخر تسجيل');
     expect(header).toContain('الماء في أحدث سجل (مل)');
-    expect(header).toContain('متوسط إكمال الوجبات/المهام آخر 7 أيام (%)');
+    expect(header).toContain('متوسط إكمال الوجبات/الماء/المهام آخر 7 أيام (%)');
     expect(row).toContain('د. أحمد');
     expect(row).toContain('2026-11-14');
     expect(row).toContain(1750);
