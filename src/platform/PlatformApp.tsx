@@ -1334,12 +1334,17 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   const [patientQuery, setPatientQuery] = useState('');
   const [patientSort, setPatientSort] = useState<PatientListSort>('name');
   const [patientPlanFilter, setPatientPlanFilter] = useState<PatientPlanFilter>('all');
+  const [patientActivityFilter, setPatientActivityFilter] = useState<PatientActivityFilter>('all');
+  const [progressByUid, setProgressByUid] = useState<Record<string, PatientProgressSummary>>({});
+  const [progressError, setProgressError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setActivity([]);
     setActivityError(null);
+    setProgressByUid({});
+    setProgressError(null);
     Promise.all([
       listClinicStaffEntries(clinicId),
       listClinicPatientEntries(clinicId),
@@ -1354,6 +1359,18 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
           if (!cancelled) setActivity(recent);
         } catch (caught: unknown) {
           if (!cancelled) setActivityError(errorText(caught));
+        }
+        try {
+          const progress = await listPatientProgressSummaries(entries);
+          if (!cancelled) setProgressByUid(progress);
+        } catch (caught: unknown) {
+          if (!cancelled) setProgressError(errorText(caught));
+        }
+        try {
+          const progress = await listPatientProgressSummaries(entries);
+          if (!cancelled) setProgressByUid(progress);
+        } catch (caught: unknown) {
+          if (!cancelled) setProgressError(errorText(caught));
         }
       })
       .catch((caught: unknown) => {
@@ -1386,7 +1403,9 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     }),
     patientQuery,
     patientPlanFilter,
+    patientActivityFilter,
     patientSort,
+    progressByUid,
   );
 
   const assign = async (patientUid: string, coachUid: string | null) => {
@@ -1407,11 +1426,13 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   return (
     <div className="flex flex-col gap-4">
       <SubscriptionCard clinicId={clinicId} />
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <DashboardMetric label="مرضى العيادة" value={loading ? '—' : patients.length} note="ضمن نطاق عيادتك فقط" />
         <DashboardMetric label="الأطباء" value={loading ? '—' : coaches.length} note="حسابات الطبيب النشطة في القائمة" />
         <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة على قاعدة المنصة" />
         <DashboardMetric label="بلا طبيب معيّن" value={loading ? '—' : summary.unassignedCount} note="يمكن تعيينهم من قائمة المرضى" />
+        <DashboardMetric label="يحتاجون متابعة" value={loading ? '—' : Object.values(progressByUid).filter((item) => item.needsFollowUp).length} note="لا سجل منذ 3 أيام أو أكثر" />
+        <DashboardMetric label="نشطون آخر 30 يومًا" value={loading ? '—' : Object.values(progressByUid).filter((item) => item.hasLogWithin30Days).length} note="لديهم سجل خلال آخر 30 يومًا" />
       </div>
       <RecentActivityCard
         title="آخر نشاط المرضى"
@@ -1476,11 +1497,14 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
           onSortChange={setPatientSort}
           planFilter={patientPlanFilter}
           onPlanFilterChange={setPatientPlanFilter}
+          activityFilter={patientActivityFilter}
+          onActivityFilterChange={setPatientActivityFilter}
           resultCount={visiblePatients.length}
         />
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل المرضى…</p>}
         {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
         {assignError && <p className="mt-3 text-sm font-bold text-red-600">{assignError}</p>}
+        {progressError && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">تعذّر تحميل مؤشرات النشاط: {progressError}</p>}
         {!loading && !error && visiblePatients.length === 0 && (
           <p className="mt-3 text-sm text-slate-500">
             {patientQuery.trim() || patientPlanFilter !== 'all'
@@ -1495,7 +1519,8 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
                 className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
                 onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
               >
-                {doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}
+                <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
+                <PatientProgressLine summary={progressByUid[patientUid]} />
               </button>
               <select
                 className={`${inputClass} w-auto`}
@@ -1529,12 +1554,17 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const [patientQuery, setPatientQuery] = useState('');
   const [patientSort, setPatientSort] = useState<PatientListSort>('name');
   const [patientPlanFilter, setPatientPlanFilter] = useState<PatientPlanFilter>('all');
+  const [patientActivityFilter, setPatientActivityFilter] = useState<PatientActivityFilter>('all');
+  const [progressByUid, setProgressByUid] = useState<Record<string, PatientProgressSummary>>({});
+  const [progressError, setProgressError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setActivity([]);
     setActivityError(null);
+    setProgressByUid({});
+    setProgressError(null);
     listDoctorPatients(clinicId, uid)
       .then(async (entries) => {
         if (cancelled) return;
@@ -1562,7 +1592,9 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
     patients,
     patientQuery,
     patientPlanFilter,
+    patientActivityFilter,
     patientSort,
+    progressByUid,
   );
 
   return (
@@ -1571,6 +1603,8 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         <DashboardMetric label="عملائي" value={loading ? '—' : patients.length} note="المرضى الذين دعوتهم أنت فقط" />
         <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة سحابيًا" />
         <DashboardMetric label="يحتاجون إعداد خطة" value={loading ? '—' : patients.length - patientsWithPlan} note="لا توجد لهم خطة سحابية بعد" />
+        <DashboardMetric label="يحتاجون متابعة" value={loading ? '—' : Object.values(progressByUid).filter((item) => item.needsFollowUp).length} note="لا سجل منذ 3 أيام أو أكثر" />
+        <DashboardMetric label="نشطون آخر 30 يومًا" value={loading ? '—' : Object.values(progressByUid).filter((item) => item.hasLogWithin30Days).length} note="لديهم سجل خلال آخر 30 يومًا" />
       </div>
       <RecentActivityCard
         title="آخر نشاط مرضاي"
@@ -1595,10 +1629,13 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
           onSortChange={setPatientSort}
           planFilter={patientPlanFilter}
           onPlanFilterChange={setPatientPlanFilter}
+          activityFilter={patientActivityFilter}
+          onActivityFilterChange={setPatientActivityFilter}
           resultCount={visiblePatients.length}
         />
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل عملائي…</p>}
         {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
+        {progressError && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">تعذّر تحميل مؤشرات النشاط: {progressError}</p>}
         {!loading && !error && patients.length === 0 && (
           <p className="mt-3 text-sm text-slate-500">لا يوجد عملاء بعد — أنشئ دعوة لمريضك الأول بالأسفل، وسيظهر هنا تلقائيًا بعد تسجيله.</p>
         )}
@@ -1612,7 +1649,8 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
                 onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
               >
-                {doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}
+                <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
+                <PatientProgressLine summary={progressByUid[patientUid]} />
               </button>
             </li>
           ))}
