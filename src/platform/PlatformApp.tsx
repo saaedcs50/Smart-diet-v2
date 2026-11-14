@@ -28,13 +28,13 @@ import {
   listClinicPatientEntries,
   listClinicStaffEntries,
   listDayLogEntries,
-  listRecentDayLogActivity,
+  listRecentDayLogDetails,
   listPatientProgressSummaries,
   listDoctorPatients,
   saveConsent,
   summarizeDoctors,
   type PatientDoc,
-  type RecentDayLogActivity,
+  type RecentDayLogDetail,
   type StaffEntry,
 } from './firestore';
 import {
@@ -64,7 +64,7 @@ import { copyLegacyPatientDataToUser } from '../utils/storageKeys';
 import { withStorageScope } from '../utils/storageScope';
 import { DoctorExportButtons } from './DoctorExportButtons';
 import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
-import { summarizePatientDayLog } from './patientDashboardMetrics';
+import { countSkippedPatientMeals, summarizePatientDayLog } from './patientDashboardMetrics';
 import { PatientProgressCharts } from './PatientProgressCharts';
 import { ClinicSummaryExportButtons } from './ClinicSummaryExportButtons';
 import type { PatientProgressSummary } from './patientProgressSummary';
@@ -145,14 +145,14 @@ function DashboardMetric({
 function RecentActivityCard({
   title,
   activity,
-  nameByUid,
+  patientByUid,
   loading,
   error,
   onOpenPatient,
 }: {
   title: string;
-  activity: RecentDayLogActivity[];
-  nameByUid: Map<string, string>;
+  activity: RecentDayLogDetail[];
+  patientByUid: Map<string, { name: string; plan?: PlanConfig }>;
   loading: boolean;
   error: string | null;
   onOpenPatient: (patientUid: string) => void;
@@ -161,7 +161,7 @@ function RecentActivityCard({
     <Card>
       <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">{title}</h2>
       <p className="mt-1 text-xs text-slate-500">
-        أحدث تواريخ السجلات فقط، دون عرض تفاصيل صحية في موجز النشاط.
+        أحدث السجلات اليومية بملخص تشغيلي: الوزن والماء والوجبات وبنود المتابعة، دون ملاحظات أو تفاصيل طبية حرة.
       </p>
       {loading ? (
         <p className="mt-3 text-sm text-slate-500">جاري تحميل النشاط…</p>
@@ -180,9 +180,30 @@ function RecentActivityCard({
               >
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
-                    {nameByUid.get(item.patientUid) ?? 'مريض'}
+                    {patientByUid.get(item.patientUid)?.name ?? 'مريض'}
                   </span>
                   <span className="mt-0.5 block text-xs text-slate-500">سجل يوم {item.date}</span>
+                  {(() => {
+                    const patient = patientByUid.get(item.patientUid);
+                    const logSummary = summarizePatientDayLog(item.log, patient?.plan ?? null);
+                    const skippedMeals = countSkippedPatientMeals(item.log);
+                    const waterGoal = patient?.plan?.dailyWaterGoalMl ?? patient?.plan?.waterGoalMl;
+                    const weightLabel = typeof item.log.weight === 'number' && Number.isFinite(item.log.weight) && item.log.weight > 0
+                      ? `${item.log.weight} كجم`
+                      : '—';
+                    const waterLabel = typeof item.log.water === 'number' && Number.isFinite(item.log.water)
+                      ? `${item.log.water} / ${typeof waterGoal === 'number' ? waterGoal : '—'} مل`
+                      : '—';
+                    return (
+                      <span className="mt-1 block text-[11px] font-normal leading-5 text-slate-600 dark:text-slate-300">
+                        الوزن: {weightLabel} · الماء: {waterLabel}
+                        <br />
+                        الوجبات المسجلة: {logSummary.recordedMeals}/{logSummary.plannedMeals ?? '—'} · المتخطاة: {skippedMeals}
+                        <br />
+                        بنود المتابعة المكتملة: {logSummary.completedTasks}/{logSummary.plannedTasks ?? '—'}
+                      </span>
+                    );
+                  })()}
                 </span>
                 <span className="shrink-0 text-xs font-bold text-indigo-700 dark:text-indigo-300">فتح الملف</span>
               </button>
@@ -262,17 +283,49 @@ function filterAndSortPatients(
     });
 }
 
-function PatientProgressLine({ summary }: { summary?: PatientProgressSummary }) {
+function PatientProgressLine({
+  summary,
+  plan,
+}: {
+  summary?: PatientProgressSummary;
+  plan?: PlanConfig;
+}) {
   if (!summary) {
     return <span className="mt-1 block text-[11px] font-normal text-slate-500">مؤشرات النشاط غير متاحة حاليًا.</span>;
   }
+
+  const status = !summary.hasLogWithin30Days
+    ? { label: 'خامل — لا سجل خلال 30 يومًا', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }
+    : summary.needsFollowUp
+      ? { label: 'يحتاج متابعة', className: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200' }
+      : { label: 'نشط', className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200' };
+
+  const startWeight = typeof plan?.startWeight === 'number' && Number.isFinite(plan.startWeight)
+    ? plan.startWeight
+    : null;
+  const targetWeight = typeof plan?.targetWeight === 'number' && Number.isFinite(plan.targetWeight)
+    ? plan.targetWeight
+    : null;
+  const targetDifference = summary.currentWeightKg != null && targetWeight != null
+    ? Math.round((summary.currentWeightKg - targetWeight) * 10) / 10
+    : null;
+  const waterGoal = plan?.dailyWaterGoalMl ?? plan?.waterGoalMl;
+
   return (
-    <span className="mt-1 block text-[11px] font-normal leading-5 text-slate-500">
+    <span className="mt-1 block text-[11px] font-normal leading-5 text-slate-600 dark:text-slate-300">
+      <span className={`mb-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${status.className}`}>
+        {status.label}
+      </span>
+      <br />
       آخر تسجيل: {summary.lastLogDate ?? 'لا يوجد خلال 30 يومًا'}
       {summary.daysSinceLastLog != null ? ` — منذ ${summary.daysSinceLastLog} يوم` : ''}
-      {' · '}إكمال آخر 7 أيام (وجبات/مهام): {summary.completion7d == null ? '—' : `${summary.completion7d}%`}
+      <br />
+      الوزن (بداية ← حالي ← هدف): {startWeight ?? '—'} ← {summary.currentWeightKg ?? '—'} ← {targetWeight ?? '—'} كجم
+      {targetDifference != null ? ` · الفرق عن الهدف ${targetDifference > 0 ? '+' : ''}${targetDifference} كجم` : ''}
+      <br />
+      الماء: {summary.currentWaterMl ?? '—'} / {typeof waterGoal === 'number' ? waterGoal : '—'} مل
+      {' · '}إكمال الوجبات/المهام آخر 7 أيام: {summary.completion7d == null ? '—' : `${summary.completion7d}%`}
       {summary.completion7d != null ? ` في ${summary.completionDays7d} أيام مسجلة` : ''}
-      {' · '}تغير الوزن: {summary.weightChangeKg == null ? '—' : `${summary.weightChangeKg > 0 ? '+' : ''}${summary.weightChangeKg} كجم`}
     </span>
   );
 }
@@ -1331,7 +1384,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   const [assignError, setAssignError] = useState<string | null>(null);
   const [assigningUid, setAssigningUid] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [activity, setActivity] = useState<RecentDayLogActivity[]>([]);
+  const [activity, setActivity] = useState<RecentDayLogDetail[]>([]);
   const [activityError, setActivityError] = useState<string | null>(null);
   const [patientQuery, setPatientQuery] = useState('');
   const [patientSort, setPatientSort] = useState<PatientListSort>('name');
@@ -1357,7 +1410,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         setPatients(entries);
         setError(null);
         try {
-          const recent = await listRecentDayLogActivity(entries.map((entry) => entry.uid), 8);
+          const recent = await listRecentDayLogDetails(entries.map((entry) => entry.uid), 8);
           if (!cancelled) setActivity(recent);
         } catch (caught: unknown) {
           if (!cancelled) setActivityError(errorText(caught));
@@ -1441,7 +1494,10 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
       <RecentActivityCard
         title="آخر نشاط المرضى"
         activity={activity}
-        nameByUid={new Map(patients.map((patient) => [patient.uid, patient.doc.profile.clientName]))}
+        patientByUid={new Map(patients.map((patient) => [
+          patient.uid,
+          { name: patient.doc.profile.clientName, plan: patient.doc.plan },
+        ]))}
         loading={loading}
         error={activityError}
         onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
@@ -1524,7 +1580,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
                 onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
               >
                 <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
-                <PatientProgressLine summary={progressByUid[patientUid]} />
+                <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
               </button>
               <select
                 className={`${inputClass} w-auto`}
@@ -1553,7 +1609,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const [patients, setPatients] = useState<Array<{ uid: string; doc: PatientDoc }>>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activity, setActivity] = useState<RecentDayLogActivity[]>([]);
+  const [activity, setActivity] = useState<RecentDayLogDetail[]>([]);
   const [activityError, setActivityError] = useState<string | null>(null);
   const [patientQuery, setPatientQuery] = useState('');
   const [patientSort, setPatientSort] = useState<PatientListSort>('name');
@@ -1574,7 +1630,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         if (cancelled) return;
         setPatients(entries);
         try {
-          const recent = await listRecentDayLogActivity(entries.map((entry) => entry.uid), 8);
+          const recent = await listRecentDayLogDetails(entries.map((entry) => entry.uid), 8);
           if (!cancelled) setActivity(recent);
         } catch (caught: unknown) {
           if (!cancelled) setActivityError(errorText(caught));
@@ -1619,7 +1675,10 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
       <RecentActivityCard
         title="آخر نشاط مرضاي"
         activity={activity}
-        nameByUid={new Map(patients.map((patient) => [patient.uid, patient.doc.profile.clientName]))}
+        patientByUid={new Map(patients.map((patient) => [
+          patient.uid,
+          { name: patient.doc.profile.clientName, plan: patient.doc.plan },
+        ]))}
         loading={loading}
         error={activityError}
         onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
@@ -1660,7 +1719,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
                 onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
               >
                 <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
-                <PatientProgressLine summary={progressByUid[patientUid]} />
+                <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
               </button>
             </li>
           ))}

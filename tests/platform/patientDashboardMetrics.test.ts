@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DayLog, PlanConfig } from '../../src/types';
-import { summarizePatientDayLog } from '../../src/platform/patientDashboardMetrics';
+import { countSkippedPatientMeals, summarizePatientDayLog } from '../../src/platform/patientDashboardMetrics';
 
 describe('summarizePatientDayLog', () => {
   it('counts only explicitly selected meals and completed checklist items', () => {
@@ -52,5 +52,19 @@ describe('summarizePatientDayLog', () => {
       completedTasks: 1,
       plannedTasks: null,
     });
+  });
+});
+
+describe('countSkippedPatientMeals', () => {
+  it('counts only meals explicitly marked as skipped', () => {
+    const log = {
+      meals: {
+        breakfast: { type: 'default' },
+        lunch: { type: 'none' },
+        dinner: { type: 'none' },
+        snack: {},
+      },
+    } satisfies Pick<DayLog, 'meals'>;
+    expect(countSkippedPatientMeals(log)).toBe(2);
   });
 });
