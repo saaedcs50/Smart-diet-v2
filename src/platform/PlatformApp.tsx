@@ -71,6 +71,7 @@ import { EmptyState } from '../components/EmptyState';
 import { InvitationManager } from './InvitationManager';
 import type { PatientTag } from './patientTags';
 import { ClinicSummaryExportButtons } from './ClinicSummaryExportButtons';
+import { AppointmentsSection } from './AppointmentsSection';
 import { isWithinLastCalendarDays, type PatientProgressSummary } from './patientProgressSummary';
 import { normalizeBodySearchQuery } from '../utils/bodySearch';
 
@@ -1603,6 +1604,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   return (
     <div className="flex flex-col gap-4">
       <SubscriptionCard clinicId={clinicId} />
+      <AppointmentsSection clinicId={clinicId} uid={uid} role="admin" patients={patients} providers={coaches} />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
         <DashboardMetric label="إجمالي المرضى" value={loading ? '—' : patients.length} note="مرضى العيادة ضمن RLS" />
         <DashboardMetric label="الأطباء النشطون" value={loading ? '—' : activeDoctors} note="حسابات طبيب غير معطّلة" />
@@ -1871,6 +1873,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة سحابيًا" />
         <DashboardMetric label="يحتاجون إعداد خطة" value={loading ? '—' : patients.length - patientsWithPlan} note="لا توجد لهم خطة سحابية بعد" />
       </div>
+      <AppointmentsSection clinicId={clinicId} uid={uid} role="coach" patients={patients} providers={[]} />
       <RecentActivityCard
         title="آخر نشاط مرضاي"
         activity={activity}
