@@ -101,7 +101,7 @@ describe('clinic summary export', () => {
     const sheets = buildClinicSummarySheets(patients, staff, {});
     const [header, row] = sheets[0].rows;
     const statusColumn = header.indexOf('حالة النشاط');
-    const completionColumn = header.indexOf('متوسط إكمال الوجبات/المهام آخر 7 أيام (%)');
+    const completionColumn = header.indexOf('متوسط إكمال الوجبات/الماء/المهام آخر 7 أيام (%)');
     expect(row[statusColumn]).toBe('المؤشرات غير متاحة');
     expect(row[completionColumn]).toBeNull();
   });
