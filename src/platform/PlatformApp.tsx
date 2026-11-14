@@ -1335,12 +1335,6 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   };
 
   const patientsWithPlan = patients.filter((patient) => Boolean(patient.doc.plan)).length;
-  const visiblePatients = filterAndSortPatients(
-    patients,
-    patientQuery,
-    patientPlanFilter,
-    patientSort,
-  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -1496,6 +1490,12 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   }, [clinicId, uid]);
 
   const patientsWithPlan = patients.filter((patient) => Boolean(patient.doc.plan)).length;
+  const visiblePatients = filterAndSortPatients(
+    patients,
+    patientQuery,
+    patientPlanFilter,
+    patientSort,
+  );
 
   return (
     <div className="flex flex-col gap-4">
