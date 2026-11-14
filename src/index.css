@@ -256,3 +256,38 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Patient accessibility preferences (account-scoped toggles). */
+html.a11y-large-text {
+  font-size: 112.5%;
+}
+
+html.a11y-high-contrast {
+  --app-text-primary: #0f172a;
+  --app-text-secondary: #334155;
+  --app-border: #64748b;
+}
+
+html.dark.a11y-high-contrast {
+  --app-text-primary: #ffffff;
+  --app-text-secondary: #e2e8f0;
+  --app-border: #94a3b8;
+}
+
+html.a11y-high-contrast :is(.text-slate-400, .text-slate-500, .text-gray-400, .text-gray-500) {
+  color: #334155 !important;
+}
+
+html.dark.a11y-high-contrast :is(.text-slate-400, .text-slate-500, .text-gray-400, .text-gray-500) {
+  color: #e2e8f0 !important;
+}
+
+html.a11y-high-contrast :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid #0f766e;
+  outline-offset: 2px;
+}
+
+html.dark.a11y-high-contrast :is(button, a, input, select, textarea):focus-visible {
+  outline-color: #5eead4;
+}
