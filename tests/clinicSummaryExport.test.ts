@@ -55,6 +55,7 @@ const progress: Record<string, PatientProgressSummary> = {
     currentWeightKg: 87.5,
     currentWaterMl: 1750,
     weightChangeKg: -2.5,
+    weightTargetProgressPercent: 25,
   },
 };
 
