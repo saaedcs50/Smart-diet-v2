@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { DayLog, PlanConfig } from '../src/types';
-import { summarizePatientProgress } from '../src/platform/patientProgressSummary';
+import { calculateWeightTargetProgress, summarizePatientProgress } from '../src/platform/patientProgressSummary';
 
 const today = new Date(2026, 10, 14);
 const plan = {
   startWeight: 90,
+  targetWeight: 80,
+  dailyWaterGoalMl: 2000,
   meals: [{ id: 'm1' }, { id: 'm2' }],
   checklist: [{ id: 'c1' }, { id: 'c2' }],
 } as unknown as PlanConfig;
@@ -85,5 +87,36 @@ describe('patient progress follow-up summaries', () => {
     ], emptyPlan, today);
     expect(summary.completion7d).toBeNull();
     expect(summary.completionDays7d).toBe(0);
+  });
+});
+
+
+describe('clinic adherence and target progress metrics', () => {
+  it('includes meals, water and checklist in the comparable daily completion average', () => {
+    const summary = summarizePatientProgress([
+      {
+        date: '2026-11-14',
+        log: log({
+          water: 0,
+          meals: { m1: { type: 'default' } },
+          checks: { c1: true },
+        }),
+      },
+    ], plan, today);
+    // Meal 50%, water 0%, checklist 50% => 33.3%.
+    expect(summary.completion7d).toBe(33.3);
+    expect(summary.completionDays7d).toBe(1);
+  });
+
+  it('calculates progress for both weight-loss and weight-gain goals', () => {
+    expect(calculateWeightTargetProgress(90, 85, 80)).toBe(50);
+    expect(calculateWeightTargetProgress(70, 73, 80)).toBe(30);
+  });
+
+  it('clamps target progress to the range 0–100 and handles invalid targets', () => {
+    expect(calculateWeightTargetProgress(90, 95, 80)).toBe(0);
+    expect(calculateWeightTargetProgress(90, 75, 80)).toBe(100);
+    expect(calculateWeightTargetProgress(90, 85, 90)).toBeNull();
+    expect(calculateWeightTargetProgress(null, 85, 80)).toBeNull();
   });
 });
