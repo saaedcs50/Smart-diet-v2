@@ -12,9 +12,17 @@ export function getFirstActivityDate(
     .sort((a, b) => a.localeCompare(b))[0] ?? null;
 }
 
-function isValidStartDate(value: string | undefined, todayDate: string): value is string {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value) || value > todayDate) return false;
-  return Number.isFinite(parseLocalDate(value).getTime());
+export function isValidFirstDaysStartDate(
+  value: string | undefined,
+  todayDate: string,
+): value is string {
+  if (!value || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value) || value > todayDate) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const parsed = parseLocalDate(value);
+  return Number.isFinite(parsed.getTime()) &&
+    parsed.getFullYear() === year &&
+    parsed.getMonth() + 1 === month &&
+    parsed.getDate() === day;
 }
 
 export interface FirstThreeDaysGuideState {
