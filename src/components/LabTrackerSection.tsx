@@ -26,17 +26,20 @@ import {
  LabTestCatalogItem
 } from '../utils/labTracking';
 import { LabChart } from './LabChart';
+import { matchesBodySearch, normalizeBodySearchQuery } from '../utils/bodySearch';
 
 interface LabTrackerSectionProps {
  plan: PlanConfig;
  onUpdatePlan: (updater: (prev: PlanConfig) => PlanConfig) => void;
  onNotify?: (msg: string) => void;
+ searchQuery?: string;
 }
 
 export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  plan,
  onUpdatePlan,
  onNotify,
+ searchQuery = '',
 }) => {
  const labConfig: LabTrackingConfig = plan.labTracking || {
  showToClient: true,
@@ -57,6 +60,16 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
 
  const grouped = groupLabEntriesByTest(labConfig.entries);
  const testKeys = Object.keys(grouped);
+ const normalizedSearch = normalizeBodySearchQuery(searchQuery);
+ const visibleTestKeys = normalizedSearch
+  ? testKeys.filter((key) => grouped[key].some((entry) => {
+    const meta = getLabTestMeta(entry.testId, entry.customName);
+    return matchesBodySearch(searchQuery, [
+     meta.nameAr, meta.shortName, entry.testId, entry.customName,
+     entry.value, entry.unit, entry.date, entry.note,
+    ]);
+   }))
+  : testKeys;
 
  // If section is hidden or empty with no client add permission
  if (!labConfig.showToClient) return null;
@@ -184,9 +197,9 @@ export const LabTrackerSection: React.FC<LabTrackerSectionProps> = ({
  )}
 
  {/* 3. Compact Grid of Tracked Lab Tests */}
- {testKeys.length > 0 && (
+ {visibleTestKeys.length > 0 && (
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
- {testKeys.map((key) => {
+ {visibleTestKeys.map((key) => {
  const entries = grouped[key];
  const summary = calculateTestTrend(entries);
  if (!summary) return null;
