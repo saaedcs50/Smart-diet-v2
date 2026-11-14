@@ -18,6 +18,8 @@ export interface PatientProgressSummary {
   completionDays7d: number;
   /** Latest explicitly recorded weight in the queried window. */
   currentWeightKg: number | null;
+  /** Water intake from the latest logged day in the queried 30-day window. */
+  currentWaterMl: number | null;
   /** Current recorded weight minus the plan's starting weight; descriptive, not evaluative. */
   weightChangeKg: number | null;
 }
@@ -116,6 +118,11 @@ export function summarizePatientProgress(
       : null;
 
   const hasLogWithin30Days = ordered.length > 0;
+  const latestWater = latest?.log.water;
+  const currentWaterMl =
+    typeof latestWater === 'number' && Number.isFinite(latestWater) && latestWater >= 0
+      ? latestWater
+      : null;
   return {
     lastLogDate: latest?.date ?? null,
     daysSinceLastLog,
@@ -124,6 +131,7 @@ export function summarizePatientProgress(
     completion7d: average(completionParts),
     completionDays7d: comparableDays.size,
     currentWeightKg,
+    currentWaterMl,
     weightChangeKg,
   };
 }
