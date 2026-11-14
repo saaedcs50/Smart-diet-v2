@@ -100,4 +100,26 @@ describe('first three days starter guide', () => {
     expect(state.dayNumber).toBe(4);
     expect(state.visible).toBe(false);
   });
+
+  it('rejects impossible and future persisted dates', () => {
+    const impossible = getFirstThreeDaysGuideState({
+      todayDate: '2026-11-14',
+      startedAtDate: '2026-02-31',
+      dayLogs: {},
+      notificationsEnabled: false,
+      mealViewed: false,
+    });
+    expect(impossible.startDate).toBe('2026-11-14');
+    expect(impossible.dayNumber).toBe(1);
+
+    const future = getFirstThreeDaysGuideState({
+      todayDate: '2026-11-14',
+      startedAtDate: '2026-11-15',
+      dayLogs: {},
+      notificationsEnabled: false,
+      mealViewed: false,
+    });
+    expect(future.startDate).toBe('2026-11-14');
+    expect(future.dayNumber).toBe(1);
+  });
 });

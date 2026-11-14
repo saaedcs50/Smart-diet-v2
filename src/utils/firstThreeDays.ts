@@ -42,7 +42,7 @@ export function getFirstThreeDaysGuideState(input: {
   const today = parseLocalDate(input.todayDate);
   const validToday = Number.isFinite(today.getTime());
   const firstActivityDate = getFirstActivityDate(input.dayLogs, input.todayDate);
-  const startDate = isValidStartDate(input.startedAtDate, input.todayDate)
+  const startDate = isValidFirstDaysStartDate(input.startedAtDate, input.todayDate)
     ? input.startedAtDate
     : firstActivityDate ?? input.todayDate;
   const start = parseLocalDate(startDate);

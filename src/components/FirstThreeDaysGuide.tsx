@@ -5,7 +5,7 @@ import { getAllStoredDayLogs } from '../utils/storage';
 import { getNotificationPermission, loadNotificationSettings } from '../utils/notifications';
 import { StorageKeys } from '../utils/storageKeys';
 import { onStorageScopeChanged } from '../utils/storageScope';
-import { getFirstActivityDate, getFirstThreeDaysGuideState } from '../utils/firstThreeDays';
+import { getFirstActivityDate, getFirstThreeDaysGuideState, isValidFirstDaysStartDate } from '../utils/firstThreeDays';
 
 function readScopedStartDate(todayDate: string): string {
   try {
