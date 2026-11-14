@@ -1,5 +1,7 @@
 import { PhotoRecord } from '../types';
 import { StorageKeys, LEGACY_PHOTO_DB } from './storageKeys';
+import { getStorageScope, withStorageScope } from './storageScope';
+import { getLocalDataBindingStatus } from '../platform/localDataOwnership';
 
 const DB_VERSION = 1;
 const STORE_NAME = 'progress_photos';
@@ -23,47 +25,115 @@ function openNamedPhotoDB(name: string): Promise<IDBDatabase> {
   });
 }
 
-async function migratePhotosFromLegacyIfNeeded(newDb: IDBDatabase): Promise<void> {
-  const newName = StorageKeys.photoDbName();
+function readAllPhotos(db: IDBDatabase): Promise<PhotoRecord[]> {
+  return new Promise((resolve, reject) => {
+    const request = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).getAll();
+    request.onsuccess = () => resolve((request.result || []) as PhotoRecord[]);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function readPhotoCount(db: IDBDatabase): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const request = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).count();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/** Preserve the previous single-device app's one-time legacy photo migration. */
+async function migratePhotosFromLegacyIfNeeded(
+  newDb: IDBDatabase,
+  newName: string,
+): Promise<void> {
   if (newName === LEGACY_PHOTO_DB) return;
   try {
-    const countReq = newDb.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).count();
-    const count: number = await new Promise((resolve, reject) => {
-      countReq.onsuccess = () => resolve(countReq.result as number);
-      countReq.onerror = () => reject(countReq.error);
-    });
-    if (count > 0) return;
-
+    if (await readPhotoCount(newDb) > 0) return;
     const legacy = await openNamedPhotoDB(LEGACY_PHOTO_DB);
-    const all: PhotoRecord[] = await new Promise((resolve, reject) => {
-      const req = legacy.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).getAll();
-      req.onsuccess = () => resolve((req.result || []) as PhotoRecord[]);
-      req.onerror = () => reject(req.error);
-    });
-    if (!all.length) {
+    try {
+      const all = await readAllPhotos(legacy);
+      if (!all.length) return;
+      await new Promise<void>((resolve, reject) => {
+        const tx = newDb.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        for (const record of all) {
+          const { id: _id, ...rest } = record as PhotoRecord & { id?: number };
+          store.add(rest);
+        }
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    } finally {
       legacy.close();
-      return;
     }
+  } catch {
+    // A missing legacy DB is normal for new installations.
+  }
+}
+
+async function openPhotoDB(): Promise<IDBDatabase> {
+  const name = StorageKeys.photoDbName();
+  const db = await openNamedPhotoDB(name);
+  // Only anonymous/local mode can auto-restore the old photo database.
+  // Authenticated user and guest scopes never inherit another scope's photos.
+  if (getStorageScope() === 'local') {
+    await migratePhotosFromLegacyIfNeeded(db, name);
+  }
+  return db;
+}
+
+/**
+ * Optional, local-only photo transfer after explicit ownership confirmation.
+ * It copies the previous device photo set into the current user's UID bucket,
+ * never uploads it, never deletes the source, and is idempotent by photo content.
+ */
+export async function migrateLegacyPhotosToCurrentUser(): Promise<number> {
+  const activeScope = getStorageScope();
+  if (!activeScope.startsWith('user:')) {
+    throw new Error('يجب تسجيل الدخول بحساب المريض قبل نقل الصور المحلية');
+  }
+  const patientUid = activeScope.slice('user:'.length);
+  if (getLocalDataBindingStatus(patientUid) !== 'matched') {
+    throw new Error('يجب تأكيد ملكية بيانات الجهاز لهذا الحساب قبل نقل الصور');
+  }
+
+  const legacyScopedName = withStorageScope('local', () => StorageKeys.photoDbName());
+  const targetName = StorageKeys.photoDbName();
+  const legacyDb = await openNamedPhotoDB(legacyScopedName);
+  let targetDb: IDBDatabase | null = null;
+  try {
+    await migratePhotosFromLegacyIfNeeded(legacyDb, legacyScopedName);
+    const sourcePhotos = await readAllPhotos(legacyDb);
+    if (sourcePhotos.length === 0) return 0;
+
+    targetDb = await openNamedPhotoDB(targetName);
+    const existing = await readAllPhotos(targetDb);
+    const fingerprint = (photo: PhotoRecord) =>
+      `${photo.date}|\u001f${photo.ts}|\u001f${photo.data}`;
+    const known = new Set(existing.map(fingerprint));
+    const toCopy = sourcePhotos.filter((photo) => {
+      const key = fingerprint(photo);
+      if (known.has(key)) return false;
+      known.add(key);
+      return true;
+    });
+    if (toCopy.length === 0) return 0;
+
     await new Promise<void>((resolve, reject) => {
-      const tx = newDb.transaction(STORE_NAME, 'readwrite');
+      const tx = targetDb!.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
-      for (const rec of all) {
-        const { id: _id, ...rest } = rec as PhotoRecord & { id?: number };
+      for (const record of toCopy) {
+        const { id: _id, ...rest } = record as PhotoRecord & { id?: number };
         store.add(rest);
       }
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
-    legacy.close();
-  } catch {
-    // legacy DB may not exist
+    return toCopy.length;
+  } finally {
+    legacyDb.close();
+    targetDb?.close();
   }
-}
-
-async function openPhotoDB(): Promise<IDBDatabase> {
-  const db = await openNamedPhotoDB(StorageKeys.photoDbName());
-  await migratePhotosFromLegacyIfNeeded(db);
-  return db;
 }
 
 export async function addPhotoToDB(record: Omit<PhotoRecord, 'id'>): Promise<number> {

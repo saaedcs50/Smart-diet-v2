@@ -16,11 +16,9 @@ type Method = keyof typeof METHOD_LABELS;
 
 export function RenewalForm({
   clinicId,
-  uid,
   onSubmitted,
 }: {
   clinicId: string;
-  uid: string;
   onSubmitted: () => void;
 }) {
   const [methods, setMethods] = useState<PlatformPaymentMethods | null>(null);
@@ -31,6 +29,8 @@ export function RenewalForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  // Keep one id across network retries to avoid duplicate payment records.
+  const [requestId] = useState(() => crypto.randomUUID());
 
   useEffect(() => {
     void getPaymentMethods()
@@ -44,11 +44,11 @@ export function RenewalForm({
     setBusy(true);
     try {
       await submitActivationRequest(clinicId, {
+        requestId,
         method,
         amount: Number(amount),
         reference,
         note,
-        submittedBy: uid,
       });
       setDone(true);
       onSubmitted();

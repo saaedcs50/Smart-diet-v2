@@ -1,4 +1,5 @@
 import { BRAND } from '../config/brand';
+import { storageScopePrefix } from './storageScope';
 
 /**
  * عزل بيانات كل عيادة على نفس الجهاز.
@@ -18,8 +19,18 @@ export function brandStorageSlug(): string {
   return slugify(BRAND.shortName || BRAND.appName || 'app');
 }
 
-export function ns(key: string): string {
+export function legacyNs(key: string): string {
   return `sd_${brandStorageSlug()}_${key}`;
+}
+
+/** Current scope namespace; local mode remains byte-for-byte compatible. */
+export function ns(key: string): string {
+  return `sd_${brandStorageSlug()}_${storageScopePrefix()}${key}`;
+}
+
+/** Key for an explicit scope without mutating the running application's scope. */
+export function nsForScope(scope: 'local' | 'guest' | `user:${string}`, key: string): string {
+  return `sd_${brandStorageSlug()}_${storageScopePrefix(scope)}${key}`;
 }
 
 /** مفاتيح التطبيق بعد العزل */
@@ -54,8 +65,9 @@ export const StorageKeys = {
   coachPinHash: () => ns('coach_pin_hash'),
   /** ملح عشوائي لكل جهاز يُخلط مع هاش الـ PIN (v2) */
   coachPinSalt: () => ns('coach_pin_salt'),
-  migratedFlag: () => ns('migrated_v1'),
-  photoDbName: () => `sd_${brandStorageSlug()}_photos_db`,
+  // This marker belongs to the one-time pre-account legacy migration, not a user bucket.
+  migratedFlag: () => legacyNs('migrated_v1'),
+  photoDbName: () => `${ns('photos_db')}`,
 };
 
 /** المفاتيح القديمة قبل white-label / العزل */
@@ -72,7 +84,6 @@ const LEGACY = {
   coachOnboardingSeen: 'smartdiet_coach_onboarding_seen',
   coachSessionToken: 'smartdiet_coach_session_token',
   coachUnlocked: 'smartdiet_coach_unlocked',
-  photoDbName: 'nt_private_photos_db',
 } as const;
 
 function copyIfMissing(oldKey: string, newKey: string): void {
@@ -118,4 +129,92 @@ export function migrateLegacyStorageOnce(): void {
   }
 }
 
-export const LEGACY_PHOTO_DB = LEGACY.photoDbName;
+export const LEGACY_PHOTO_DB = 'nt_private_photos_db';
+
+
+const LEGACY_PATIENT_KEYS = [
+  'plan',
+  'active_fasting',
+  'notification_settings',
+  'last_water_notif',
+  'fired_notifs_today',
+  'last_app_boot',
+  'last_welcome_back_gap_date',
+  'milestones_unlocked',
+  'milestones_initialized',
+  'report_shared_at',
+  'intake_draft',
+  'seasonal_activation',
+] as const;
+
+/**
+ * Copy only patient-owned legacy data into the confirmed account bucket.
+ * Never copies coach PIN/session data, device preferences, ownership markers,
+ * or IndexedDB photos. Existing user-scoped values always win.
+ */
+export function copyLegacyPatientDataToUser(uid: string): {
+  copiedKeys: number;
+  skippedExisting: number;
+} {
+  if (!uid || !/^[A-Za-z0-9_-]+$/.test(uid)) {
+    throw new Error('معرّف مستخدم غير صالح لنقل البيانات المحلية');
+  }
+  if (typeof localStorage === 'undefined') {
+    throw new Error('التخزين المحلي غير متاح');
+  }
+
+  const sourcePrefix = legacyNs('');
+  const targetScope = `user:${uid}` as const;
+  let copiedKeys = 0;
+  let skippedExisting = 0;
+
+  const copyKey = (suffix: string) => {
+    const sourceKey = sourcePrefix + suffix;
+    const targetKey = nsForScope(targetScope, suffix);
+    const sourceValue = localStorage.getItem(sourceKey);
+    if (sourceValue == null) return;
+    if (localStorage.getItem(targetKey) != null) {
+      skippedExisting += 1;
+      return;
+    }
+    localStorage.setItem(targetKey, sourceValue);
+    copiedKeys += 1;
+  };
+
+  for (const key of LEGACY_PATIENT_KEYS) copyKey(key);
+
+  const dayPrefix = 'day_';
+  const shoppingPrefix = 'shopping_list_';
+  const sourceKeys: string[] = [];
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith(sourcePrefix)) continue;
+    const suffix = key.slice(sourcePrefix.length);
+    if (suffix.startsWith(dayPrefix) || suffix.startsWith(shoppingPrefix)) {
+      sourceKeys.push(suffix);
+    }
+  }
+  for (const suffix of sourceKeys) copyKey(suffix);
+
+  return { copiedKeys, skippedExisting };
+}
+
+/** True when the legacy patient dataset was previously bound to an account. */
+export function hasLegacyPatientData(): boolean {
+  if (typeof localStorage === 'undefined') return false;
+  try {
+    const prefix = legacyNs('');
+    const known = [...LEGACY_PATIENT_KEYS].map((key) => prefix + key);
+    if (known.some((key) => localStorage.getItem(key) != null)) return true;
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith(prefix + 'day_') || key.startsWith(prefix + 'shopping_list_'))) {
+        return true;
+      }
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+

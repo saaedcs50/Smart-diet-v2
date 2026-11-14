@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  createPushDisabledResponse,
+  PUSH_DELIVERY_ENABLED as SERVER_PUSH_DELIVERY_ENABLED,
+} from '../../supabase/functions/notify/pushGate';
+import {
   isFcmConfigured,
   isPushDeliveryEnabled,
   notifyPatient,
@@ -7,9 +11,14 @@ import {
 } from '../../src/platform/fcm';
 
 describe('Web Push safety gate', () => {
-  it('keeps delivery disabled until RFC 8291 encryption is implemented', () => {
+  it('keeps delivery disabled until RFC 8291 encryption is implemented', async () => {
     expect(isPushDeliveryEnabled()).toBe(false);
+    expect(SERVER_PUSH_DELIVERY_ENABLED).toBe(false);
     expect(isFcmConfigured()).toBe(false);
+    const response = createPushDisabledResponse();
+    expect(response.status).toBe(503);
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    expect(await response.json()).toMatchObject({ ok: false });
   });
 
   it('does not request or register a browser push subscription while disabled', async () => {

@@ -2,8 +2,7 @@
 // اشتراك العيادة — طبقة البيانات لصاحب العيادة (المرحلة الرابعة من B2B)
 // ----------------------------------------------------------------------------
 // - قراءة حالة الاشتراك وبيانات الدفع (مسموح للطاقم حتى لو منتهي)
-// - إرسال طلب تفعيل: إلحاق سجل دفع في payments[] (القواعد تسمح للأدمن
-//   بالإلحاق فقط، بلا تعديل على السابق)
+// - إرسال طلب تفعيل عبر RPC ذرّية؛ لا قراءة/كتابة للمصفوفة من المتصفح
 // - ترحيل 2026-10-31: Firestore ← Supabase (clinic_subscriptions)
 // ============================================================================
 
@@ -34,11 +33,11 @@ function rowToSubscription(row: Record<string, unknown>): ClinicSubscriptionDoc 
 export async function getSubscription(
   clinicId: string,
 ): Promise<ClinicSubscriptionDoc | null> {
+  // Patients need the subscription gate state, but must not read payment
+  // references or the clinic's full payments JSONB history.
   const { data, error } = await getSupabase()
-    .from('clinic_subscriptions')
-    .select()
-    .eq('clinic_id', clinicId)
-    .single();
+    .rpc('get_clinic_subscription_gate', { p_clinic_id: clinicId })
+    .maybeSingle();
   if (error || !data) return null;
   return rowToSubscription(data as Record<string, unknown>);
 }
@@ -54,58 +53,32 @@ export async function getPaymentMethods(): Promise<PlatformPaymentMethods | null
 }
 
 export interface ActivationRequestInput {
+  requestId: string;
   method: 'instapay' | 'vodafone_cash';
   amount: number;
   reference: string;
   note?: string;
-  submittedBy: string;
 }
 
 /**
- * إرسال طلب تفعيل: يلحق سجل دفع جديد بلا مراجعة.
- * القواعد ترفض أي تعديل على المدفوعات السابقة أو باقي الحقول.
+ * يرسل طلب التجديد عبر RPC ذرّية. هوية المرسل تُشتق داخل Postgres من auth.uid().
+ * يظل الطلب idempotent عند إعادة المحاولة بنفس requestId.
  */
 export async function submitActivationRequest(
   clinicId: string,
   input: ActivationRequestInput,
 ): Promise<void> {
-  const sb = getSupabase();
-  const { data, error } = await sb
-    .from('clinic_subscriptions')
-    .select('payments')
-    .eq('clinic_id', clinicId)
-    .single();
-  if (error || !data) throw new Error('لا يوجد اشتراك لهذه العيادة');
-  const payments = Array.isArray((data as { payments: unknown }).payments)
-    ? [...((data as { payments: PaymentRecord[] }).payments)]
-    : [];
+  if (!input.requestId.trim()) throw new Error('معرّف الطلب غير صالح');
 
-  // منع الطلبات المكررة: طلب معلق واحد يكفي
-  const hasPending = payments.some((p) => p.reviewedAt == null);
-  if (hasPending) throw new Error('لديك طلب تفعيل معلق بالفعل — انتظر المراجعة');
-
-  const reference = input.reference.trim();
-  if (!reference) throw new Error('أدخل رقم العملية');
-  if (!(input.amount > 0)) throw new Error('أدخل مبلغًا صحيحًا');
-
-  const now = new Date().toISOString();
-  payments.push({
-    method: input.method,
-    amount: input.amount,
-    currency: 'EGP',
-    reference,
-    submittedAt: now,
-    submittedBy: input.submittedBy,
-    reviewedAt: null,
-    reviewedBy: null,
-    note: (input.note ?? '').trim(),
-  } satisfies PaymentRecord);
-
-  const { error: updateError } = await sb
-    .from('clinic_subscriptions')
-    .update({ payments, updated_at: now })
-    .eq('clinic_id', clinicId);
-  if (updateError) throw new Error(updateError.message);
+  const { error } = await getSupabase().rpc('submit_clinic_payment_request', {
+    p_clinic_id: clinicId,
+    p_request_id: input.requestId,
+    p_method: input.method,
+    p_amount: input.amount,
+    p_reference: input.reference,
+    p_note: input.note ?? '',
+  });
+  if (error) throw new Error(error.message);
 }
 
 /** الأيام المتبقية على الانتهاء (null للدائم أو بلا تاريخ). */

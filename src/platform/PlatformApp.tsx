@@ -59,7 +59,10 @@ import { AdherenceSection } from './adherence/AdherenceSection';
 import { registerFcmToken, isFcmConfigured, isPushDeliveryEnabled, notifyPatient } from './fcm';
 import { getSupabase } from './supabase';
 import { bindLocalDataToPatient, getLocalDataBindingStatus, type LocalDataBindingStatus } from './localDataOwnership';
+import { copyLegacyPatientDataToUser } from '../utils/storageKeys';
+import { withStorageScope } from '../utils/storageScope';
 import { DoctorExportButtons } from './DoctorExportButtons';
+import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
 import { summarizePatientDayLog } from './patientDashboardMetrics';
 
 type Route =
@@ -591,6 +594,11 @@ const EMPTY_LOCAL_SYNC_SUMMARY = { dayLogCount: 0, shoppingListCount: 0, hasPlan
 function SyncSection({ patientUid }: { patientUid: string }) {
   const [consent, setConsent] = useState(false);
   const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
+  const [photoOwnershipConfirmed, setPhotoOwnershipConfirmed] = useState(false);
+  const [localMigrationBusy, setLocalMigrationBusy] = useState(false);
+  const [localMigrationMessage, setLocalMigrationMessage] = useState<string | null>(null);
+  const [photoMigrationBusy, setPhotoMigrationBusy] = useState(false);
+  const [photoMigrationMessage, setPhotoMigrationMessage] = useState<string | null>(null);
   const [bindingStatus, setBindingStatus] = useState<LocalDataBindingStatus>(() =>
     getLocalDataBindingStatus(patientUid),
   );
@@ -599,9 +607,13 @@ function SyncSection({ patientUid }: { patientUid: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState(() => {
-    if (['mismatch', 'unavailable'].includes(getLocalDataBindingStatus(patientUid))) return EMPTY_LOCAL_SYNC_SUMMARY;
+    const initialBinding = getLocalDataBindingStatus(patientUid);
+    if (['mismatch', 'unavailable'].includes(initialBinding)) return EMPTY_LOCAL_SYNC_SUMMARY;
     try {
-      return summarizeSnapshot(readLocalSnapshot());
+      const snapshot = initialBinding === 'unbound'
+        ? withStorageScope('local', readLocalSnapshot)
+        : readLocalSnapshot();
+      return summarizeSnapshot(snapshot);
     } catch {
       return EMPTY_LOCAL_SYNC_SUMMARY;
     }
@@ -611,6 +623,9 @@ function SyncSection({ patientUid }: { patientUid: string }) {
     const nextBinding = getLocalDataBindingStatus(patientUid);
     setBindingStatus(nextBinding);
     setOwnershipConfirmed(false);
+    setPhotoOwnershipConfirmed(false);
+    setLocalMigrationMessage(null);
+    setPhotoMigrationMessage(null);
     setConsent(false);
     setStatus(loadSyncStatus(undefined, patientUid));
     setReport(null);
@@ -620,11 +635,91 @@ function SyncSection({ patientUid }: { patientUid: string }) {
       return;
     }
     try {
-      setSummary(summarizeSnapshot(readLocalSnapshot()));
+      if (nextBinding === 'matched') {
+        // The same account was bound by the previous app version. Move only
+        // the approved patient-data keys into this UID namespace, never photos
+        // or coach credentials, and never overwrite newer UID-scoped records.
+        copyLegacyPatientDataToUser(patientUid);
+        setSummary(summarizeSnapshot(readLocalSnapshot()));
+      } else {
+        // Unbound legacy data is shown for review only; no copy happens until
+        // the patient explicitly confirms ownership in the UI.
+        setSummary(summarizeSnapshot(withStorageScope('local', readLocalSnapshot)));
+      }
     } catch {
       setSummary(EMPTY_LOCAL_SYNC_SUMMARY);
+      setError('تعذّر قراءة البيانات المحلية بأمان؛ لم يتم نقل أو رفع أي بيانات.');
     }
   }, [patientUid]);
+
+  const migrateLocalDataToAccount = async () => {
+    setError(null);
+    const currentBinding = getLocalDataBindingStatus(patientUid);
+    if (currentBinding === 'mismatch' || currentBinding === 'unavailable') {
+      setError('تعذّر التحقق من ملكية بيانات الجهاز؛ لم يتم نقل أي بيانات.');
+      return;
+    }
+    if (currentBinding === 'unbound' && !ownershipConfirmed) {
+      setError('أكّد أولًا أن الخطة والسجلات القديمة تخص الحساب الحالي.');
+      return;
+    }
+
+    setLocalMigrationBusy(true);
+    try {
+      if (currentBinding === 'unbound') {
+        bindLocalDataToPatient(patientUid);
+        setBindingStatus('matched');
+      }
+      const result = copyLegacyPatientDataToUser(patientUid);
+      setSummary(summarizeSnapshot(readLocalSnapshot()));
+      setLocalMigrationMessage(
+        result.copiedKeys > 0
+          ? `تم حفظ ${result.copiedKeys} عنصرًا محليًا في مساحة هذا الحساب. لم تُرفع هذه البيانات إلى السحابة.`
+          : 'بيانات الحساب موجودة بالفعل في مساحته المحلية؛ لم تُستبدل أي بيانات.',
+      );
+    } catch (caught) {
+      setError(errorText(caught));
+    } finally {
+      setLocalMigrationBusy(false);
+    }
+  };
+
+  const migratePhotosToAccount = async () => {
+    setError(null);
+    const currentBinding = getLocalDataBindingStatus(patientUid);
+    if (currentBinding === 'mismatch' || currentBinding === 'unavailable') {
+      setError('بيانات الجهاز مرتبطة بحساب آخر أو تعذّر التحقق منها؛ لم يتم نقل الصور.');
+      return;
+    }
+    if (currentBinding === 'unbound' && !ownershipConfirmed) {
+      setError('أكّد أولًا ملكية بيانات الجهاز قبل نقل الصور.');
+      return;
+    }
+    if (!photoOwnershipConfirmed) {
+      setError('أكّد أن صور التقدم القديمة تخص الحساب الحالي قبل نقلها.');
+      return;
+    }
+
+    setPhotoMigrationBusy(true);
+    try {
+      if (currentBinding === 'unbound') {
+        bindLocalDataToPatient(patientUid);
+        setBindingStatus('matched');
+        copyLegacyPatientDataToUser(patientUid);
+        setSummary(summarizeSnapshot(readLocalSnapshot()));
+      }
+      const copied = await migrateLegacyPhotosToCurrentUser();
+      setPhotoMigrationMessage(
+        copied > 0
+          ? `تم نسخ ${copied} صورة إلى مساحة هذا الحساب على الجهاز فقط. النسخة الأصلية ما زالت محفوظة ولم تُرفع أي صورة للسحابة.`
+          : 'لا توجد صور قديمة لنقلها، أو أن الصور موجودة بالفعل في مساحة هذا الحساب.',
+      );
+    } catch (caught) {
+      setError(errorText(caught));
+    } finally {
+      setPhotoMigrationBusy(false);
+    }
+  };
 
   const run = async () => {
     setError(null);
@@ -656,6 +751,8 @@ function SyncSection({ patientUid }: { patientUid: string }) {
         bindLocalDataToPatient(patientUid);
         setBindingStatus('matched');
       }
+      // Idempotent local-only copy. Cloud upload remains separately consented.
+      copyLegacyPatientDataToUser(patientUid);
       const snapshot = readLocalSnapshot();
       setSummary(summarizeSnapshot(snapshot));
       const result = await migrateLocalToCloud(snapshot, patientUid, patientUid);
@@ -725,6 +822,50 @@ function SyncSection({ patientUid }: { patientUid: string }) {
       {bindingStatus === 'matched' && (
         <p className="mt-2 text-xs font-bold text-emerald-700 dark:text-emerald-400">
           تم ربط بيانات هذا الجهاز بالحساب الحالي؛ لن تُرفع إلى حساب آخر.
+        </p>
+      )}
+      {bindingStatus === 'unbound' && ownershipConfirmed && (
+        <button
+          type="button"
+          className={`${ghostButtonClass} mt-3`}
+          onClick={() => void migrateLocalDataToAccount()}
+          disabled={localMigrationBusy}
+        >
+          {localMigrationBusy ? 'جارٍ حفظ البيانات محليًا…' : 'حفظ بيانات الجهاز في مساحة حسابي فقط'}
+        </button>
+      )}
+      {localMigrationMessage && (
+        <p className="mt-2 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+          {localMigrationMessage}
+        </p>
+      )}
+      {bindingStatus !== 'mismatch' && bindingStatus !== 'unavailable' && (
+        <>
+          <label className="mt-3 flex items-start gap-2 text-xs font-bold text-slate-700 dark:text-slate-200">
+            <input
+              type="checkbox"
+              checked={photoOwnershipConfirmed}
+              onChange={(event) => setPhotoOwnershipConfirmed(event.target.checked)}
+            />
+            <span>
+              أؤكد أن صور التقدم القديمة على هذا الجهاز تخص الحساب الحالي. سيتم نسخها إلى مساحة الحساب المحلية فقط، ولن تُرفع إلى السحابة.
+            </span>
+          </label>
+          {photoOwnershipConfirmed && (
+            <button
+              type="button"
+              className={`${ghostButtonClass} mt-2`}
+              onClick={() => void migratePhotosToAccount()}
+              disabled={photoMigrationBusy || (bindingStatus === 'unbound' && !ownershipConfirmed)}
+            >
+              {photoMigrationBusy ? 'جارٍ نقل الصور محليًا…' : 'نقل صور التقدم إلى مساحة هذا الحساب'}
+            </button>
+          )}
+        </>
+      )}
+      {photoMigrationMessage && (
+        <p className="mt-2 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+          {photoMigrationMessage}
         </p>
       )}
       <label className="mt-3 flex items-start gap-2 text-xs font-bold text-slate-700 dark:text-slate-200">
@@ -1372,7 +1513,6 @@ function PlatformShell() {
       {user && profile && !profile.disabled && !profileMissing && profile.role !== 'owner' && (
         <SubscriptionGate
           clinicId={profile.clinicId}
-          uid={profile.uid}
           role={profile.role}
         >
           {route.view === 'patient' && (

@@ -136,9 +136,7 @@ export const DEFAULT_PLAN: PlanConfig = {
   ],
 };
 
-const PLAN_KEY = StorageKeys.plan();
-const DAY_PREFIX = StorageKeys.dayPrefix();
-const ACTIVE_FASTING_KEY = StorageKeys.activeFasting();
+// Resolve keys at call time: the active account scope can change after login/logout.
 
 /**
  * Parses YYYY-MM-DD into a pure local Date (midnight local time)
@@ -179,7 +177,7 @@ export function getTodayDateString(d?: Date | string | number): string {
  */
 export function getActiveFastingSession(): ActiveFastingSession {
   try {
-    const raw = localStorage.getItem(ACTIVE_FASTING_KEY);
+    const raw = localStorage.getItem(StorageKeys.activeFasting());
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.isActive && parsed.startTime) {
@@ -201,9 +199,9 @@ export function getActiveFastingSession(): ActiveFastingSession {
 export function saveActiveFastingSession(session: ActiveFastingSession): void {
   try {
     if (session.isActive && session.startTime) {
-      localStorage.setItem(ACTIVE_FASTING_KEY, JSON.stringify(session));
+      localStorage.setItem(StorageKeys.activeFasting(), JSON.stringify(session));
     } else {
-      localStorage.removeItem(ACTIVE_FASTING_KEY);
+      localStorage.removeItem(StorageKeys.activeFasting());
     }
   } catch (e) {
     console.error('Failed to save active fasting session', e);
@@ -215,7 +213,7 @@ export function saveActiveFastingSession(session: ActiveFastingSession): void {
  */
 export function clearActiveFastingSession(): void {
   try {
-    localStorage.removeItem(ACTIVE_FASTING_KEY);
+    localStorage.removeItem(StorageKeys.activeFasting());
   } catch (e) {}
 }
 
@@ -259,14 +257,14 @@ export function createEmptyDayLog(): DayLog {
 
 export function loadPlanFromStorage(): PlanConfig {
   try {
-    const raw = localStorage.getItem(PLAN_KEY);
+    const raw = localStorage.getItem(StorageKeys.plan());
     if (raw) {
       const parsed = JSON.parse(raw);
       // PIN لم يعد مصدر دخول: امسح القيم القديمة المعروفة إن وُجدت
       if (parsed.adminPin === '1234' || parsed.adminPin === '32184') {
         parsed.adminPin = '';
         try {
-          localStorage.setItem(PLAN_KEY, JSON.stringify({ ...DEFAULT_PLAN, ...parsed }));
+          localStorage.setItem(StorageKeys.plan(), JSON.stringify({ ...DEFAULT_PLAN, ...parsed }));
         } catch (e) {}
       }
       return { ...DEFAULT_PLAN, ...parsed };
@@ -279,7 +277,7 @@ export function loadPlanFromStorage(): PlanConfig {
 
 export function savePlanToStorage(plan: PlanConfig): boolean {
   try {
-    localStorage.setItem(PLAN_KEY, JSON.stringify(plan));
+    localStorage.setItem(StorageKeys.plan(), JSON.stringify(plan));
     return true;
   } catch (e) {
     console.error('Failed to save plan', e);
@@ -289,7 +287,7 @@ export function savePlanToStorage(plan: PlanConfig): boolean {
 
 export function loadDayLog(dateStr: string): DayLog {
   try {
-    const raw = localStorage.getItem(DAY_PREFIX + dateStr);
+    const raw = localStorage.getItem(StorageKeys.dayPrefix() + dateStr);
     if (raw) {
       const parsed = JSON.parse(raw);
       const empty = createEmptyDayLog();
@@ -312,7 +310,7 @@ export function loadDayLog(dateStr: string): DayLog {
 
 export function saveDayLog(dateStr: string, day: DayLog): boolean {
   try {
-    localStorage.setItem(DAY_PREFIX + dateStr, JSON.stringify(day));
+    localStorage.setItem(StorageKeys.dayPrefix() + dateStr, JSON.stringify(day));
     return true;
   } catch (e) {
     console.error('Failed to save day log', e);
@@ -324,8 +322,8 @@ export function getAllStoredDayLogs(): Record<string, DayLog> {
   const result: Record<string, DayLog> = {};
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith(DAY_PREFIX)) {
-      const dateStr = key.slice(DAY_PREFIX.length);
+    if (key && key.startsWith(StorageKeys.dayPrefix())) {
+      const dateStr = key.slice(StorageKeys.dayPrefix().length);
       try {
         result[dateStr] = JSON.parse(localStorage.getItem(key) || '{}');
       } catch {
@@ -385,7 +383,7 @@ export function importFullBackupJSON(jsonString: string): boolean {
     }
     if (data.dailyLogs && typeof data.dailyLogs === 'object') {
       Object.entries(data.dailyLogs).forEach(([dateStr, log]) => {
-        localStorage.setItem(DAY_PREFIX + dateStr, JSON.stringify(log));
+        localStorage.setItem(StorageKeys.dayPrefix() + dateStr, JSON.stringify(log));
       });
     }
     return true;
