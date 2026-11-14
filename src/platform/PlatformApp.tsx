@@ -64,7 +64,7 @@ import { copyLegacyPatientDataToUser } from '../utils/storageKeys';
 import { withStorageScope } from '../utils/storageScope';
 import { DoctorExportButtons } from './DoctorExportButtons';
 import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
-import { summarizePatientDayLog } from './patientDashboardMetrics';
+import { countSkippedPatientMeals, summarizePatientDayLog } from './patientDashboardMetrics';
 import { PatientProgressCharts } from './PatientProgressCharts';
 import { ClinicSummaryExportButtons } from './ClinicSummaryExportButtons';
 import type { PatientProgressSummary } from './patientProgressSummary';
@@ -186,7 +186,7 @@ function RecentActivityCard({
                   {(() => {
                     const patient = patientByUid.get(item.patientUid);
                     const logSummary = summarizePatientDayLog(item.log, patient?.plan ?? null);
-                    const skippedMeals = Object.values(item.log.meals ?? {}).filter((meal) => meal.type === 'none').length;
+                    const skippedMeals = countSkippedPatientMeals(item.log);
                     const waterGoal = patient?.plan?.dailyWaterGoalMl ?? patient?.plan?.waterGoalMl;
                     const weightLabel = typeof item.log.weight === 'number' && Number.isFinite(item.log.weight) && item.log.weight > 0
                       ? `${item.log.weight} كجم`
