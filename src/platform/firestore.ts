@@ -23,6 +23,7 @@ import type { NotificationSettings } from '../utils/notifications';
 import type { SeasonalActivation } from '../utils/seasonalTemplate';
 import type { ShoppingListState } from '../utils/shoppingList';
 import { localDateKey, summarizePatientProgress, type PatientProgressSummary } from './patientProgressSummary';
+import { normalizePatientTags, type PatientTag } from './patientTags';
 
 // SDV2-UX-001: لا تخفي أخطاء الصلاحيات على شكل بيانات فارغة.
 // سجّل الخطأ مع السياق حتى يمكن تشخيص مشاكل RLS/Grants.
@@ -88,6 +89,7 @@ export interface PatientDoc {
   profile: { clientName: string };
   plan?: PlanConfig;
   invitedBy?: string;
+  tags?: PatientTag[];
   updatedAt?: string;
   updatedBy?: string;
 }
@@ -316,6 +318,7 @@ function rowToPatientDoc(row: Record<string, unknown>): PatientDoc {
   };
   if (row.plan != null) doc.plan = row.plan as PlanConfig;
   if (row.invited_by != null) doc.invitedBy = row.invited_by as string;
+  doc.tags = normalizePatientTags(row.tags);
   return doc;
 }
 
@@ -388,6 +391,26 @@ export async function savePatientPlan(
     .update({ plan: planToFirestore(plan, editorUid) })
     .eq('id', uid);
   if (error) throw new Error(error.message);
+}
+
+/** Saves staff-managed patient tags; authorization is enforced by patients RLS. */
+export async function savePatientTags(
+  uid: string,
+  tags: PatientTag[],
+): Promise<void> {
+  if (!uid) throw new Error('معرف المريض غير صالح.');
+  const normalized = normalizePatientTags(tags);
+  if (normalized.length !== tags.length) {
+    throw new Error('بعض الوسوم غير صالحة. راجع النصوص والألوان والحد الأقصى.');
+  }
+  const { data, error } = await getSupabase()
+    .from('patients')
+    .update({ tags: normalized })
+    .eq('id', uid)
+    .select('id')
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('لم يتم حفظ الوسوم: لا تملك صلاحية تحديث هذا المريض أو لم يعد موجودًا.');
 }
 
 // حفظ خطة مع لقطة من الخطة السابقة — plan_history غير موجود في السكيما
