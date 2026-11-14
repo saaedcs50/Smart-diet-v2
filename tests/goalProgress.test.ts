@@ -53,4 +53,18 @@ describe('goal progress summary', () => {
     expect(summary.targetWeight).toBeNull();
     expect(summary.weeklyAdherence).toBeNull();
   });
+  
+  it('counts a genuinely recorded zero-score day rather than inflating the average', () => {
+    const logs: Record<string, DayLog> = {
+      '2026-11-14': { ...createEmptyDayLog(), notes: 'Only a note was recorded' },
+    };
+    const summary = calculateGoalProgressSummary(
+      { ...DEFAULT_PLAN, targetWeight: 75 },
+      '2026-11-14',
+      logs,
+    );
+
+    expect(summary.loggedDays).toBe(1);
+    expect(summary.weeklyAdherence).toBe(0);
+  });
 });

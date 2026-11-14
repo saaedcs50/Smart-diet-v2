@@ -1,6 +1,7 @@
 import type { DayLog, PlanConfig } from '../types';
 import { calculateDayScore } from './calculations';
 import { getAllStoredDayLogs, getTodayDateString, parseLocalDate } from './storage';
+import { hasAnyDayActivity } from './streakReminder';
 
 export interface GoalProgressSummary {
   currentWeight: number | null;
@@ -55,7 +56,7 @@ export function calculateGoalProgressSummary(
     const stored = logs[dateKey];
     if (!stored) continue;
     const score = calculateDayScore(plan, stored);
-    if (score.total > 0 || stored.isFreeze) weeklyScores.push(score.total);
+    if (hasAnyDayActivity(stored)) weeklyScores.push(score.total);
   }
 
   return {
