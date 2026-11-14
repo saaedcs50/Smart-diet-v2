@@ -1366,12 +1366,6 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         } catch (caught: unknown) {
           if (!cancelled) setProgressError(errorText(caught));
         }
-        try {
-          const progress = await listPatientProgressSummaries(entries);
-          if (!cancelled) setProgressByUid(progress);
-        } catch (caught: unknown) {
-          if (!cancelled) setProgressError(errorText(caught));
-        }
       })
       .catch((caught: unknown) => {
         if (!cancelled) setError(errorText(caught));
@@ -1574,6 +1568,12 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
           if (!cancelled) setActivity(recent);
         } catch (caught: unknown) {
           if (!cancelled) setActivityError(errorText(caught));
+        }
+        try {
+          const progress = await listPatientProgressSummaries(entries);
+          if (!cancelled) setProgressByUid(progress);
+        } catch (caught: unknown) {
+          if (!cancelled) setProgressError(errorText(caught));
         }
       })
       .catch((caught: unknown) => {
