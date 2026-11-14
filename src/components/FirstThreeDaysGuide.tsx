@@ -10,7 +10,7 @@ import { getFirstActivityDate, getFirstThreeDaysGuideState, isValidFirstDaysStar
 function readScopedStartDate(todayDate: string): string {
   try {
     const saved = localStorage.getItem(StorageKeys.firstDaysStartedAt());
-    if (isValidFirstDaysStartDate(saved ?? undefined, todayDate)) return saved;
+    if (saved && isValidFirstDaysStartDate(saved, todayDate)) return saved;
   } catch {
     // Start from the best date available when storage is unavailable.
   }
