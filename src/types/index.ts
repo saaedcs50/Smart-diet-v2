@@ -309,6 +309,14 @@ export interface BodyMeasurements {
   neck: number | null;
 }
 
+/** Measurements recorded for a single date. Values are observations only; the app does not diagnose or interpret them. */
+export interface DailyHealthMetrics {
+  bodyFatPercent?: number | null;
+  bloodGlucoseMgDl?: number | null;
+  systolicBloodPressureMmHg?: number | null;
+  diastolicBloodPressureMmHg?: number | null;
+}
+
 export interface ActiveFastingSession {
   isActive: boolean;
   startTime: number | null; // timestamp in ms
@@ -331,6 +339,8 @@ export interface DayLog {
   notes: string;
   weight: number | null;
   meas: BodyMeasurements;
+  /** Optional health readings logged for this date. */
+  healthMetrics?: DailyHealthMetrics;
   symptoms: Record<string, boolean>;
   symNotes: string;
   mood: number | null;

@@ -47,6 +47,12 @@ function fixture(name = 'Patient A'): DoctorExportPatient {
     notes: 'Synthetic daily note',
     weight: 82.5,
     meas: { waist: 90, chest: null, hips: null, arm: null, thigh: null, neck: null },
+    healthMetrics: {
+      bodyFatPercent: 31.4,
+      bloodGlucoseMgDl: 105,
+      systolicBloodPressureMmHg: 120,
+      diastolicBloodPressureMmHg: 80,
+    },
     symptoms: { headache: false },
     symNotes: '',
     mood: 4,
@@ -164,6 +170,15 @@ describe('doctor data exports', () => {
     const exportedLog = JSON.parse(String(sheets[1].rows[1][fullLogIndex])) as Record<string, unknown>;
     expect(exportedLog.weight).toBe(82.5);
     expect(exportedLog.notes).toBe('Synthetic daily note');
+
+    const dailyRow = sheets[1].rows[1];
+    expect(dailyRow[dailyHeader.indexOf('Body fat (%)')]).toBe(31.4);
+    expect(dailyRow[dailyHeader.indexOf('Blood glucose (mg/dL)')]).toBe(105);
+    expect(dailyRow[dailyHeader.indexOf('Systolic blood pressure (mmHg)')]).toBe(120);
+    expect(dailyRow[dailyHeader.indexOf('Diastolic blood pressure (mmHg)')]).toBe(80);
+
+    const latestBodyFatIndex = patientHeader.indexOf('Last recorded body fat (%)');
+    expect(sheets[0].rows[1][latestBodyFatIndex]).toBe(31.4);
 
     const adherenceHeader = sheets[2].rows[0];
     expect(adherenceHeader).toContain('Overall (%)');

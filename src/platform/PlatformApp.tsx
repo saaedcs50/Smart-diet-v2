@@ -1322,6 +1322,13 @@ function PatientDetail({
                     {daySummary.plannedTasks != null && <span>مهام مكتملة: {daySummary.completedTasks} / {daySummary.plannedTasks}</span>}
                     {log.sleepHours != null && <span>النوم: {log.sleepHours} ساعة</span>}
                     {log.quality && <span>جودة النوم: {log.quality}</span>}
+                    {log.healthMetrics?.bodyFatPercent != null && <span>دهون الجسم: {log.healthMetrics.bodyFatPercent}%</span>}
+                    {log.healthMetrics?.bloodGlucoseMgDl != null && <span>سكر الدم: {log.healthMetrics.bloodGlucoseMgDl} mg/dL</span>}
+                    {(log.healthMetrics?.systolicBloodPressureMmHg != null || log.healthMetrics?.diastolicBloodPressureMmHg != null) && (
+                      <span>
+                        ضغط الدم: {log.healthMetrics?.systolicBloodPressureMmHg ?? '—'}/{log.healthMetrics?.diastolicBloodPressureMmHg ?? '—'} mmHg
+                      </span>
+                    )}
                   </div>
                 </li>
               );
