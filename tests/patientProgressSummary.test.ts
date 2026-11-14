@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DayLog, PlanConfig } from '../src/types';
-import { calculateWeightTargetProgress, summarizePatientProgress } from '../src/platform/patientProgressSummary';
+import { calculateWeightTargetProgress, isWithinLastCalendarDays, summarizePatientProgress } from '../src/platform/patientProgressSummary';
 
 const today = new Date(2026, 10, 14);
 const plan = {
@@ -119,5 +119,20 @@ describe('clinic adherence and target progress metrics', () => {
     expect(calculateWeightTargetProgress(90, 75, 80)).toBe(100);
     expect(calculateWeightTargetProgress(90, 85, 90)).toBeNull();
     expect(calculateWeightTargetProgress(null, 85, 80)).toBeNull();
+  });
+});
+
+
+describe('new patient file date window', () => {
+  it('counts records created within inclusive local calendar-day windows', () => {
+    expect(isWithinLastCalendarDays('2026-11-08T10:00:00+02:00', 7, today)).toBe(true);
+    expect(isWithinLastCalendarDays('2026-11-07T23:00:00+02:00', 7, today)).toBe(false);
+    expect(isWithinLastCalendarDays('2026-10-16T12:00:00+02:00', 30, today)).toBe(true);
+    expect(isWithinLastCalendarDays('2026-10-15T12:00:00+02:00', 30, today)).toBe(false);
+  });
+
+  it('rejects missing and malformed creation timestamps', () => {
+    expect(isWithinLastCalendarDays(undefined, 7, today)).toBe(false);
+    expect(isWithinLastCalendarDays('not-a-timestamp', 7, today)).toBe(false);
   });
 });
