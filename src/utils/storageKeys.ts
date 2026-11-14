@@ -62,6 +62,8 @@ export const StorageKeys = {
   onboardingSeen: () => ns('onboarding_seen'),
   /** إقرار العميل بأنه اطّلع على الوجبة التالية ضمن دليل أول ثلاثة أيام */
   firstDaysMealViewed: () => ns('first_days_meal_viewed'),
+  /** تاريخ بدء قائمة أول ثلاثة أيام، ويظل ثابتًا حتى بعد تسجيل الخروج أو مرور الأيام */
+  firstDaysStartedAt: () => ns('first_days_started_at'),
   coachOnboardingSeen: () => ns('coach_onboarding_seen'),
   coachSessionToken: () => ns('coach_session_token'),
   coachUnlocked: () => ns('coach_unlocked'),

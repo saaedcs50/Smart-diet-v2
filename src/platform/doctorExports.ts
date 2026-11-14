@@ -25,6 +25,22 @@ function jsonCell(value: unknown): string {
   }
 }
 
+function mealNotesForLog(log: DayLog, plan: PlanConfig | null): Array<{
+  mealId: string;
+  mealName: string;
+  note: string;
+}> {
+  return Object.entries(log.meals ?? {}).flatMap(([mealId, mealLog]) => {
+    const note = typeof mealLog.reason === 'string' ? mealLog.reason.trim() : '';
+    if (!note) return [];
+    return [{
+      mealId,
+      mealName: plan?.meals?.find((meal) => meal.id === mealId)?.name ?? mealId,
+      note,
+    }];
+  });
+}
+
 function validNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
@@ -93,6 +109,7 @@ export function buildDoctorExportSheets(patients: DoctorExportPatient[]): Export
     'Sleep hours',
     'Sleep quality',
     'Meals (JSON)',
+    'Meal notes (JSON)',
     'Checklist (JSON)',
     'Supplements (JSON)',
     'Medications (JSON)',
@@ -166,6 +183,7 @@ export function buildDoctorExportSheets(patients: DoctorExportPatient[]): Export
         validNumber(log.sleepHours),
         log.quality ?? '',
         jsonCell(log.meals),
+        jsonCell(mealNotesForLog(log, plan)),
         jsonCell(log.checks),
         jsonCell(log.supps),
         jsonCell(log.medications),
@@ -475,12 +493,17 @@ export function buildDoctorPdfHtml(patients: DoctorExportPatient[], clinicName: 
       ${patient.adherenceConfig ? `<p>المحاور والأوزان: ${esc(patient.adherenceConfig.axes.map((axis) => `${axis.name} (${axis.weight}%)`).join('، '))}</p>` : '<p>لا يوجد إعداد لمحاور الالتزام.</p>'}
       ${patient.adherenceScores.length ? `<table><thead><tr><th>التاريخ</th><th>النسبة</th><th>الدرجات</th><th>ملاحظة</th></tr></thead><tbody>${[...patient.adherenceScores].sort((a, b) => b.date.localeCompare(a.date)).map((score) => `<tr><td>${esc(score.date)}</td><td>${esc(score.overall)}%</td><td>${esc(score.scores.join(' / '))}</td><td>${esc(score.note)}</td></tr>`).join('')}</tbody></table>` : '<p>لا توجد درجات التزام مسجلة.</p>'}
       <h3>السجلات اليومية</h3>
-      ${logs.length ? `<table><thead><tr><th>التاريخ</th><th>الوزن</th><th>الماء</th><th>النوم</th><th>السعرات</th><th>ملاحظات</th></tr></thead>
-        <tbody>${logs.map(({ date, log }) => `<tr>
-          <td>${esc(date)}</td><td>${esc(log.weight)} كجم</td><td>${esc(log.water)} مل</td>
-          <td>${esc(log.sleepHours ?? log.sleep)} / ${esc(log.quality)}</td>
-          <td>${esc(log.consumedCalories)}</td><td>${esc(log.notes)}</td>
-        </tr>`).join('')}</tbody></table>` : '<p>لا توجد سجلات يومية.</p>'}
+      ${logs.length ? `<table><thead><tr><th>التاريخ</th><th>الوزن</th><th>الماء</th><th>النوم</th><th>السعرات</th><th>ملاحظات اليوم</th><th>ملاحظات الوجبات</th></tr></thead>
+        <tbody>${logs.map(({ date, log }) => {
+          const mealNotes = mealNotesForLog(log, plan)
+            .map((item) => `${item.mealName}: ${item.note}`)
+            .join(' | ');
+          return `<tr>
+            <td>${esc(date)}</td><td>${esc(log.weight)} كجم</td><td>${esc(log.water)} مل</td>
+            <td>${esc(log.sleepHours ?? log.sleep)} / ${esc(log.quality)}</td>
+            <td>${esc(log.consumedCalories)}</td><td>${esc(log.notes)}</td><td>${esc(mealNotes)}</td>
+          </tr>`;
+        }).join('')}</tbody></table>` : '<p>لا توجد سجلات يومية.</p>'}
     </section>`;
   }).join('');
 

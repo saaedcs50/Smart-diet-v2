@@ -12,7 +12,8 @@ import {
   Info, 
   Scale, 
   Sparkles, 
-  Fish 
+  Fish,
+  StickyNote,
 } from 'lucide-react';
 import { MealItem, MealLogState } from '../types';
 import { BRAND } from '../config/brand';
@@ -38,6 +39,7 @@ export const MealCard: React.FC<MealCardProps> = ({
   const currentLog: MealLogState = state || {};
   const [showAlts, setShowAlts] = useState(false);
   const [showSmartSubs, setShowSmartSubs] = useState(false);
+  const [showMealNote, setShowMealNote] = useState(Boolean(state?.reason));
 
   const isCommitted = currentLog.eval === 'yes';
   const isSlipped = currentLog.eval === 'no';
@@ -189,21 +191,38 @@ export const MealCard: React.FC<MealCardProps> = ({
         </div>
       </div>
 
-      {/* Note input if not fully committed */}
-      {isSlipped && (
-        <div className="mt-3 p-3 rounded-2xl bg-[var(--app-card-muted)] border border-[var(--app-border)]/60 text-xs text-[var(--app-text-primary)] space-y-1.5 animate-in fade-in">
-          <p className="text-[12px] leading-relaxed text-[var(--app-text-secondary)]">
-            تدوين ما تم تناوله أو سبب التغيير لإطلاع {BRAND.doctorName}:
-          </p>
-          <input
-            type="text"
-            placeholder="مثال: تم تناول وجبة سريعة مع الأصدقاء..."
-            value={currentLog.reason || ''}
-            onChange={(e) => onUpdate({ ...currentLog, reason: e.target.value })}
-            className="w-full text-xs p-2 rounded-xl border border-[var(--app-border)]/70 bg-[var(--app-card)] text-[var(--app-text-primary)] outline-none focus:ring-2 focus:ring-[var(--app-hero)]"
-          />
-        </div>
-      )}
+      {/* Free-text meal diary: visible for all meal states and saved inside this day's meal log. */}
+      <div className="mt-3">
+        <button
+          type="button"
+          aria-expanded={isSlipped || showMealNote || Boolean(currentLog.reason)}
+          onClick={() => setShowMealNote((value) => !value)}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--app-border)]/70 px-3 py-2 text-[11px] font-bold text-[var(--app-text-secondary)] hover:bg-[var(--app-card-muted)]"
+        >
+          <StickyNote className="h-3.5 w-3.5" />
+          {currentLog.reason?.trim() ? 'تعديل ملاحظة الوجبة' : 'أضف ملاحظة للوجبة'}
+        </button>
+        {(isSlipped || showMealNote || Boolean(currentLog.reason)) && (
+          <div className="mt-2 p-3 rounded-2xl bg-[var(--app-card-muted)] border border-[var(--app-border)]/60 text-xs text-[var(--app-text-primary)] space-y-1.5 animate-in fade-in">
+            <label className="block text-[12px] leading-relaxed text-[var(--app-text-secondary)]">
+              {isSlipped
+                ? `دوّن ما تناولته أو سبب التغيير ليطّلع عليه ${BRAND.doctorName}:`
+                : `ملاحظة اختيارية مرتبطة بهذه الوجبة، وتظهر في تقرير ${BRAND.doctorName}:`}
+            </label>
+            <textarea
+              rows={2}
+              maxLength={500}
+              value={currentLog.reason || ''}
+              onChange={(e) => onUpdate({ ...currentLog, reason: e.target.value })}
+              placeholder="مثال: أكلت خارج المنزل — كشري، أو لم أتمكن من تناول الوجبة..."
+              className="w-full resize-y text-xs p-2.5 rounded-xl border border-[var(--app-border)]/70 bg-[var(--app-card)] text-[var(--app-text-primary)] outline-none focus:ring-2 focus:ring-[var(--app-hero)]"
+            />
+            <p className="text-[10px] text-[var(--app-text-secondary)] text-left">
+              {(currentLog.reason || '').length}/500
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Mindful Eating: Hunger & Fullness Scale 1-10 (Before & After Meal) */}
       <HungerFullnessPicker

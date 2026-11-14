@@ -2,6 +2,21 @@ import type { DayLog } from '../types';
 import { hasAnyDayActivity } from './streakReminder';
 import { parseLocalDate } from './storage';
 
+export function getFirstActivityDate(
+  dayLogs: Record<string, DayLog>,
+  todayDate: string,
+): string | null {
+  return Object.entries(dayLogs)
+    .filter(([date, log]) => date <= todayDate && hasAnyDayActivity(log))
+    .map(([date]) => date)
+    .sort((a, b) => a.localeCompare(b))[0] ?? null;
+}
+
+function isValidStartDate(value: string | undefined, todayDate: string): value is string {
+  if (!value || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value) || value > todayDate) return false;
+  return Number.isFinite(parseLocalDate(value).getTime());
+}
+
 export interface FirstThreeDaysGuideState {
   visible: boolean;
   startDate: string;
@@ -20,16 +35,16 @@ export interface FirstThreeDaysGuideState {
 export function getFirstThreeDaysGuideState(input: {
   todayDate: string;
   dayLogs: Record<string, DayLog>;
+  startedAtDate?: string;
   notificationsEnabled: boolean;
   mealViewed: boolean;
 }): FirstThreeDaysGuideState {
   const today = parseLocalDate(input.todayDate);
   const validToday = Number.isFinite(today.getTime());
-  const firstActivityDate = Object.entries(input.dayLogs)
-    .filter(([date, log]) => date <= input.todayDate && hasAnyDayActivity(log))
-    .map(([date]) => date)
-    .sort((a, b) => a.localeCompare(b))[0];
-  const startDate = firstActivityDate ?? input.todayDate;
+  const firstActivityDate = getFirstActivityDate(input.dayLogs, input.todayDate);
+  const startDate = isValidStartDate(input.startedAtDate, input.todayDate)
+    ? input.startedAtDate
+    : firstActivityDate ?? input.todayDate;
   const start = parseLocalDate(startDate);
 
   const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());

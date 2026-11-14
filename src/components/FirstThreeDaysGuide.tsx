@@ -5,7 +5,24 @@ import { getAllStoredDayLogs } from '../utils/storage';
 import { getNotificationPermission, loadNotificationSettings } from '../utils/notifications';
 import { StorageKeys } from '../utils/storageKeys';
 import { onStorageScopeChanged } from '../utils/storageScope';
-import { getFirstThreeDaysGuideState } from '../utils/firstThreeDays';
+import { getFirstActivityDate, getFirstThreeDaysGuideState } from '../utils/firstThreeDays';
+
+function readScopedStartDate(todayDate: string): string {
+  try {
+    const saved = localStorage.getItem(StorageKeys.firstDaysStartedAt());
+    if (saved && /^\\d{4}-\\d{2}-\\d{2}$/.test(saved) && saved <= todayDate) return saved;
+  } catch {
+    // Start from the best date available when storage is unavailable.
+  }
+  const firstActivity = getFirstActivityDate(getAllStoredDayLogs(), todayDate);
+  const resolved = firstActivity ?? todayDate;
+  try {
+    localStorage.setItem(StorageKeys.firstDaysStartedAt(), resolved);
+  } catch {
+    // The guide remains functional for this session if storage is unavailable.
+  }
+  return resolved;
+}
 
 interface FirstThreeDaysGuideProps {
   todayDate: string;
@@ -26,7 +43,16 @@ export const FirstThreeDaysGuide: React.FC<FirstThreeDaysGuideProps> = ({
       return false;
     }
   });
+  const [startedAtDate, setStartedAtDate] = useState(() => readScopedStartDate(todayDate));
   const [expanded, setExpanded] = useState(true);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(StorageKeys.firstDaysStartedAt(), startedAtDate);
+    } catch {
+      // Keep the resolved date in memory if local storage is unavailable.
+    }
+  }, [startedAtDate]);
 
   useEffect(() => onStorageScopeChanged(() => {
     try {
@@ -34,7 +60,8 @@ export const FirstThreeDaysGuide: React.FC<FirstThreeDaysGuideProps> = ({
     } catch {
       setMealViewed(false);
     }
-  }), []);
+    setStartedAtDate(readScopedStartDate(todayDate));
+  }), [todayDate]);
 
   // Re-read on every parent render so permission, settings, and a newly
   // recorded weight are reflected immediately after the user changes them.
@@ -50,6 +77,7 @@ export const FirstThreeDaysGuide: React.FC<FirstThreeDaysGuideProps> = ({
   const progress = getFirstThreeDaysGuideState({
     todayDate,
     dayLogs: getAllStoredDayLogs(),
+    startedAtDate,
     notificationsEnabled,
     mealViewed,
   });

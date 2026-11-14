@@ -39,7 +39,7 @@ function fixture(name = 'Patient A'): DoctorExportPatient {
     wake: '07:00',
     sleepHours: 8,
     quality: 'good',
-    meals: { breakfast: { type: 'default', eval: 'yes' } },
+    meals: { breakfast: { type: 'default', eval: 'yes', reason: 'أكلت بره: كشري' } },
     checks: { water: true },
     supps: { vitamin: false },
     medications: {},
@@ -172,6 +172,12 @@ describe('doctor data exports', () => {
     expect(exportedLog.notes).toBe('Synthetic daily note');
 
     const dailyRow = sheets[1].rows[1];
+    const mealNotesIndex = dailyHeader.indexOf('Meal notes (JSON)');
+    expect(JSON.parse(String(dailyRow[mealNotesIndex]))).toEqual([{
+      mealId: 'breakfast',
+      mealName: 'breakfast',
+      note: 'أكلت بره: كشري',
+    }]);
     expect(dailyRow[dailyHeader.indexOf('Body fat (%)')]).toBe(31.4);
     expect(dailyRow[dailyHeader.indexOf('Blood glucose (mg/dL)')]).toBe(105);
     expect(dailyRow[dailyHeader.indexOf('Systolic blood pressure (mmHg)')]).toBe(120);
@@ -209,6 +215,7 @@ describe('doctor data exports', () => {
     expect(html).not.toContain('<img src=x');
     expect(html).toContain('window.print()');
     expect(html).toContain('Synthetic daily note');
+    expect(html).toContain('أكلت بره: كشري');
     expect(html).toContain('83.5%');
     expect(html).toContain('Synthetic adherence note');
   });
