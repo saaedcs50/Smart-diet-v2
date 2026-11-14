@@ -197,6 +197,101 @@ const buttonClass =
 const ghostButtonClass =
   'rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 dark:border-slate-700 dark:text-slate-200';
 
+type PatientListSort = 'name' | 'plan';
+type PatientPlanFilter = 'all' | 'withPlan' | 'withoutPlan';
+
+function filterAndSortPatients(
+  patients: Array<{ uid: string; doc: PatientDoc }>,
+  query: string,
+  planFilter: PatientPlanFilter,
+  sort: PatientListSort,
+): Array<{ uid: string; doc: PatientDoc }> {
+  const normalizedQuery = query.trim().toLocaleLowerCase('ar');
+  return patients
+    .filter(({ doc }) => {
+      const matchesQuery = !normalizedQuery ||
+        (doc.profile.clientName ?? '').toLocaleLowerCase('ar').includes(normalizedQuery);
+      const hasPlan = Boolean(doc.plan);
+      const matchesPlan = planFilter === 'all' ||
+        (planFilter === 'withPlan' && hasPlan) ||
+        (planFilter === 'withoutPlan' && !hasPlan);
+      return matchesQuery && matchesPlan;
+    })
+    .sort((a, b) => {
+      if (sort === 'plan') {
+        const planDifference = Number(Boolean(b.doc.plan)) - Number(Boolean(a.doc.plan));
+        if (planDifference !== 0) return planDifference;
+      }
+      return (a.doc.profile.clientName ?? '').localeCompare(
+        b.doc.profile.clientName ?? '',
+        'ar',
+      );
+    });
+}
+
+function PatientListControls({
+  query,
+  onQueryChange,
+  sort,
+  onSortChange,
+  planFilter,
+  onPlanFilterChange,
+  resultCount,
+}: {
+  query: string;
+  onQueryChange: (value: string) => void;
+  sort: PatientListSort;
+  onSortChange: (value: PatientListSort) => void;
+  planFilter: PatientPlanFilter;
+  onPlanFilterChange: (value: PatientPlanFilter) => void;
+  resultCount: number;
+}) {
+  return (
+    <div className="mt-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
+      <label className="block text-xs font-bold text-slate-600 dark:text-slate-300" htmlFor="platform-patient-search">
+        بحث باسم المريض
+      </label>
+      <input
+        id="platform-patient-search"
+        type="search"
+        value={query}
+        onChange={(event) => onQueryChange(event.target.value)}
+        placeholder="اكتب اسم المريض..."
+        className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+      />
+      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+          ترتيب حسب
+          <select
+            value={sort}
+            onChange={(event) => onSortChange(event.target.value as PatientListSort)}
+            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+          >
+            <option value="name">الاسم (أ-ي)</option>
+            <option value="plan">أصحاب الخطط أولًا</option>
+          </select>
+        </label>
+        <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+          حالة الخطة
+          <select
+            value={planFilter}
+            onChange={(event) => onPlanFilterChange(event.target.value as PatientPlanFilter)}
+            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+          >
+            <option value="all">كل المرضى</option>
+            <option value="withPlan">لديهم خطة سحابية</option>
+            <option value="withoutPlan">بلا خطة سحابية</option>
+          </select>
+        </label>
+      </div>
+      <p className="mt-2 text-[11px] text-slate-500" role="status">
+        عدد النتائج: {resultCount}
+      </p>
+    </div>
+  );
+}
+
+
 // ---------------------------------------------------------------------------
 // الدخول
 // ---------------------------------------------------------------------------
@@ -1168,6 +1263,9 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   const [reloadKey, setReloadKey] = useState(0);
   const [activity, setActivity] = useState<RecentDayLogActivity[]>([]);
   const [activityError, setActivityError] = useState<string | null>(null);
+  const [patientQuery, setPatientQuery] = useState('');
+  const [patientSort, setPatientSort] = useState<PatientListSort>('name');
+  const [patientPlanFilter, setPatientPlanFilter] = useState<PatientPlanFilter>('all');
 
   useEffect(() => {
     let cancelled = false;
@@ -1210,13 +1308,18 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     patients.map((patient) => ({ uid: patient.uid, invitedBy: patient.doc.invitedBy })),
   );
   const coachUids = new Set(coaches.map((coach) => coach.uid));
-  const visiblePatients = patients.filter((patient) => {
-    if (filter === 'all') return true;
-    if (filter === 'unassigned') {
-      return !patient.doc.invitedBy || !coachUids.has(patient.doc.invitedBy);
-    }
-    return patient.doc.invitedBy === filter.doctorUid;
-  });
+  const visiblePatients = filterAndSortPatients(
+    patients.filter((patient) => {
+      if (filter === 'all') return true;
+      if (filter === 'unassigned') {
+        return !patient.doc.invitedBy || !coachUids.has(patient.doc.invitedBy);
+      }
+      return patient.doc.invitedBy === filter.doctorUid;
+    }),
+    patientQuery,
+    patientPlanFilter,
+    patientSort,
+  );
 
   const assign = async (patientUid: string, coachUid: string | null) => {
     setAssignError(null);
@@ -1232,6 +1335,12 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   };
 
   const patientsWithPlan = patients.filter((patient) => Boolean(patient.doc.plan)).length;
+  const visiblePatients = filterAndSortPatients(
+    patients,
+    patientQuery,
+    patientPlanFilter,
+    patientSort,
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -1298,11 +1407,24 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
           مرضى عيادتك فقط — من قاعدة المنصة مباشرة، لا بيانات وهمية. عيّن
           الطبيب من القائمة المنسدلة لكل مريض.
         </p>
+        <PatientListControls
+          query={patientQuery}
+          onQueryChange={setPatientQuery}
+          sort={patientSort}
+          onSortChange={setPatientSort}
+          planFilter={patientPlanFilter}
+          onPlanFilterChange={setPatientPlanFilter}
+          resultCount={visiblePatients.length}
+        />
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل المرضى…</p>}
         {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
         {assignError && <p className="mt-3 text-sm font-bold text-red-600">{assignError}</p>}
         {!loading && !error && visiblePatients.length === 0 && (
-          <p className="mt-3 text-sm text-slate-500">لا يوجد مرضى في هذا العرض.</p>
+          <p className="mt-3 text-sm text-slate-500">
+            {patientQuery.trim() || patientPlanFilter !== 'all'
+              ? 'لا توجد نتائج مطابقة للبحث أو التصفية.'
+              : 'لا يوجد مرضى في هذا العرض.'}
+          </p>
         )}
         <ul className="mt-3 flex flex-col gap-2">
           {visiblePatients.map(({ uid: patientUid, doc }) => (
@@ -1342,6 +1464,9 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const [loading, setLoading] = useState(true);
   const [activity, setActivity] = useState<RecentDayLogActivity[]>([]);
   const [activityError, setActivityError] = useState<string | null>(null);
+  const [patientQuery, setPatientQuery] = useState('');
+  const [patientSort, setPatientSort] = useState<PatientListSort>('name');
+  const [patientPlanFilter, setPatientPlanFilter] = useState<PatientPlanFilter>('all');
 
   useEffect(() => {
     let cancelled = false;
@@ -1395,13 +1520,25 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
           المرضى الذين دعوتهم أنت فقط — من قاعدة المنصة مباشرة، لا بيانات
           وهمية. اضغط على مريض لعرض خطته وسجلات تقدمه.
         </p>
+        <PatientListControls
+          query={patientQuery}
+          onQueryChange={setPatientQuery}
+          sort={patientSort}
+          onSortChange={setPatientSort}
+          planFilter={patientPlanFilter}
+          onPlanFilterChange={setPatientPlanFilter}
+          resultCount={visiblePatients.length}
+        />
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل عملائي…</p>}
         {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
         {!loading && !error && patients.length === 0 && (
           <p className="mt-3 text-sm text-slate-500">لا يوجد عملاء بعد — أنشئ دعوة لمريضك الأول بالأسفل، وسيظهر هنا تلقائيًا بعد تسجيله.</p>
         )}
+        {!loading && !error && patients.length > 0 && visiblePatients.length === 0 && (
+          <p className="mt-3 text-sm text-slate-500">لا توجد نتائج مطابقة للبحث أو التصفية.</p>
+        )}
         <ul className="mt-3 flex flex-col gap-2">
-          {patients.map(({ uid: patientUid, doc }) => (
+          {visiblePatients.map(({ uid: patientUid, doc }) => (
             <li key={patientUid}>
               <button
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
