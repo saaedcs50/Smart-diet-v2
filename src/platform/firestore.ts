@@ -511,6 +511,40 @@ export async function listRecentDayLogActivity(
     .map((row) => ({ patientUid: row.patient_id, date: row.log_date }));
 }
 
+/** أحدث إدخالات اليوم الفعلية للمرضى الذين حُددوا مسبقًا حسب نطاق الدور. */
+export interface RecentDayLogDetail extends RecentDayLogActivity {
+  log: DayLog;
+}
+
+export async function listRecentDayLogDetails(
+  patientUids: string[],
+  limit = 8,
+): Promise<RecentDayLogDetail[]> {
+  const scopedUids = [...new Set(patientUids.filter((uid) => typeof uid === 'string' && uid.length > 0))];
+  if (scopedUids.length === 0) return [];
+
+  const safeLimit = Math.max(1, Math.min(20, Math.floor(limit)));
+  const { data, error } = await getSupabase()
+    .from('day_logs')
+    .select('patient_id, log_date, log')
+    .in('patient_id', scopedUids)
+    .order('log_date', { ascending: false })
+    .limit(safeLimit);
+
+  if (error) {
+    logDbError('listRecentDayLogDetails', error);
+    throw new Error(error.message);
+  }
+
+  const out: RecentDayLogDetail[] = [];
+  for (const row of (data as Array<{ patient_id: string; log_date: string; log: unknown }> | null) ?? []) {
+    if (typeof row.patient_id !== 'string' || typeof row.log_date !== 'string') continue;
+    const parsed = dayLogFromFirestore(row.log);
+    if (parsed) out.push({ patientUid: row.patient_id, date: row.log_date, log: parsed });
+  }
+  return out;
+}
+
 /**
  * Patient-level operational summaries for doctor/clinic dashboards.
  * IDs must come from the current role-scoped patient query; Supabase RLS remains
