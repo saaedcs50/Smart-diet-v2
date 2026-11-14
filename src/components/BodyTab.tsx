@@ -133,12 +133,11 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  targetProgressPercent = Math.min(100, Math.max(0, Math.round((lostSoFar / totalToLose) * 100)));
  }
 
- return (
- <div className="space-y-4 pb-12 animate-in fade-in duration-150">
  // Instant search matches the visible sections rather than changing or filtering patient data.
  const searchActive = searchQuery.trim().length > 0;
  const showWeightBanner = matchesBodySearch(searchQuery, [
   'الوزن الصباحي والهدف', 'وزن اليوم', 'وزن بداية الرحلة', 'الهدف المطلوب', 'خسارة الوزن',
+  day.weight, startWeight, targetWeight,
  ]);
  const showTrajectory = matchesBodySearch(searchQuery, [
   'الوزن المتوقع مقابل الفعلي', 'المسار المتوقع', 'معدل نزول الوزن',
@@ -162,6 +161,7 @@ export const BodyTab: React.FC<BodyTabProps> = ({
  const measurementSearchFields = [
   'قياسات الجسم بالمتر', 'محيط الجسم', 'الوسط', 'الخصر', 'محيط الصدر',
   'الأرداف', 'الهيبس', 'الذراع', 'الفخذ', 'الرقبة', 'waist', 'chest', 'hips',
+  day.meas?.waist, day.meas?.chest, day.meas?.hips, day.meas?.arm, day.meas?.thigh, day.meas?.neck,
  ];
  const showBodyMeasurements = matchesBodySearch(searchQuery, measurementSearchFields);
  const labEntries = plan.labTracking?.entries || [];
@@ -185,6 +185,9 @@ export const BodyTab: React.FC<BodyTabProps> = ({
   showMilestones, showBodyMeasurements, showLabs, showPhotos,
  ].some(Boolean);
 
+
+ return (
+ <div className="space-y-4 pb-12 animate-in fade-in duration-150">
   <section className="rounded-3xl border border-peacock-pale bg-[var(--app-card)] p-3 dark:border-peacock-ink/40" aria-label="البحث في الجسم والقياسات">
    <label htmlFor="body-tab-search" className="mb-2 block text-xs font-bold text-brand-secondary-text dark:text-peacock-teal-light">بحث سريع في الجسم والقياسات</label>
    <div className="flex items-center gap-2 rounded-2xl border border-peacock-pale bg-[var(--app-bg)] px-3 dark:border-peacock-ink/40">
