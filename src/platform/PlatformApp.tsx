@@ -67,6 +67,7 @@ import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
 import { countSkippedPatientMeals, summarizePatientDayLog } from './patientDashboardMetrics';
 import { PatientProgressCharts } from './PatientProgressCharts';
 import { PatientTagsEditor } from './PatientTagsEditor';
+import { EmptyState } from '../components/EmptyState';
 import { InvitationManager } from './InvitationManager';
 import type { PatientTag } from './patientTags';
 import { ClinicSummaryExportButtons } from './ClinicSummaryExportButtons';
@@ -171,7 +172,11 @@ function RecentActivityCard({
       ) : error ? (
         <p role="alert" className="mt-3 text-sm font-bold text-red-600">{error}</p>
       ) : activity.length === 0 ? (
-        <p className="mt-3 text-sm text-slate-500">لا توجد سجلات أيام بعد ضمن نطاق العرض.</p>
+        <EmptyState
+          title="لا توجد سجلات أيام بعد"
+          description="ستظهر هنا أحدث السجلات التشغيلية للمرضى عند بدء تسجيل النشاط."
+          className="mt-3"
+        />
       ) : (
         <ul className="mt-3 flex flex-col gap-2">
           {activity.map((item, index) => (
@@ -1253,7 +1258,12 @@ function PatientDetail({
 
   if (loading) return <p className="text-sm text-slate-500">جاري تحميل بيانات المريض…</p>;
   if (error) return <p className="text-sm font-bold text-red-600">{error}</p>;
-  if (!doc) return <p className="text-sm text-slate-500">لا يوجد ملف مريض بهذا المعرف.</p>;
+  if (!doc) return (
+    <EmptyState
+      title="ملف المريض غير موجود"
+      description="تأكد من رابط الملف أو من أن حسابك يملك صلاحية الوصول إليه."
+    />
+  );
 
   const latestEntry = entries[0] ?? null;
   const latestWeightEntry = entries.find(({ log }) => log.weight != null) ?? null;
@@ -1296,7 +1306,11 @@ function PatientDetail({
             <p>عدد الوجبات: {plan.meals.length} — عدد بنود المتابعة: {plan.checklist.length}</p>
           </div>
         ) : (
-          <p className="mt-3 text-sm text-slate-500">لا توجد خطة سحابية بعد لهذا المريض.</p>
+          <EmptyState
+            title="لا توجد خطة سحابية بعد"
+            description="ستظهر تفاصيل الخطة هنا بعد أن يحفظها الطبيب في ملف المريض."
+            className="mt-3"
+          />
         )}
       </Card>
       <PatientProgressCharts entries={entries} plan={plan} />
@@ -1305,7 +1319,11 @@ function PatientDetail({
           سجلات الأيام ({entries.length})
         </h3>
         {entries.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-500">لا توجد سجلات أيام سحابية بعد.</p>
+          <EmptyState
+            title="لا توجد سجلات يومية سحابية"
+            description="تظهر السجلات بعد موافقة المريض على المزامنة وتسجيل بياناته اليومية."
+            className="mt-3"
+          />
         ) : (
           <ul className="mt-3 flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-200">
             {entries.slice(0, visibleEntryCount).map(({ date, log }) => {
@@ -1628,7 +1646,11 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل الدكاترة…</p>}
         {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
         {!loading && !error && coaches.length === 0 && (
-          <p className="mt-3 text-sm text-slate-500">لا يوجد أطباء بعد — ادعُ طبيبًا من نموذج الدعوة بالأسفل.</p>
+          <EmptyState
+            title="لا يوجد أطباء في العيادة بعد"
+            description="أنشئ دعوة للطبيب من نموذج الدعوة أسفل هذه الصفحة."
+            className="mt-3"
+          />
         )}
         <p className="mt-2 text-[11px] leading-5 text-slate-500">
           «الجدد» هنا ملفات مرضى أُنشئت خلال 7/30 يومًا؛ جدول الدعوات لا يحتفظ بتاريخ القبول، لذلك لا ننسب تاريخ إنشاء الدعوة إلى تاريخ القبول.
@@ -1715,11 +1737,15 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         {assignError && <p className="mt-3 text-sm font-bold text-red-600">{assignError}</p>}
         {progressError && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">تعذّر تحميل مؤشرات النشاط: {progressError}</p>}
         {!loading && !error && visiblePatients.length === 0 && (
-          <p className="mt-3 text-sm text-slate-500">
-            {patientQuery.trim() || patientPlanFilter !== 'all' || patientActivityFilter !== 'all'
-              ? 'لا توجد نتائج مطابقة للبحث أو التصفية.'
-              : 'لا يوجد مرضى في هذا العرض.'}
-          </p>
+          <EmptyState
+            title={patientQuery.trim() || patientPlanFilter !== 'all' || patientActivityFilter !== 'all'
+              ? 'لا توجد نتائج مطابقة'
+              : 'لا يوجد مرضى في هذا العرض'}
+            description={patientQuery.trim() || patientPlanFilter !== 'all' || patientActivityFilter !== 'all'
+              ? 'غيّر كلمات البحث أو أعد ضبط مرشحات الخطة والنشاط.'
+              : 'سيظهر المرضى هنا بعد التسجيل بدعوة وربطهم بالعيادة.'}
+            className="mt-3"
+          />
         )}
         <ul className="mt-3 flex flex-col gap-2">
           {visiblePatients.map(({ uid: patientUid, doc }) => (
@@ -1882,10 +1908,18 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
         {progressError && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">تعذّر تحميل مؤشرات النشاط: {progressError}</p>}
         {!loading && !error && patients.length === 0 && (
-          <p className="mt-3 text-sm text-slate-500">لا يوجد عملاء بعد — أنشئ دعوة لمريضك الأول بالأسفل، وسيظهر هنا تلقائيًا بعد تسجيله.</p>
+          <EmptyState
+            title="لا يوجد عملاء بعد"
+            description="أنشئ دعوة لمريضك الأول من النموذج أدناه؛ وسيظهر هنا بعد التسجيل."
+            className="mt-3"
+          />
         )}
         {!loading && !error && patients.length > 0 && visiblePatients.length === 0 && (
-          <p className="mt-3 text-sm text-slate-500">لا توجد نتائج مطابقة للبحث أو التصفية.</p>
+          <EmptyState
+            title="لا توجد نتائج مطابقة"
+            description="غيّر كلمات البحث أو أعد ضبط مرشحات الخطة والنشاط."
+            className="mt-3"
+          />
         )}
         <ul className="mt-3 flex flex-col gap-2">
           {visiblePatients.map(({ uid: patientUid, doc }) => (

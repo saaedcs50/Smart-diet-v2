@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listAllClinics, type ClinicSummary } from '../owner';
+import { EmptyState } from '../../components/EmptyState';
 import {
   daysRemaining,
   parseDashboardDate,
@@ -139,9 +140,11 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: OwnerTab) => voi
             <span className="text-[11px] text-slate-500">جنيه مصري</span>
           </div>
           {summary.approvedPaymentsLastSixMonths === 0 ? (
-            <p className="mt-6 rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-500 dark:bg-slate-800">
-              لا توجد مدفوعات معتمدة في الفترة المحددة بعد.
-            </p>
+            <EmptyState
+              title="لا توجد مدفوعات معتمدة بعد"
+              description="ستظهر حركة التحصيل هنا بعد اعتماد أول عملية دفع."
+              className="mt-4"
+            />
           ) : (
             <div className="mt-5 flex h-40 items-end gap-2">
               {summary.monthlyApprovedPayments.map((month) => {
@@ -177,7 +180,11 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: OwnerTab) => voi
             <button type="button" onClick={() => onNavigate('clinics')} className="text-xs font-bold text-indigo-700 dark:text-indigo-300">فتح العيادات</button>
           </div>
           {soonExpiring.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-500">لا توجد اشتراكات نشطة تنتهي خلال 30 يومًا.</p>
+            <EmptyState
+              title="لا توجد اشتراكات قاربت على الانتهاء"
+              description="لا توجد اشتراكات نشطة تنتهي خلال الثلاثين يومًا القادمة."
+              className="mt-3"
+            />
           ) : (
             <ul className="mt-3 flex flex-col divide-y divide-slate-100 dark:divide-slate-800">
               {soonExpiring.map((clinic) => {
@@ -211,7 +218,11 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: OwnerTab) => voi
           </button>
         </div>
         {summary.pendingPayments.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-500">لا توجد طلبات معلّقة حاليًا.</p>
+          <EmptyState
+            title="لا توجد طلبات دفع معلّقة"
+            description="جميع الطلبات المسجلة تمت مراجعتها أو لا توجد طلبات جديدة."
+            className="mt-3"
+          />
         ) : (
           <ul className="mt-3 grid gap-2 md:grid-cols-2">
             {summary.pendingPayments.slice(0, 4).map((request) => {
