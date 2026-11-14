@@ -22,6 +22,7 @@ import type { MilestonesUnlocked } from '../utils/milestones';
 import type { NotificationSettings } from '../utils/notifications';
 import type { SeasonalActivation } from '../utils/seasonalTemplate';
 import type { ShoppingListState } from '../utils/shoppingList';
+import { localDateKey, summarizePatientProgress, type PatientProgressSummary } from './patientProgressSummary';
 
 // SDV2-UX-001: لا تخفي أخطاء الصلاحيات على شكل بيانات فارغة.
 // سجّل الخطأ مع السياق حتى يمكن تشخيص مشاكل RLS/Grants.
@@ -508,6 +509,71 @@ export async function listRecentDayLogActivity(
   return ((data as Array<{ patient_id: string; log_date: string }> | null) ?? [])
     .filter((row) => typeof row.patient_id === 'string' && typeof row.log_date === 'string')
     .map((row) => ({ patientUid: row.patient_id, date: row.log_date }));
+}
+
+/**
+ * Patient-level operational summaries for doctor/clinic dashboards.
+ * IDs must come from the current role-scoped patient query; Supabase RLS remains
+ * the final authorization boundary. Only the last 30 calendar days are loaded.
+ */
+export async function listPatientProgressSummaries(
+  patients: Array<{ uid: string; doc: PatientDoc }>,
+  today = new Date(),
+): Promise<Record<string, PatientProgressSummary>> {
+  const uniquePatients = Array.from(
+    new Map(patients.filter((patient) => patient.uid).map((patient) => [patient.uid, patient])).values(),
+  );
+  const todayKey = localDateKey(today);
+  const cutoff = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  cutoff.setDate(cutoff.getDate() - 29);
+  const cutoffKey = localDateKey(cutoff);
+  const entriesByUid = new Map<string, Array<{ date: string; log: DayLog }>>();
+  for (const patient of uniquePatients) entriesByUid.set(patient.uid, []);
+
+  const patientBatchSize = 100;
+  const pageSize = 500;
+  for (let patientOffset = 0; patientOffset < uniquePatients.length; patientOffset += patientBatchSize) {
+    const patientBatch = uniquePatients.slice(patientOffset, patientOffset + patientBatchSize);
+    const patientUids = patientBatch.map((patient) => patient.uid);
+    let offset = 0;
+
+    while (true) {
+      const { data, error } = await getSupabase()
+        .from('day_logs')
+        .select('patient_id, log_date, log')
+        .in('patient_id', patientUids)
+        .gte('log_date', cutoffKey)
+        .lte('log_date', todayKey)
+        .order('log_date', { ascending: true })
+        .range(offset, offset + pageSize - 1);
+
+      if (error) {
+        logDbError('listPatientProgressSummaries', error);
+        throw new Error(`listPatientProgressSummaries: ${error.message}`);
+      }
+      if (!data || data.length === 0) break;
+
+      for (const row of data as Array<{ patient_id: string; log_date: string; log: unknown }>) {
+        const patientEntries = entriesByUid.get(row.patient_id);
+        if (!patientEntries || typeof row.log_date !== 'string') continue;
+        const parsed = dayLogFromFirestore(row.log);
+        if (parsed) patientEntries.push({ date: row.log_date, log: parsed });
+      }
+
+      if (data.length < pageSize) break;
+      offset += data.length;
+    }
+  }
+
+  const summaries: Record<string, PatientProgressSummary> = {};
+  for (const patient of uniquePatients) {
+    summaries[patient.uid] = summarizePatientProgress(
+      entriesByUid.get(patient.uid) ?? [],
+      patient.doc.plan ?? null,
+      today,
+    );
+  }
+  return summaries;
 }
 
 // للطاقم فقط (سياسات RLS ترفض غير طاقم العيادة): مرضى عيادة واحدة.
