@@ -64,10 +64,11 @@ describe('patient progress follow-up summaries', () => {
       },
     ], plan, today);
     expect(summary.needsFollowUp).toBe(false);
-    expect(summary.completion7d).toBe(50);
+    expect(summary.completion7d).toBe(33.3);
     expect(summary.completionDays7d).toBe(1);
     expect(summary.currentWeightKg).toBe(87.5);
     expect(summary.weightChangeKg).toBe(-2.5);
+    expect(summary.weightTargetProgressPercent).toBe(25);
     expect(summary.currentWaterMl).toBe(0);
   });
 
