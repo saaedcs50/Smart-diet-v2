@@ -28,13 +28,13 @@ import {
   listClinicPatientEntries,
   listClinicStaffEntries,
   listDayLogEntries,
-  listRecentDayLogActivity,
+  listRecentDayLogDetails,
   listPatientProgressSummaries,
   listDoctorPatients,
   saveConsent,
   summarizeDoctors,
   type PatientDoc,
-  type RecentDayLogActivity,
+  type RecentDayLogDetail,
   type StaffEntry,
 } from './firestore';
 import {
@@ -145,14 +145,14 @@ function DashboardMetric({
 function RecentActivityCard({
   title,
   activity,
-  nameByUid,
+  patientByUid,
   loading,
   error,
   onOpenPatient,
 }: {
   title: string;
-  activity: RecentDayLogActivity[];
-  nameByUid: Map<string, string>;
+  activity: RecentDayLogDetail[];
+  patientByUid: Map<string, { name: string; plan?: PlanConfig }>;
   loading: boolean;
   error: string | null;
   onOpenPatient: (patientUid: string) => void;
@@ -161,7 +161,7 @@ function RecentActivityCard({
     <Card>
       <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">{title}</h2>
       <p className="mt-1 text-xs text-slate-500">
-        أحدث تواريخ السجلات فقط، دون عرض تفاصيل صحية في موجز النشاط.
+        أحدث السجلات اليومية بملخص تشغيلي: الوزن والماء والوجبات وبنود المتابعة، دون ملاحظات أو تفاصيل طبية حرة.
       </p>
       {loading ? (
         <p className="mt-3 text-sm text-slate-500">جاري تحميل النشاط…</p>
@@ -180,9 +180,30 @@ function RecentActivityCard({
               >
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
-                    {nameByUid.get(item.patientUid) ?? 'مريض'}
+                    {patientByUid.get(item.patientUid)?.name ?? 'مريض'}
                   </span>
                   <span className="mt-0.5 block text-xs text-slate-500">سجل يوم {item.date}</span>
+                  {(() => {
+                    const patient = patientByUid.get(item.patientUid);
+                    const logSummary = summarizePatientDayLog(item.log, patient?.plan ?? null);
+                    const skippedMeals = Object.values(item.log.meals ?? {}).filter((meal) => meal.type === 'none').length;
+                    const waterGoal = patient?.plan?.dailyWaterGoalMl ?? patient?.plan?.waterGoalMl;
+                    const weightLabel = typeof item.log.weight === 'number' && Number.isFinite(item.log.weight) && item.log.weight > 0
+                      ? `${item.log.weight} كجم`
+                      : '—';
+                    const waterLabel = typeof item.log.water === 'number' && Number.isFinite(item.log.water)
+                      ? `${item.log.water} / ${typeof waterGoal === 'number' ? waterGoal : '—'} مل`
+                      : '—';
+                    return (
+                      <span className="mt-1 block text-[11px] font-normal leading-5 text-slate-600 dark:text-slate-300">
+                        الوزن: {weightLabel} · الماء: {waterLabel}
+                        <br />
+                        الوجبات المسجلة: {logSummary.recordedMeals}/{logSummary.plannedMeals ?? '—'} · المتخطاة: {skippedMeals}
+                        <br />
+                        بنود المتابعة المكتملة: {logSummary.completedTasks}/{logSummary.plannedTasks ?? '—'}
+                      </span>
+                    );
+                  })()}
                 </span>
                 <span className="shrink-0 text-xs font-bold text-indigo-700 dark:text-indigo-300">فتح الملف</span>
               </button>
@@ -1331,7 +1352,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   const [assignError, setAssignError] = useState<string | null>(null);
   const [assigningUid, setAssigningUid] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [activity, setActivity] = useState<RecentDayLogActivity[]>([]);
+  const [activity, setActivity] = useState<RecentDayLogDetail[]>([]);
   const [activityError, setActivityError] = useState<string | null>(null);
   const [patientQuery, setPatientQuery] = useState('');
   const [patientSort, setPatientSort] = useState<PatientListSort>('name');
@@ -1357,7 +1378,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         setPatients(entries);
         setError(null);
         try {
-          const recent = await listRecentDayLogActivity(entries.map((entry) => entry.uid), 8);
+          const recent = await listRecentDayLogDetails(entries.map((entry) => entry.uid), 8);
           if (!cancelled) setActivity(recent);
         } catch (caught: unknown) {
           if (!cancelled) setActivityError(errorText(caught));
@@ -1441,7 +1462,10 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
       <RecentActivityCard
         title="آخر نشاط المرضى"
         activity={activity}
-        nameByUid={new Map(patients.map((patient) => [patient.uid, patient.doc.profile.clientName]))}
+        patientByUid={new Map(patients.map((patient) => [
+          patient.uid,
+          { name: patient.doc.profile.clientName, plan: patient.doc.plan },
+        ]))}
         loading={loading}
         error={activityError}
         onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
@@ -1553,7 +1577,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const [patients, setPatients] = useState<Array<{ uid: string; doc: PatientDoc }>>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activity, setActivity] = useState<RecentDayLogActivity[]>([]);
+  const [activity, setActivity] = useState<RecentDayLogDetail[]>([]);
   const [activityError, setActivityError] = useState<string | null>(null);
   const [patientQuery, setPatientQuery] = useState('');
   const [patientSort, setPatientSort] = useState<PatientListSort>('name');
@@ -1574,7 +1598,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         if (cancelled) return;
         setPatients(entries);
         try {
-          const recent = await listRecentDayLogActivity(entries.map((entry) => entry.uid), 8);
+          const recent = await listRecentDayLogDetails(entries.map((entry) => entry.uid), 8);
           if (!cancelled) setActivity(recent);
         } catch (caught: unknown) {
           if (!cancelled) setActivityError(errorText(caught));
@@ -1619,7 +1643,10 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
       <RecentActivityCard
         title="آخر نشاط مرضاي"
         activity={activity}
-        nameByUid={new Map(patients.map((patient) => [patient.uid, patient.doc.profile.clientName]))}
+        patientByUid={new Map(patients.map((patient) => [
+          patient.uid,
+          { name: patient.doc.profile.clientName, plan: patient.doc.plan },
+        ]))}
         loading={loading}
         error={activityError}
         onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
