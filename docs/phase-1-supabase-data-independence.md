@@ -263,6 +263,10 @@ A read-only inspection of the signed-in Google Cloud project `smart-diet-platfor
 
 The OAuth consent screen is External and In production, with a support email configured. Google Project Checkup currently reports warnings about insecure OAuth flow configuration, loopback IP redirects on an existing Web client, and unverified branding. No client secret was viewed/copied and no Google Cloud settings were changed. A dedicated Supabase Web OAuth client is required, with the Supabase callback URI registered. The app-side feature flag remains disabled until the new client is configured in Supabase.
 
+### Dedicated Google OAuth client created (17 November 2026)
+
+Created a separate Web OAuth client named `Smart Diet Supabase Auth` in the Google Cloud project `smart-diet-platform-trial`. The original Firebase auto-created client was left unchanged. The new client is configured with JavaScript origins `https://smart-diet-v2.vercel.app` and `https://smart-diet-v2.saaedbelal.workers.dev`, and the Supabase redirect URI `https://lhjyshlxbsnesayivxpb.supabase.co/auth/v1/callback`. The Client ID and Secret were not committed to the repository or this report.
+
 ### Google OAuth UI guard added
 
 The live Production and Staging projects both have Google OAuth disabled, and valid Google OAuth client credentials were not available in the project connection. To prevent the app from presenting a broken login action, the Phase 1 branch now gates both Google login and staff-invitation buttons behind `VITE_GOOGLE_OAUTH_ENABLED=true`. The default is disabled. Email/password authentication remains unchanged. This removes the code/configuration mismatch from the user interface but does not activate Google OAuth; activating it still requires valid Google provider credentials and the Supabase callback configuration.
