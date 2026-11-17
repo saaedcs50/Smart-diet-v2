@@ -14,7 +14,7 @@ These migrations reconcile the existing manually provisioned Staging schema. The
 
 ### `20261109061815_staging_schema_reconciliation.sql`
 
-- Added the four missing application tables: `adherence_configs`, `adherence_scores`, `fcm_tokens`, and `consents`, with RLS enabled and patient/profile foreign keys.
+- Added the four missing application tables: `adherence_configs`, `adherence_scores`, `push_subscriptions`, and `consents`, with RLS enabled and patient/profile foreign keys.
 - Added the unique `day_logs(patient_id, log_date)` index required by the application's upsert conflict target, plus the verified-safe patient foreign key.
 - Added access policies: patients can read their permitted adherence data; clinic staff can write adherence data only within patient access scope; patients manage their own push tokens and sync consents.
 - Reworked invitation policies so a self-created profile must match a pending invitation's normalized email, exact role, and clinic. The invitee can consume a pending invitation, but cannot reopen it. A clinic admin/owner can re-open invitations in scope; a coach can manage only patient invitations they created.

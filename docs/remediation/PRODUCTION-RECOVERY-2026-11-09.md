@@ -9,7 +9,7 @@
 - The two migration files in `supabase/migrations` now match the versions in Production's migration ledger.
 - Production has 11/11 public application tables with RLS enabled, zero policies assigned to broad `PUBLIC`, anon SELECT only on `platform_config`, and zero TRUNCATE grants to `anon`, `authenticated`, or `service_role`.
 - Supabase Security and Health advisors returned no findings after cleanup.
-- The 31-assertion role matrix passed on Production across `anon`, `owner`, `admin`, `coach`, `patient`, and an invitee. The test used synthetic Auth identities and data inside a single transaction, then rolled it back. A follow-up query verified zero fixture rows remained in Auth, profiles, clinics, subscriptions, patients, logs, adherence, consents, FCM tokens, invitations, and platform config.
+- The 31-assertion role matrix passed on Production across `anon`, `owner`, `admin`, `coach`, `patient`, and an invitee. The test used synthetic Auth identities and data inside a single transaction, then rolled it back. A follow-up query verified zero fixture rows remained in Auth, profiles, clinics, subscriptions, patients, logs, adherence, consents, push subscriptions, invitations, and platform config.
 
 ## Deployment and environment observations
 

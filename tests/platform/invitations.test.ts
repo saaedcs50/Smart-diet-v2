@@ -1,5 +1,5 @@
-// اختبارات خالصة لمساعدات الدعوات (بلا Firebase ولا شبكة).
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+// اختبارات خالصة لمساعدات الدعوات بلا شبكة.
+import { describe, it, expect } from 'vitest';
 import {
   invitationIdForEmail,
   parseInvitation,

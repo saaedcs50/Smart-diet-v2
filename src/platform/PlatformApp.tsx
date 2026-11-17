@@ -1247,16 +1247,7 @@ function PatientDetail({
     };
   };
 
-  useEffect(load, [patientUid]);
-
-  // تسجيل توكن Web Push للمريض (مرة واحدة عند فتح ملفه)
-  useEffect(() => {
-    if (!isStaffView && isPushDeliveryEnabled()) {
-      void registerPushSubscription(patientUid).catch(() => {});
-    }
-  }, [patientUid, isStaffView]);
-
-  if (loading) return <p className="text-sm text-slate-500">جاري تحميل بيانات المريض…</p>;
+  useEffect(load, [patientUid]);if (loading) return <p className="text-sm text-slate-500">جاري تحميل بيانات المريض…</p>;
   if (error) return <p className="text-sm font-bold text-red-600">{error}</p>;
   if (!doc) return (
     <EmptyState
@@ -1383,6 +1374,9 @@ function PatientDetail({
         uid={viewerUid}
         isStaffView={isStaffView}
       />
+      {!isStaffView && isPushDeliveryEnabled() && (
+        <EnablePatientPushButton patientUid={patientUid} />
+      )}
       {isStaffView && (
         isPushDeliveryEnabled() ? (
           <NotifyPatientButton patientUid={patientUid} clientName={doc.profile.clientName} />
@@ -1403,6 +1397,42 @@ function PatientDetail({
 }
 
 // زر إشعار المريض (للدكتور) — يرسل Web Push عبر الـ Worker.
+function EnablePatientPushButton({ patientUid }: { patientUid: string }) {
+  const [busy, setBusy] = useState(false);
+  const [enabled, setEnabled] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function enable() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const endpoint = await registerPushSubscription(patientUid);
+      if (!endpoint) {
+        setMessage('لم يتم تفعيل التنبيهات. تحقق من إذن المتصفح ودعم الإشعارات.');
+      } else {
+        setEnabled(true);
+        setMessage('تم تفعيل التنبيهات على هذا الجهاز.');
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+      <button
+        type="button"
+        onClick={() => void enable()}
+        disabled={busy || enabled}
+        className="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-bold text-indigo-700 disabled:opacity-50 dark:border-indigo-800 dark:text-indigo-300"
+      >
+        {busy ? 'جارٍ التفعيل…' : enabled ? 'التنبيهات مفعّلة' : 'تفعيل التنبيهات على هذا الجهاز'}
+      </button>
+      {message && <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{message}</p>}
+    </div>
+  );
+}
+
 function NotifyPatientButton({
   patientUid,
   clientName,

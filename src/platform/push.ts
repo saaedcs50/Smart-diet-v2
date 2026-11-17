@@ -17,40 +17,47 @@ function decodeVapidKey(value: string): Uint8Array {
   const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
   const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
   const binary = atob(padded);
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  const key = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  if (key.length !== 65 || key[0] !== 4) throw new Error('مفتاح الإشعارات غير صالح.');
+  return key;
 }
 
 export function isPushDeliveryEnabled(): boolean {
-  return Boolean(
-    readEnv('VITE_VAPID_PUBLIC_KEY') &&
-    readEnv('VITE_SUPABASE_URL') &&
-    readEnv('VITE_SUPABASE_ANON_KEY'),
-  );
+  const publicKey = readEnv('VITE_VAPID_PUBLIC_KEY');
+  if (!publicKey || !readEnv('VITE_SUPABASE_URL') || !readEnv('VITE_SUPABASE_ANON_KEY')) return false;
+  try {
+    decodeVapidKey(publicKey);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
  * Registers the current browser endpoint for the signed-in patient.
- * Only the endpoint is stored: notifications are intentionally payload-free.
+ * Permission is requested only from an explicit patient button click.
  */
 export async function registerPushSubscription(patientUid: string): Promise<string | null> {
   try {
     if (!isPushDeliveryEnabled()) return null;
-    if (typeof navigator === 'undefined' || typeof window === 'undefined') return null;
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return null;
+    if (typeof navigator === 'undefined' || typeof window === 'undefined' ||
+        typeof Notification === 'undefined') return null;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+
+    // Ask before any network await so the browser's user-activation requirement is preserved.
+    let permission = Notification.permission;
+    if (permission === 'default') permission = await Notification.requestPermission();
+    if (permission !== 'granted') return null;
 
     const sb = getSupabase();
     const { data: { user }, error: userError } = await sb.auth.getUser();
     if (userError || !user || user.id !== patientUid) return null;
 
-    let permission = Notification.permission;
-    if (permission === 'default') permission = await Notification.requestPermission();
-    if (permission !== 'granted') return null;
-
     const registration = await navigator.serviceWorker.ready;
     const applicationServerKey = decodeVapidKey(readEnv('VITE_VAPID_PUBLIC_KEY')!);
     let subscription = await registration.pushManager.getSubscription();
 
-    if (subscription && subscription.options.applicationServerKey) {
+    if (subscription) {
       const currentApplicationServerKey = subscription.options.applicationServerKey;
       const currentKey = currentApplicationServerKey
         ? new Uint8Array(currentApplicationServerKey)
@@ -92,7 +99,7 @@ export async function notifyPatient(
   const anonKey = readEnv('VITE_SUPABASE_ANON_KEY');
   if (!baseUrl || !anonKey) throw new Error('إعدادات خدمة البيانات غير مكتملة.');
 
-  const response = await fetch(`${baseUrl.replace(/\\/$/, '')}/functions/v1/notify`, {
+  const response = await fetch(`${baseUrl.replace(/\/$/, '')}/functions/v1/notify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

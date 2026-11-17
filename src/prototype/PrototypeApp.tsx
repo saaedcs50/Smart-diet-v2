@@ -171,7 +171,7 @@ export const PrototypeApp: React.FC = () => {
           <Users className="w-5 h-5 text-brand-hero" />
           <h1 className="text-xl font-black">لوحة الأخصائية — نموذج المنصة</h1>
         </div>
-        <p className="text-xs text-slate-500">منصة التغذية والصحة — عرض تجريبي متعدد المرضى (بانتظار البناء الحقيقي على Firebase).</p>
+        <p className="text-xs text-slate-500">منصة التغذية والصحة — عرض تجريبي متعدد المرضى (بانتظار اكتمال بناء المنصة السحابية).</p>
 
         {selected ? (
           <PatientPage detail={selected} onBack={() => setSelectedId(null)} />

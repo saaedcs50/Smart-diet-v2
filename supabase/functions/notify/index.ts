@@ -37,7 +37,13 @@ function base64UrlDecode(value: string): Uint8Array {
 
 async function createVapidAuthorization(audience: string): Promise<string> {
   const privateKey = base64UrlDecode(VAPID_PRIVATE_KEY);
-  if (privateKey.length !== 32) throw new Error('Invalid VAPID private key.');
+  const publicKey = base64UrlDecode(VAPID_PUBLIC_KEY);
+  if (privateKey.length !== 32 || publicKey.length !== 65 || publicKey[0] !== 4) {
+    throw new Error('Invalid VAPID key pair.');
+  }
+  if (!(VAPID_SUBJECT.startsWith('mailto:') || VAPID_SUBJECT.startsWith('https://'))) {
+    throw new Error('Invalid VAPID contact subject.');
+  }
 
   const pkcs8Header = new Uint8Array([
     0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d,
@@ -76,8 +82,7 @@ function isApprovedPushEndpoint(endpoint: string): boolean {
     const url = new URL(endpoint);
     if (url.protocol !== 'https:' || url.username || url.password || url.port) return false;
     const host = url.hostname.toLowerCase();
-    return host === 'fcm.googleapis.com' ||
-      host === 'updates.push.services.mozilla.com' ||
+    host === 'updates.push.services.mozilla.com' ||
       host === 'web.push.apple.com' ||
       host.endsWith('.notify.windows.com');
   } catch {
@@ -158,6 +163,14 @@ Deno.serve(async (request: Request) => {
     if (!authorized) return json({ ok: false, error: 'غير مخول لإرسال تنبيه لهذا المريض.' }, 403);
 
     if (caller.role !== 'owner') {
+      const { data: clinic, error: clinicError } = await admin
+        .from('clinics')
+        .select('status')
+        .eq('id', patient.clinic_id)
+        .maybeSingle();
+      if (clinicError || !clinic || clinic.status !== 'active') {
+        return json({ ok: false, error: 'العيادة غير نشطة.' }, 403);
+      }
       const { data: subscription, error: subscriptionError } = await admin
         .from('clinic_subscriptions')
         .select('status')

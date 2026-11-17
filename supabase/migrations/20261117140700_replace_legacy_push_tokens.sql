@@ -21,6 +21,7 @@ CREATE INDEX IF NOT EXISTS push_subscriptions_patient_idx
 ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.push_subscriptions FROM PUBLIC, anon, authenticated;
 GRANT SELECT, DELETE ON TABLE public.push_subscriptions TO authenticated;
+GRANT ALL ON TABLE public.push_subscriptions TO service_role;
 
 DROP POLICY IF EXISTS push_subscriptions_select_own ON public.push_subscriptions;
 CREATE POLICY push_subscriptions_select_own
@@ -66,8 +67,13 @@ BEGIN
   INSERT INTO public.push_subscriptions (endpoint, patient_id, updated_at)
   VALUES (p_endpoint, v_uid, now())
   ON CONFLICT (endpoint) DO UPDATE
-    SET patient_id = EXCLUDED.patient_id,
-        updated_at = now();
+    SET updated_at = now()
+    WHERE public.push_subscriptions.patient_id = EXCLUDED.patient_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Push endpoint is already registered to another account'
+      USING ERRCODE = '42501';
+  END IF;
 END;
 $function$;
 
