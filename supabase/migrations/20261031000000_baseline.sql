@@ -3,7 +3,7 @@
 -- ============================================================================
 -- This baseline captures the schema as deployed via Supabase Dashboard SQL Editor.
 -- Tables: profiles, clinics, clinic_subscriptions, platform_config, invitations,
---         patients, day_logs, adherence_configs, adherence_scores, fcm_tokens,
+--         patients, day_logs, adherence_configs, adherence_scores, push_subscriptions,
 --         consents
 -- RLS enabled on all tables with policies mirroring the B2B authorization model.
 -- Grants: authenticated and service_role have CRUD; anon has none (except TRUNCATE revoked).
@@ -25,7 +25,7 @@
 --   7. day_logs (id BIGSERIAL PK, patient_id -> patients, log_date DATE, log JSONB, UNIQUE(patient_id, log_date))
 --   8. adherence_configs (patient_id PK -> patients, axes JSONB, updated_by)
 --   9. adherence_scores (id BIGSERIAL PK, patient_id -> patients, score_date DATE, scores JSONB, overall NUMERIC)
---  10. fcm_tokens (patient_id PK -> patients, tokens TEXT[])
+--  10. push_subscriptions (patient_id PK -> patients, tokens TEXT[])
 --  11. consents (id BIGSERIAL PK, patient_id -> patients, purpose TEXT, consent JSONB, granted_by, UNIQUE(patient_id, purpose))
 --
 -- Helper functions (SECURITY DEFINER):
@@ -37,4 +37,4 @@
 
 -- Tables in this baseline (for CI validation):
 -- profiles, clinics, clinic_subscriptions, platform_config, invitations,
--- patients, day_logs, adherence_configs, adherence_scores, fcm_tokens, consents
+-- patients, day_logs, adherence_configs, adherence_scores, push_subscriptions, consents
