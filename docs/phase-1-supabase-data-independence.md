@@ -281,3 +281,18 @@ The publication and client-side subscription were inspected, and RLS behavior wa
 - The only database writes attempted were synthetic Staging fixture operations inside rollback-only test transactions. Both tests passed, and post-test checks confirmed that no fixture rows or state changes remained.
 
 **Phase 1 disposition: live Staging authorization tests and the independence audit are complete; migration baseline and cross-host Auth/Realtime verification remain open. Do not apply Production migrations or mark Phase 1 fully closed until those gates are satisfied.**
+
+## 8. CI and dependency-security finding
+
+The PR check run before the latest workflow adjustment reported:
+
+- `Types, lint, tests, build`: **PASS** (type-check and ESLint passed, unit tests passed, production build passed).
+- `Supabase RLS policy static validation`: **PASS**.
+- `Vercel Preview Comments`: **PASS**.
+- `Dependency & secret scanning`: **FAIL** because OSV Scanner found one High-severity advisory in the lockfile; Gitleaks was skipped by the workflow's default success-only step condition.
+
+The flagged package is `picomatch@4.0.7` (`GHSA-fc5q-39xc-vjpf`, `CVE-2026-112366`), a ReDoS issue involving crafted single-branch repeated extglob patterns. The lockfile contains one copy; it is pulled transitively through `fdir`, `tinyglobby`, `vite`, and `vitest`. `vite` and `vitest` are declared devDependencies, and no direct app-level `picomatch` import was found in the repository search. This reduces direct production-runtime exposure, but does not make the dependency warning disappear.
+
+The advisory lists affected versions through 4.0.7 and no patched version. The upstream releases page still lists 4.0.7 as the latest release at this audit point. No override to an older version, unreviewed fork, or speculative patch was applied.
+
+The workflow was adjusted so the PR base-history fetch and Gitleaks scan run with `always()` rather than being silently skipped after an OSV failure. A new workflow run was queued for the updated commit; its final Gitleaks result is not yet available in this report.
