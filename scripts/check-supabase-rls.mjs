@@ -54,6 +54,8 @@ const expectedStagingMigrations = [
   '20261109073735_restrict_remaining_public_policies.sql',
   '20261109074419_consolidate_remaining_rls_policies.sql',
   '20261109074506_split_platform_config_read.sql',
+  '20261117140700_replace_legacy_push_tokens.sql',
+  '20261117150000_harden_push_subscription_registration.sql',
 ];
 const missingStagingMigrations = expectedStagingMigrations
   .filter((name) => !migrationFiles.includes(name));
