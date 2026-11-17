@@ -1,5 +1,5 @@
 // ============================================================================
-// مزامنة الترحيل: من التخزين المحلي الحالي إلى Firestore — المرحلة الثانية
+// مزامنة الترحيل: من التخزين المحلي الحالي إلى Database — المرحلة الثانية
 // ----------------------------------------------------------------------------
 // - opt-in صريح فقط: لا تعمل هذه الدالة تلقائيًا أبدًا، بل عند ضغط المريض
 //   زر «مزامنة بيانات جهازي» بعد تأكيد موافقة صريحة (تُحفظ في
@@ -33,13 +33,13 @@ import { loadSeasonalActivation } from '../utils/seasonalTemplate';
 import type { ActiveFastingSession, DayLog, PlanConfig } from '../types/index';
 import type { SeasonalActivation } from '../utils/seasonalTemplate';
 import type { ShoppingListState } from '../utils/shoppingList';
-import type { MilestonesDoc } from './firestore';
+import type { MilestonesDoc } from './database';
 import {
   getPatientPlan,
   saveConsent,
   saveDayLog,
   savePatientPlan,
-} from './firestore';
+} from './database';
 
 export interface LocalSnapshot {
   plan: PlanConfig;

@@ -4,7 +4,7 @@
 // كل الدوال هنا لصاحب المنصة (role='owner') فقط — سياسات RLS تفرض ذلك.
 // تشمل: إدارة العيادات والاشتراكات، مراجعة طلبات التفعيل، دعوة أصحاب
 // العيادات، وإعدادات الدفع اليدوي.
-// - ترحيل 2026-10-31: Firestore ← Supabase
+// - تعتمد المنصة على Supabase Auth وPostgres كمصدر موحّد للبيانات.
 // ============================================================================
 
 import { getSupabase } from './supabase';
@@ -13,7 +13,7 @@ import type {
   PaymentRecord,
   PlatformPaymentMethods,
   SubscriptionPlan,
-} from './firestore';
+} from './database';
 
 export interface ClinicSummary {
   id: string;

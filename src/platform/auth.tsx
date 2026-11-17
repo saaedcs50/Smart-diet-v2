@@ -1,5 +1,5 @@
 // ============================================================================
-// سياق مصادقة المنصة — ترحيل 2026-10-31: Firebase Auth ← Supabase Auth
+// سياق مصادقة المنصة — ترحيل 2026-10-31: Supabase Auth ← Supabase Auth
 // ----------------------------------------------------------------------------
 // - الدخول بالبريد وكلمة المرور، ودخول Google (OAuth)، والخروج.
 // - الدور والعيادة يُقرآن من جدول `profiles` (id = auth.uid()).
@@ -24,7 +24,7 @@ import {
 } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabase } from './supabase';
-import type { PlatformRole, PlatformUserProfile } from './firestore';
+import type { PlatformRole, PlatformUserProfile } from './database';
 
 export type { PlatformRole, PlatformUserProfile };
 

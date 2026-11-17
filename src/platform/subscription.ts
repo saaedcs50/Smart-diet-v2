@@ -3,7 +3,7 @@
 // ----------------------------------------------------------------------------
 // - قراءة حالة الاشتراك وبيانات الدفع (مسموح للطاقم حتى لو منتهي)
 // - إرسال طلب تفعيل عبر RPC ذرّية؛ لا قراءة/كتابة للمصفوفة من المتصفح
-// - ترحيل 2026-10-31: Firestore ← Supabase (clinic_subscriptions)
+// - تعتمد المنصة على Supabase Auth وPostgres كمصدر موحّد للبيانات.
 // ============================================================================
 
 import { getSupabase } from './supabase';
@@ -12,7 +12,7 @@ import type {
   PaymentRecord,
   PlatformPaymentMethods,
   SubscriptionPlan,
-} from './firestore';
+} from './database';
 
 export type { SubscriptionPlan };
 export type { ClinicSubscriptionDoc, PaymentRecord, PlatformPaymentMethods };
@@ -85,14 +85,8 @@ export async function submitActivationRequest(
 export function daysUntilExpiry(sub: ClinicSubscriptionDoc | null): number | null {
   if (!sub || sub.plan === 'permanent') return null;
   const raw = sub.expiresAt as unknown;
-  // Supabase يعيد ISO string؛ ندعم أيضًا كائن Firestore Timestamp للتوافق
-  let t: Date | null = null;
-  if (typeof raw === 'string') {
-    t = new Date(raw);
-  } else {
-    const toDate = (raw as { toDate?: () => Date })?.toDate;
-    if (typeof toDate === 'function') t = toDate.call(raw);
-  }
+  // يعتمد حقل الانتهاء على ISO timestamp الصادر من PostgreSQL.
+  const t = typeof raw === 'string' ? new Date(raw) : null;
   if (!(t instanceof Date) || isNaN(t.getTime())) return null;
   return Math.ceil((t.getTime() - Date.now()) / 86400000);
 }

@@ -2,7 +2,7 @@
 // واجهة المنصة — المرحلة الثانية من بناء المنصة
 // ----------------------------------------------------------------------------
 // - تعمل فقط عندما يكون وضع المنصة مفعّلًا (VITE_PLATFORM_ENABLED=true —
-//   يفرضه App.tsx قبل تركيب هذا المكوّن)، وبلا إعدادات Firebase تُعرض
+//   يفرضه App.tsx قبل تركيب هذا المكوّن)، وبلا إعدادات Supabase تُعرض
 //   رسالة إعداد واضحة بدل انكسار غامض.
 // - لا تسجيل ذاتي: التسجيل بدعوة فقط (البريد المدعو به + كلمة مرور)،
 //   ودخول Google عند إنشاء الحساب للطاقم فقط (تفرضه invitations.ts).
@@ -36,7 +36,7 @@ import {
   type PatientDoc,
   type RecentDayLogDetail,
   type StaffEntry,
-} from './firestore';
+} from './database';
 import {
   createInvitation,
   registerStaffWithGoogleInvitation,
@@ -57,7 +57,7 @@ import type { DayLog, PlanConfig } from '../types';
 import { SubscriptionGate } from './subscription/SubscriptionGate';
 import { SubscriptionCard } from './subscription/SubscriptionCard';
 import { AdherenceSection } from './adherence/AdherenceSection';
-import { registerFcmToken, isFcmConfigured, isPushDeliveryEnabled, notifyPatient } from './fcm';
+import { registerFcmToken, isFcmConfigured, isPushDeliveryEnabled, notifyPatient } from './push';
 import { getSupabase } from './supabase';
 import { bindLocalDataToPatient, getLocalDataBindingStatus, type LocalDataBindingStatus } from './localDataOwnership';
 import { copyLegacyPatientDataToUser } from '../utils/storageKeys';
@@ -1249,7 +1249,7 @@ function PatientDetail({
 
   useEffect(load, [patientUid]);
 
-  // تسجيل توكن FCM للمريض (مرة واحدة عند فتح ملفه)
+  // تسجيل توكن Web Push للمريض (مرة واحدة عند فتح ملفه)
   useEffect(() => {
     if (!isStaffView && isFcmConfigured()) {
       void registerFcmToken(patientUid).catch(() => {});
@@ -1402,7 +1402,7 @@ function PatientDetail({
   );
 }
 
-// زر إشعار المريض (للدكتور) — يرسل FCM عبر الـ Worker.
+// زر إشعار المريض (للدكتور) — يرسل Web Push عبر الـ Worker.
 function NotifyPatientButton({
   patientUid,
   clientName,

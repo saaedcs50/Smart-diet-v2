@@ -8,7 +8,7 @@ import {
   type PatientTag,
   type PatientTagColor,
 } from './patientTags';
-import { savePatientTags } from './firestore';
+import { savePatientTags } from './database';
 
 const COLOR_LABELS: Record<PatientTagColor, string> = {
   slate: 'رمادي',

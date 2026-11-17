@@ -1,9 +1,9 @@
 // ============================================================================
-// طبقة بيانات المنصة — ترحيل 2026-10-31: Firestore ← Supabase (Postgres)
+// طبقة بيانات المنصة — ترحيل 2026-10-31: Database ← Supabase (Postgres)
 // ----------------------------------------------------------------------------
 // مطابقة لنموذج البيانات، بلا أي تغيير في الأنواع نفسها (PlanConfig وDayLog
 // وكل أنواع الدفعات تُستخدم كما هي). ما يتغير هو مصدر البيانات فقط:
-//   - جداول Supabase بدل مجموعات Firestore (snake_case في القاعدة،
+//   - جداول Supabase بدل مجموعات Database (snake_case في القاعدة،
 //     camelCase في الواجهات — التحويل هنا).
 //   - الطوابع الزمنية ISO strings بدل FieldValue.
 //   - حقولا مزامنة: updatedAt (ISO) وupdatedBy (uid المحرِّر).
@@ -167,78 +167,6 @@ export interface ClinicAuditEvent {
 }
 
 // ---------------------------------------------------------------------------
-// بناة المسارات — للتوافق مع الاختبارات؛ يعيدون مسارًا نصيًا بلا Firebase.
-// ---------------------------------------------------------------------------
-
-export interface PathRef {
-  path: string;
-}
-
-function pathRef(path: string): PathRef {
-  return { path };
-}
-
-export function clinicRef(clinicId: string): PathRef {
-  return pathRef(`clinics/${clinicId}`);
-}
-
-export function userRef(uid: string): PathRef {
-  return pathRef(`users/${uid}`);
-}
-
-export function patientRef(uid: string): PathRef {
-  return pathRef(`patients/${uid}`);
-}
-
-export function dayLogRef(uid: string, date: string): PathRef {
-  return pathRef(`patients/${uid}/dayLogs/${date}`);
-}
-
-export function dayLogsCollection(uid: string): PathRef {
-  return pathRef(`patients/${uid}/dayLogs`);
-}
-
-export function planHistoryCollection(uid: string): PathRef {
-  return pathRef(`patients/${uid}/planHistory`);
-}
-
-export function shoppingListRef(uid: string, weekStartISO: string): PathRef {
-  return pathRef(`patients/${uid}/shoppingLists/${weekStartISO}`);
-}
-
-export function milestonesRef(uid: string): PathRef {
-  return pathRef(`patients/${uid}/milestones/state`);
-}
-
-export function seasonalRef(uid: string): PathRef {
-  return pathRef(`patients/${uid}/seasonal/state`);
-}
-
-export function intakeRef(uid: string, intakeId: string): PathRef {
-  return pathRef(`patients/${uid}/intakes/${intakeId}`);
-}
-
-export function consentRef(uid: string, type: string): PathRef {
-  return pathRef(`patients/${uid}/consents/${type}`);
-}
-
-export function activeFastingRef(uid: string): PathRef {
-  return pathRef(`patients/${uid}/activeFasting/state`);
-}
-
-export function notificationSettingsRef(uid: string): PathRef {
-  return pathRef(`patients/${uid}/notificationSettings/state`);
-}
-
-export function photoRef(uid: string, photoId: string): PathRef {
-  return pathRef(`patients/${uid}/photos/${photoId}`);
-}
-
-export function clinicAuditCollection(clinicId: string): PathRef {
-  return pathRef(`clinicAudit/${clinicId}/events`);
-}
-
-// ---------------------------------------------------------------------------
 // التحويل (دوال خالصة — قابلة للاختبار بلا شبكة)
 // ---------------------------------------------------------------------------
 
@@ -280,7 +208,7 @@ export function withSyncMeta<T extends object>(
 }
 
 // الخطة المُزامنة: adminPin القديم يُحذف دائمًا قبل الرفع.
-export function planToFirestore(
+export function planToDatabase(
   plan: PlanConfig,
   editorUid: string,
 ): Omit<PlanConfig, 'adminPin'> & SyncMeta {
@@ -289,7 +217,7 @@ export function planToFirestore(
   return withSyncMeta(rest, editorUid);
 }
 
-export function dayLogToFirestore(
+export function dayLogToDatabase(
   dayLog: DayLog,
   editorUid: string,
 ): DayLog & SyncMeta {
@@ -297,14 +225,14 @@ export function dayLogToFirestore(
 }
 
 // قراءة دفاعية خفيفة: ترفض ما ليس كائنًا أو ما يفتقد الحقول الجوهرية.
-export function planFromFirestore(data: unknown): PlanConfig | null {
+export function planFromDatabase(data: unknown): PlanConfig | null {
   if (!isPlainObject(data)) return null;
   if (typeof data.clientName !== 'string') return null;
   if (!Array.isArray(data.meals) || !Array.isArray(data.checklist)) return null;
   return data as unknown as PlanConfig;
 }
 
-export function dayLogFromFirestore(data: unknown): DayLog | null {
+export function dayLogFromDatabase(data: unknown): DayLog | null {
   if (!isPlainObject(data)) return null;
   if (typeof data.water !== 'number') return null;
   if (!isPlainObject(data.meals) || !isPlainObject(data.meas)) return null;
@@ -361,7 +289,7 @@ export async function getPatientPlan(
 ): Promise<PlanConfig | null> {
   const patient = await getPatient(uid);
   if (!patient?.plan) return null;
-  return planFromFirestore(patient.plan);
+  return planFromDatabase(patient.plan);
 }
 
 // إنشاء/تأكيد سجل المريض (clinicId + الاسم المعروض) بلا خطة بعد.
@@ -390,7 +318,7 @@ export async function savePatientPlan(
 ): Promise<void> {
   const { error } = await getSupabase()
     .from('patients')
-    .update({ plan: planToFirestore(plan, editorUid) })
+    .update({ plan: planToDatabase(plan, editorUid) })
     .eq('id', uid);
   if (error) throw new Error(error.message);
 }
@@ -440,7 +368,7 @@ export async function getDayLog(
     return null;
   }
   if (!data) return null;
-  return dayLogFromFirestore((data as { log: unknown }).log);
+  return dayLogFromDatabase((data as { log: unknown }).log);
 }
 
 export async function saveDayLog(
@@ -453,7 +381,7 @@ export async function saveDayLog(
     {
       patient_id: uid,
       log_date: date,
-      log: dayLogToFirestore(dayLog, editorUid),
+      log: dayLogToDatabase(dayLog, editorUid),
     },
     { onConflict: 'patient_id,log_date' },
   );
@@ -472,7 +400,7 @@ export async function listDayLogs(uid: string): Promise<DayLog[]> {
   if (!data) return [];
   const out: DayLog[] = [];
   for (const row of data as Array<{ log: unknown }>) {
-    const parsed = dayLogFromFirestore(row.log);
+    const parsed = dayLogFromDatabase(row.log);
     if (parsed) out.push(parsed);
   }
   return out;
@@ -494,7 +422,7 @@ export async function listDayLogEntries(
   if (!data) return [];
   const out: Array<{ date: string; log: DayLog }> = [];
   for (const row of data as Array<{ log_date: string; log: unknown }>) {
-    const parsed = dayLogFromFirestore(row.log);
+    const parsed = dayLogFromDatabase(row.log);
     if (parsed) out.push({ date: row.log_date, log: parsed });
   }
   return out;
@@ -564,7 +492,7 @@ export async function listRecentDayLogDetails(
   const out: RecentDayLogDetail[] = [];
   for (const row of (data as Array<{ patient_id: string; log_date: string; log: unknown }> | null) ?? []) {
     if (typeof row.patient_id !== 'string' || typeof row.log_date !== 'string') continue;
-    const parsed = dayLogFromFirestore(row.log);
+    const parsed = dayLogFromDatabase(row.log);
     if (parsed) out.push({ patientUid: row.patient_id, date: row.log_date, log: parsed });
   }
   return out;
@@ -615,7 +543,7 @@ export async function listPatientProgressSummaries(
       for (const row of data as Array<{ patient_id: string; log_date: string; log: unknown }>) {
         const patientEntries = entriesByUid.get(row.patient_id);
         if (!patientEntries || typeof row.log_date !== 'string') continue;
-        const parsed = dayLogFromFirestore(row.log);
+        const parsed = dayLogFromDatabase(row.log);
         if (parsed) patientEntries.push({ date: row.log_date, log: parsed });
       }
 
@@ -782,7 +710,7 @@ export async function listPatientDayLogsForExport(
     if (!data || data.length === 0) break;
 
     for (const row of data as Array<{ log_date: string; log: unknown }>) {
-      const log = dayLogFromFirestore(row.log);
+      const log = dayLogFromDatabase(row.log);
       if (!log) {
         throw new Error(`سجل يومي غير صالح للمريض ${patientUid} بتاريخ ${row.log_date}؛ أُلغي التصدير لتجنب ملف ناقص.`);
       }

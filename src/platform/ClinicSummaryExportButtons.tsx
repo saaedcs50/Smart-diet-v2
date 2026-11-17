@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { PatientProgressSummary } from './patientProgressSummary';
-import type { StaffEntry } from './firestore';
+import type { StaffEntry } from './database';
 import {
   buildClinicSummaryCsv,
   buildClinicSummaryXlsx,
