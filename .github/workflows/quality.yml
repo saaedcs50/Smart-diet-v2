@@ -75,3 +75,23 @@ jobs:
             exit 1
           fi
           echo "Edge Function source present in repo"
+
+  cloudflare-worker-validation:
+    name: Cloudflare Worker bundle validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build Vite assets
+        run: npm run build
+
+      - name: Validate Cloudflare Worker bundle without deployment
+        run: npx --yes wrangler@4.164.0 deploy --dry-run --outdir .wrangler-dry-run --config wrangler.jsonc
