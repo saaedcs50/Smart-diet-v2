@@ -218,7 +218,7 @@ This did not expose patient rows in the tests: `anon` still had no `SELECT` gran
 
 A transactional hardening test was run on Production and rolled back. During the transaction it revoked only `MAINTAIN`, `REFERENCES`, and `TRIGGER` from `anon` and `authenticated` on existing `public` tables and from `postgres` default privileges in `public`. The post-revoke assertions passed: no non-DML grants remained; `anon` retained `SELECT` on `platform_config`; authenticated patient/day-log DML stayed available; and patient visibility was not widened. A follow-up read confirmed the transaction rolled back and the pre-existing grants/defaults remain unchanged.
 
-A proposed idempotent migration source was added to this PR as `supabase/migrations/20261117170000_revoke_excess_public_table_privileges.sql`. It includes assertions for the retained public-config SELECT and authenticated patients/day-logs DML grants. **It has not been applied to either project.** Apply only after confirming a usable Production backup/restore point and reviewing the exact project migration sequence.
+A proposed idempotent migration source was added to this PR as `supabase/migrations/20261117170000_revoke_excess_public_table_privileges.sql`. It includes assertions for the retained public-config SELECT and authenticated patients/day-logs DML grants. **Production application status updated 17 November 2026:** the migration was applied to Production through Supabase migration tooling as `20261117165914_revoke_excess_public_table_privileges`. The migration ledger now records that version. A post-apply catalog query returned no remaining `MAINTAIN`, `REFERENCES`, or `TRIGGER` grants to `anon`/`authenticated` on `public` tables. Public `platform_config SELECT` and authenticated patient/day-log DML assertions passed during application. Staging was not changed by this production-only hardening.
 
 ### Auth URL and OAuth provider configuration
 
@@ -247,7 +247,7 @@ Both projects have an active `notify` Edge Function with `verify_jwt = true`. Pr
 
 A read-only inspection of the Production project's Backups page confirmed that the organization is on the Free plan and **project backups are not included**. The page shows no completed backup timestamp. Scheduled backups (up to 7 days), PITR, and Restore to New Project are locked behind Pro. No backup, restore, retention, or billing setting was changed.
 
-This is a hard safety gate for permanent Production DDL. A schema-only catalog export is not a substitute for a recoverable backup of patient and clinic data. The proposed grants migration must remain unapplied to Production until a usable backup/restore path is available. Enabling a paid plan is a billing decision and was not performed.
+This is a hard safety gate for permanent Production DDL. A schema-only catalog export is not a substitute for a recoverable backup of patient and clinic data. The owner explicitly accepted proceeding without a managed backup/restore path. This is a recorded risk acceptance, not evidence of recoverability. A manual logical export remains the only no-cost mitigation and must be kept outside the Production project.
 
 ### Transactional test of the proposed grants migration
 
@@ -256,6 +256,14 @@ The exact source file `20261117170000_revoke_excess_public_table_privileges.sql`
 ### Direct Realtime verification remains open
 
 The publication and client-side subscription were inspected, and RLS behavior was covered by SQL tests. A direct browser/WebSocket session test with two authenticated Staging identities has still not been executed; this remains an explicit closure gate.
+
+### Google OAuth UI guard added
+
+The live Production and Staging projects both have Google OAuth disabled, and valid Google OAuth client credentials were not available in the project connection. To prevent the app from presenting a broken login action, the Phase 1 branch now gates both Google login and staff-invitation buttons behind `VITE_GOOGLE_OAUTH_ENABLED=true`. The default is disabled. Email/password authentication remains unchanged. This removes the code/configuration mismatch from the user interface but does not activate Google OAuth; activating it still requires valid Google provider credentials and the Supabase callback configuration.
+
+### Non-Vercel hosting discovery
+
+The connected Cloudflare account is reachable and currently has no Pages projects. Cloudflare's documented Git integration requires installing/authorizing the Cloudflare GitHub App for the repository; Direct Upload requires a prebuilt `dist` directory and a Pages-scoped API token in the deployment workflow. Neither integration nor deployment credentials are configured in the connected account/repository. No project or deployment was fabricated. The hosting cutover remains open until the repository is authorized for Cloudflare Git integration or a Direct Upload credential is securely provisioned.
 
 ## 6. Findings and remaining closure gates
 
@@ -267,9 +275,9 @@ The publication and client-side subscription were inspected, and RLS behavior wa
 | Appointment RLS | PASS on Staging | PR #71 remains open; Production intentionally has no appointments schema |
 | Storage | PASS for current design; cloud Storage intentionally unused | No bucket creation required |
 | Realtime profile isolation | Catalog/client/RLS review PASS | Direct two-clinic authenticated WebSocket test |
-| Migration ledger and canonical baseline | **OPEN** | Full schema export, exact source mapping, clean rebuild test |
-| Auth redirect and Google OAuth on another host | **OPEN** | Production allows only the existing Vercel origin; Staging allows localhost only; Google is disabled in both projects. A new test origin and valid provider credentials/callback are still required |
-| Production excess table/default grants | **OPEN — migration drafted** | Exact migration passed rollback-only tests in both projects; Production has no backup on Free plan, so permanent DDL is blocked pending a recoverable backup path |
+| Migration ledger and canonical baseline | **OPEN** | Baseline remains a placeholder; need a full schema-only export from Production, source reconciliation, and clean rebuild validation |
+| Auth redirect and Google OAuth on another host | **PARTIAL** | Google UI buttons are now disabled by default via `VITE_GOOGLE_OAUTH_ENABLED`; actual provider activation and non-Vercel redirect testing remain open because no Google OAuth client credentials or deployed alternate host are configured |
+| Production excess table/default grants | **PASS — applied to Production** | Migration ledger version `20261117165914`; post-apply query found no excess grants; preserved public config SELECT and authenticated application DML |
 | Leaked Password Protection | **PLAN LIMITATION** | Available on Supabase Pro and above; the organization is Free. No billing-tier change was made |
 
 ## 7. Change and safety record
@@ -278,10 +286,10 @@ The publication and client-side subscription were inspected, and RLS behavior wa
 - PR #71 remained open and unmerged; its appointments schema is present in Staging only.
 - No application data was copied, transformed, deleted, or migrated.
 - No Supabase project was created, paused, restored, reconfigured, or replaced.
-- No Production SQL write, schema DDL, Auth setting change, or secret change was performed.
+- Production received one non-destructive privilege-hardening migration: revoke unnecessary `MAINTAIN`, `REFERENCES`, and `TRIGGER` privileges and remove those privileges from `postgres` default table grants. No rows or tables were modified or deleted. No Auth setting or secret was changed.
 - The only database writes attempted were synthetic Staging fixture operations inside rollback-only test transactions. Both tests passed, and post-test checks confirmed that no fixture rows or state changes remained.
 
-**Phase 1 disposition: live Staging authorization tests and the independence audit are complete; migration baseline and cross-host Auth/Realtime verification remain open. Do not apply Production migrations or mark Phase 1 fully closed until those gates are satisfied.**
+**Phase 1 disposition (updated 17 November 2026):** the Production least-privilege migration is applied and verified; Google OAuth UI is safely gated; Staging role tests and existing RLS audit pass. Canonical full baseline, Cloudflare Pages deployment and cross-host Auth, actual Google provider activation, and authenticated two-clinic Realtime WebSocket verification remain open. Production backup/restore is explicitly risk-accepted as unavailable on the current plan, not passed.
 
 ## 8. CI and dependency-security finding
 
