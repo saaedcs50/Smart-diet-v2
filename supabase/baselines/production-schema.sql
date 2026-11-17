@@ -131,38 +131,40 @@ CREATE TABLE public.push_subscriptions (
 
 -- Constraints
 ALTER TABLE public.adherence_configs ADD CONSTRAINT adherence_configs_axes_array CHECK (jsonb_typeof(axes) = 'array'::text);
-ALTER TABLE public.adherence_configs ADD CONSTRAINT adherence_configs_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE;
 ALTER TABLE public.adherence_configs ADD CONSTRAINT adherence_configs_pkey PRIMARY KEY (patient_id);
 ALTER TABLE public.adherence_scores ADD CONSTRAINT adherence_scores_overall_range CHECK (overall >= 0::numeric AND overall <= 100::numeric);
-ALTER TABLE public.adherence_scores ADD CONSTRAINT adherence_scores_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE;
 ALTER TABLE public.adherence_scores ADD CONSTRAINT adherence_scores_pkey PRIMARY KEY (id);
 ALTER TABLE public.adherence_scores ADD CONSTRAINT adherence_scores_scores_array CHECK (jsonb_typeof(scores) = 'array'::text);
-ALTER TABLE public.clinic_subscriptions ADD CONSTRAINT clinic_subscriptions_clinic_id_fkey FOREIGN KEY (clinic_id) REFERENCES clinics(id) ON DELETE CASCADE;
 ALTER TABLE public.clinic_subscriptions ADD CONSTRAINT clinic_subscriptions_pkey PRIMARY KEY (clinic_id);
 ALTER TABLE public.clinic_subscriptions ADD CONSTRAINT clinic_subscriptions_plan_check CHECK (plan = ANY (ARRAY['permanent'::text, 'monthly'::text, 'annual'::text]));
 ALTER TABLE public.clinic_subscriptions ADD CONSTRAINT clinic_subscriptions_status_check CHECK (status = ANY (ARRAY['active'::text, 'grace'::text, 'expired'::text]));
 ALTER TABLE public.clinics ADD CONSTRAINT clinics_pkey PRIMARY KEY (id);
 ALTER TABLE public.clinics ADD CONSTRAINT clinics_status_check CHECK (status = ANY (ARRAY['active'::text, 'suspended'::text]));
-ALTER TABLE public.consents ADD CONSTRAINT consents_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE;
 ALTER TABLE public.consents ADD CONSTRAINT consents_patient_id_purpose_key UNIQUE (patient_id, purpose);
 ALTER TABLE public.consents ADD CONSTRAINT consents_pkey PRIMARY KEY (id);
-ALTER TABLE public.day_logs ADD CONSTRAINT day_logs_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE;
 ALTER TABLE public.day_logs ADD CONSTRAINT day_logs_patient_id_log_date_key UNIQUE (patient_id, log_date);
 ALTER TABLE public.day_logs ADD CONSTRAINT day_logs_pkey PRIMARY KEY (id);
 ALTER TABLE public.invitations ADD CONSTRAINT invitations_pkey PRIMARY KEY (email);
 ALTER TABLE public.invitations ADD CONSTRAINT invitations_role_check CHECK (role = ANY (ARRAY['patient'::text, 'coach'::text, 'admin'::text]));
 ALTER TABLE public.invitations ADD CONSTRAINT invitations_status_check CHECK (status = ANY (ARRAY['pending'::text, 'consumed'::text]));
-ALTER TABLE public.patients ADD CONSTRAINT patients_clinic_id_fkey FOREIGN KEY (clinic_id) REFERENCES clinics(id);
-ALTER TABLE public.patients ADD CONSTRAINT patients_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
 ALTER TABLE public.patients ADD CONSTRAINT patients_pkey PRIMARY KEY (id);
 ALTER TABLE public.patients ADD CONSTRAINT patients_tags_valid CHECK (jsonb_typeof(tags) = 'array'::text AND jsonb_array_length(tags) <= 20);
 ALTER TABLE public.platform_config ADD CONSTRAINT platform_config_pkey PRIMARY KEY (key);
-ALTER TABLE public.profiles ADD CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_pkey PRIMARY KEY (id);
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check CHECK (role = ANY (ARRAY['patient'::text, 'coach'::text, 'admin'::text, 'owner'::text]));
 ALTER TABLE public.push_subscriptions ADD CONSTRAINT push_subscriptions_endpoint_https CHECK (length(endpoint) >= 16 AND length(endpoint) <= 2048 AND endpoint ~ '^https://(updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/'::text);
-ALTER TABLE public.push_subscriptions ADD CONSTRAINT push_subscriptions_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE;
 ALTER TABLE public.push_subscriptions ADD CONSTRAINT push_subscriptions_pkey PRIMARY KEY (endpoint);
+
+-- Foreign keys are added after all referenced primary/unique keys exist
+ALTER TABLE public.adherence_configs ADD CONSTRAINT adherence_configs_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE;
+ALTER TABLE public.adherence_scores ADD CONSTRAINT adherence_scores_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE;
+ALTER TABLE public.clinic_subscriptions ADD CONSTRAINT clinic_subscriptions_clinic_id_fkey FOREIGN KEY (clinic_id) REFERENCES clinics(id) ON DELETE CASCADE;
+ALTER TABLE public.consents ADD CONSTRAINT consents_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE;
+ALTER TABLE public.day_logs ADD CONSTRAINT day_logs_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE;
+ALTER TABLE public.patients ADD CONSTRAINT patients_clinic_id_fkey FOREIGN KEY (clinic_id) REFERENCES clinics(id);
+ALTER TABLE public.patients ADD CONSTRAINT patients_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.push_subscriptions ADD CONSTRAINT push_subscriptions_patient_id_fkey FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE;
 
 -- Sequence ownership
 ALTER SEQUENCE public.adherence_scores_id_seq OWNED BY public.adherence_scores.id;
