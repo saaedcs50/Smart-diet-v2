@@ -261,9 +261,13 @@ The publication and client-side subscription were inspected, and RLS behavior wa
 
 The live Production and Staging projects both have Google OAuth disabled, and valid Google OAuth client credentials were not available in the project connection. To prevent the app from presenting a broken login action, the Phase 1 branch now gates both Google login and staff-invitation buttons behind `VITE_GOOGLE_OAUTH_ENABLED=true`. The default is disabled. Email/password authentication remains unchanged. This removes the code/configuration mismatch from the user interface but does not activate Google OAuth; activating it still requires valid Google provider credentials and the Supabase callback configuration.
 
+### Cloudflare Worker implementation added
+
+The branch now contains a full-stack Worker entrypoint, Wrangler configuration, and a manual GitHub Actions deploy workflow. It preserves the existing Express endpoints, serves the Vite output as static assets, and replaces Upstash for this deployment with a SQLite-backed Durable Object guard store. The workflow is manually triggered and does not switch traffic. CI now includes a no-deploy Wrangler bundle-validation job. The connected Cloudflare account has workers.dev subdomain `saaedbelal`, and no paid upgrade is required for the SQLite-backed Durable Object under Cloudflare Free quotas. Runtime deployment is not yet active because the Cloudflare API token and the two server secrets must be provisioned to GitHub Actions.
+
 ### Non-Vercel hosting discovery
 
-The connected Cloudflare account is reachable and currently has no Pages projects. More importantly, this is not a static-only Vite app: `server.ts` runs Express and mounts `src/server/api.ts`, which provides `/health` and stateful `/coach-session` routes backed by `coachGuardStore` (Upstash configuration). A plain Pages static deployment would omit these routes and is not a valid replacement. Cloudflare Git integration also requires installing/authorizing the Cloudflare GitHub App; Direct Upload requires a prebuilt asset bundle and a Pages-scoped API token in CI. Neither is configured. A correct Cloudflare migration must port the Express routes to Workers/Pages Functions and replace/verify the persistent guard-store adapter before traffic is switched. No project or deployment was fabricated.
+The connected Cloudflare account is reachable and currently has no Pages projects. More importantly, this is not a static-only Vite app: `server.ts` runs Express and mounts `src/server/api.ts`, which provides `/health` and stateful `/coach-session` routes backed by `coachGuardStore` (Upstash configuration). A plain Pages static deployment would omit these routes and is not a valid replacement. Cloudflare Git integration also requires installing/authorizing the Cloudflare GitHub App; Direct Upload requires a prebuilt asset bundle and a Pages-scoped API token in CI. Neither is configured. A correct Cloudflare Worker path is now implemented in the branch, including the persistent Durable Object adapter. No production Worker has been deployed yet; the GitHub Actions credentials and server secrets must be set before invoking its manual deployment workflow.
 
 ### Repeatable schema-export tooling added
 
@@ -280,7 +284,7 @@ Added `scripts/export-production-schema.sh`. It uses `supabase db dump` against 
 | Storage | PASS for current design; cloud Storage intentionally unused | No bucket creation required |
 | Realtime profile isolation | Catalog/client/RLS review PASS | Direct two-clinic authenticated WebSocket test still requires two valid Staging sessions; no user tokens were available to run a real browser subscription test |
 | Migration ledger and canonical baseline | **PARTIAL** | Added repeatable schema-export script; still need to run it with the Production DB connection string, reconcile source, and pass a clean rebuild test |
-| Auth redirect and Google OAuth on another host | **PARTIAL** | Google UI buttons are now disabled by default via `VITE_GOOGLE_OAUTH_ENABLED`; actual provider activation and non-Vercel redirect testing remain open because no Google OAuth client credentials or deployed alternate host are configured |
+| Auth redirect and Google OAuth on another host | **PARTIAL** | Google UI buttons are now disabled by default via `VITE_GOOGLE_OAUTH_ENABLED`; actual provider activation and non-Vercel redirect testing remain open because no Google OAuth provider credentials are configured and the Worker is not deployed yet |
 | Production excess table/default grants | **PASS — applied to Production** | Migration ledger version `20261117165914`; post-apply query found no excess grants; preserved public config SELECT and authenticated application DML |
 | Leaked Password Protection | **PLAN LIMITATION** | Available on Supabase Pro and above; the organization is Free. No billing-tier change was made |
 
@@ -293,7 +297,7 @@ Added `scripts/export-production-schema.sh`. It uses `supabase db dump` against 
 - Production received one non-destructive privilege-hardening migration: revoke unnecessary `MAINTAIN`, `REFERENCES`, and `TRIGGER` privileges and remove those privileges from `postgres` default table grants. No rows or tables were modified or deleted. No Auth setting or secret was changed.
 - The only database writes attempted were synthetic Staging fixture operations inside rollback-only test transactions. Both tests passed, and post-test checks confirmed that no fixture rows or state changes remained.
 
-**Phase 1 disposition (updated 17 November 2026):** the Production least-privilege migration is applied and verified; Google OAuth UI is safely gated; Staging role tests and existing RLS audit pass. Canonical full baseline, a Cloudflare-compatible replacement for the Express runtime, cross-host Auth, actual Google provider activation, and authenticated two-clinic Realtime WebSocket verification remain open. Production backup/restore is explicitly risk-accepted as unavailable on the current plan, not passed.
+**Phase 1 disposition (updated 17 November 2026):** the Production least-privilege migration is applied and verified; Google OAuth UI is safely gated; Staging role tests and existing RLS audit pass. Canonical full baseline, Cloudflare Worker deployment, cross-host Auth, actual Google provider activation, and authenticated two-clinic Realtime WebSocket verification remain open. Production backup/restore is explicitly risk-accepted as unavailable on the current plan, not passed.
 
 ## 8. CI and dependency-security finding
 
