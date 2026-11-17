@@ -1,5 +1,6 @@
 import express, { Router, Request, Response } from 'express';
 import crypto from 'crypto';
+import { getServerRuntimeEnv } from './runtimeEnv.js';
 import { brandCopy } from '../config/brand.js';
 import {
   getCoachGuardStore,
@@ -11,14 +12,14 @@ export const apiRouter = Router();
 // Ensure body parser is applied to all api routes
 apiRouter.use(express.json({ limit: '200kb' }));
 
-const isProd = process.env.NODE_ENV === 'production';
+const isProd = (): boolean => getServerRuntimeEnv('NODE_ENV') === 'production';
 
 // ============================================================================
 // السر المستخدم لتوقيع جلسات الطبيبة (HMAC): لازم يكون فريد لكل عميل/نسخة
 // ============================================================================
 let devSessionSecret: string | null = null;
 const getSessionSecret = (): string => {
-  const secret = process.env.SESSION_SECRET;
+  const secret = getServerRuntimeEnv('SESSION_SECRET');
   if (secret) return secret.trim();
 
   if (!devSessionSecret) {
@@ -37,10 +38,10 @@ const getSessionSecret = (): string => {
 // ============================================================================
 let devCoachPin: string | null = null;
 const getCoachPin = (): string => {
-  const pin = process.env.COACH_PIN;
+  const pin = getServerRuntimeEnv('COACH_PIN');
   if (pin) return String(pin).trim();
 
-  if (isProd) {
+  if (isProd()) {
     throw new Error('COACH_PIN غير معرف في بيئة الإنتاج — أضفه في متغيرات البيئة قبل النشر.');
   }
   if (!devCoachPin) {
@@ -116,10 +117,10 @@ function guardFailure(res: Response, err: unknown): Response {
 // فحص إعدادات الأمان عند بدء التشغيل.
 // في الإنتاج يفشل فورًا (throw) لو SESSION_SECRET أو COACH_PIN غير معرفين — لا افتراضيات صامتة.
 export const validateSecurityConfig = (): void => {
-  if (isProd) {
+  if (isProd()) {
     const missing: string[] = [];
-    if (!process.env.SESSION_SECRET?.trim()) missing.push('SESSION_SECRET');
-    if (!process.env.COACH_PIN?.trim()) missing.push('COACH_PIN');
+    if (!getServerRuntimeEnv('SESSION_SECRET')?.trim()) missing.push('SESSION_SECRET');
+    if (!getServerRuntimeEnv('COACH_PIN')?.trim()) missing.push('COACH_PIN');
     if (missing.length > 0) {
       throw new Error(
         `متغيرات أمان ناقصة في بيئة الإنتاج: ${missing.join(', ')} — عرّفها في متغيرات البيئة قبل النشر.`
