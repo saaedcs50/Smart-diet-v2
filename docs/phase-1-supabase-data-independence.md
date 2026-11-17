@@ -257,8 +257,9 @@ The publication and client-side subscription were inspected, and RLS behavior wa
 | Storage | PASS for current design; cloud Storage intentionally unused | No bucket creation required |
 | Realtime profile isolation | Catalog/client/RLS review PASS | Direct two-clinic authenticated WebSocket test |
 | Migration ledger and canonical baseline | **OPEN** | Full schema export, exact source mapping, clean rebuild test |
-| Auth redirect and Google OAuth on another host | **OPEN** | Select/deploy test origin, verify Auth allow-list and Google callback, test sign-in/sign-out/session restore |
-| Leaked Password Protection | **WARNING** | Enable and verify in Supabase Auth settings |
+| Auth redirect and Google OAuth on another host | **OPEN** | Production allows only the existing Vercel origin; Staging allows localhost only; Google is disabled in both projects. A new test origin and valid provider credentials/callback are still required |
+| Production excess table/default grants | **OPEN — migration drafted** | Transactional revoke test passed and rolled back; verify Production backup/restore point before applying the new hardening migration |
+| Leaked Password Protection | **PLAN LIMITATION** | Available on Supabase Pro and above; the organization is Free. No billing-tier change was made |
 
 ## 7. Change and safety record
 
