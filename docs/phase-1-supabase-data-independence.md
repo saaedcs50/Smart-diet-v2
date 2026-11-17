@@ -291,7 +291,7 @@ Added `scripts/export-production-schema.sh` for repeatable future exports. The b
 | Realtime profile isolation | Catalog/client/RLS review PASS | Direct two-clinic authenticated WebSocket test still requires two valid Staging sessions; no user tokens were available to run a real browser subscription test |
 | Production schema snapshot | **IMPLEMENTED — validation pending** | Live catalog baseline is in `supabase/baselines/production-schema.sql`; isolated PostgreSQL CI replay added. Historical ledger-to-source filename reconciliation remains a separate item |
 | Auth redirect and Google OAuth on another host | **PARTIAL** | Google UI buttons are now disabled by default via `VITE_GOOGLE_OAUTH_ENABLED`; actual provider activation and non-Vercel redirect testing remain open because no Google OAuth provider credentials are configured and the Worker is not deployed yet |
-| Production excess table/default grants | **PASS — applied to Production** | Migration ledger version `20261117165914`; post-apply query found no excess grants; preserved public config SELECT and authenticated application DML |
+| Excess public table/default grants | **PASS — applied to both projects** | Production ledger `20261117165914`, Staging ledger `20261117174650`; post-apply queries found no excess grants; preserved public config SELECT and authenticated application DML |
 | Leaked Password Protection | **PLAN LIMITATION** | Available on Supabase Pro and above; the organization is Free. No billing-tier change was made |
 
 ## 7. Change and safety record
