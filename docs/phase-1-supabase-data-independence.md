@@ -226,6 +226,7 @@ A second live dashboard inspection of Staging confirmed:
 
 - Site URL remains `http://localhost:3000`.
 - The allowed redirect `http://localhost:3000/**` is present. The inspection did not add, remove, or change it.
+- Email password sign-in is **enabled**.
 - Google OAuth provider is **disabled**.
 
 A separate live inspection of Production confirmed:
