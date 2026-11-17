@@ -1,36 +1,16 @@
-// اختبارات طبقة المنصة — المرحلة الأولى.
-// بلا شبكة وبلا مستخدمين حقيقيين: الدوال الخالصة (التحويل، المسارات،
-// التحقق من الملف) + مفتاح الوضع. عمليات القراءة/الكتابة الفعلية لا تُختبر
-// هنا لأنها تحتاج محاكي Firestore، وهي خارج نطاق هذه المرحلة.
+// اختبارات طبقة البيانات — تحويلات خالصة بلا شبكة أو حسابات حقيقية.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { parseUserProfile } from '../../src/platform/auth';
 import {
-  clinicRef,
-  consentRef,
-  dayLogFromFirestore,
-  dayLogRef,
-  dayLogToFirestore,
-  dayLogsCollection,
-  patientRef,
-  photoRef,
-  planFromFirestore,
-  planToFirestore,
+  dayLogFromDatabase,
+  dayLogToDatabase,
+  planFromDatabase,
+  planToDatabase,
   stripUndefinedDeep,
-  userRef,
-} from '../../src/platform/firestore';
+} from '../../src/platform/database';
 import { isPlatformEnabled } from '../../src/platform/platformMode';
 import type { DayLog, PlanConfig } from '../../src/types/index';
-
-// إعدادات وهمية لاختبارات طبقة المنصة: بناء المراجع (doc/collection) يتطلب
-// مثيل Firestore، لكنه لا يصل إلى أي شبكة ولا يتحقق من صحة القيم — لذلك
-// تُضبط قيم وهمية هنا قبل أي اختبار. لا توجد أي قيمة حقيقية في هذا الملف.
-process.env.VITE_FIREBASE_API_KEY = 'test-api-key';
-process.env.VITE_FIREBASE_AUTH_DOMAIN = 'test.firebaseapp.com';
-process.env.VITE_FIREBASE_PROJECT_ID = 'test-project';
-process.env.VITE_FIREBASE_STORAGE_BUCKET = 'test.appspot.com';
-process.env.VITE_FIREBASE_MESSAGING_SENDER_ID = '000000000000';
-process.env.VITE_FIREBASE_APP_ID = '1:000000000000:web:0000000000000000000000';
 
 const dummyPlan = {
   clientName: 'مريض تجريبي',
@@ -91,30 +71,14 @@ describe('platform mode flag', () => {
   });
 });
 
-describe('firestore paths', () => {
-  it('مسارات المستندات مطابقة لنموذج §٣', () => {
-    expect(clinicRef('clinic-a').path).toBe('clinics/clinic-a');
-    expect(userRef('uid-1').path).toBe('users/uid-1');
-    expect(patientRef('uid-1').path).toBe('patients/uid-1');
-    expect(dayLogRef('uid-1', '2026-10-24').path).toBe(
-      'patients/uid-1/dayLogs/2026-10-24',
-    );
-    expect(dayLogsCollection('uid-1').path).toBe('patients/uid-1/dayLogs');
-    expect(consentRef('uid-1', 'sync').path).toBe(
-      'patients/uid-1/consents/sync',
-    );
-    expect(photoRef('uid-1', 'p1').path).toBe('patients/uid-1/photos/p1');
-  });
-});
-
 describe('plan/dayLog converters', () => {
-  it('planToFirestore يحذف adminPin وundefined ويضيف بيانات المزامنة', () => {
+  it('planToDatabase يحذف adminPin وundefined ويضيف بيانات المزامنة', () => {
     const withUndefined = {
       ...dummyPlan,
       targetCalories: undefined,
       weeklyFocus: undefined,
     } as unknown as PlanConfig;
-    const out = planToFirestore(withUndefined, 'editor-1') as unknown as Record<
+    const out = planToDatabase(withUndefined, 'editor-1') as unknown as Record<
       string,
       unknown
     >;
@@ -125,8 +89,8 @@ describe('plan/dayLog converters', () => {
     expect(out.clientName).toBe('مريض تجريبي');
   });
 
-  it('dayLogToFirestore يحافظ على الحقول ويضيف بيانات المزامنة', () => {
-    const out = dayLogToFirestore(dummyDayLog, 'editor-1');
+  it('dayLogToDatabase يحافظ على الحقول ويضيف بيانات المزامنة', () => {
+    const out = dayLogToDatabase(dummyDayLog, 'editor-1');
     expect(out.water).toBe(1500);
     expect(out.updatedBy).toBe('editor-1');
     expect(out.updatedAt).toBeDefined();
@@ -141,17 +105,17 @@ describe('plan/dayLog converters', () => {
     expect(cleaned).toEqual({ a: 1, nested: { d: [1, undefined, 3] } });
   });
 
-  it('planFromFirestore يقبل الصالح ويرفض الفاسد', () => {
-    expect(planFromFirestore(dummyPlan)?.clientName).toBe('مريض تجريبي');
-    expect(planFromFirestore(null)).toBeNull();
-    expect(planFromFirestore({ clientName: 'x' })).toBeNull();
-    expect(planFromFirestore({ clientName: 'x', meals: [], checklist: [] })).not.toBeNull();
+  it('planFromDatabase يقبل الصالح ويرفض الفاسد', () => {
+    expect(planFromDatabase(dummyPlan)?.clientName).toBe('مريض تجريبي');
+    expect(planFromDatabase(null)).toBeNull();
+    expect(planFromDatabase({ clientName: 'x' })).toBeNull();
+    expect(planFromDatabase({ clientName: 'x', meals: [], checklist: [] })).not.toBeNull();
   });
 
-  it('dayLogFromFirestore يقبل الصالح ويرفض الفاسد', () => {
-    expect(dayLogFromFirestore(dummyDayLog)?.water).toBe(1500);
-    expect(dayLogFromFirestore({ water: 'x' })).toBeNull();
-    expect(dayLogFromFirestore(null)).toBeNull();
+  it('dayLogFromDatabase يقبل الصالح ويرفض الفاسد', () => {
+    expect(dayLogFromDatabase(dummyDayLog)?.water).toBe(1500);
+    expect(dayLogFromDatabase({ water: 'x' })).toBeNull();
+    expect(dayLogFromDatabase(null)).toBeNull();
   });
 });
 

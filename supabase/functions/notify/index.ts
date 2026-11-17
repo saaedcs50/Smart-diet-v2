@@ -1,6 +1,6 @@
 // Supabase Edge Function: deliver empty-payload Web Push notifications.
 // No patient name, clinical text, or health data is sent to a push provider.
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2.118.0';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
@@ -25,7 +25,7 @@ function json(body: Record<string, unknown>, status = 200): Response {
 function base64UrlEncode(bytes: Uint8Array): string {
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 function base64UrlDecode(value: string): Uint8Array {
@@ -118,7 +118,7 @@ Deno.serve(async (request: Request) => {
 
   try {
     const authorization = request.headers.get('Authorization') ?? '';
-    const accessToken = authorization.replace(/^Bearer\\s+/i, '');
+    const accessToken = authorization.replace(/^Bearer\s+/i, '');
     if (!accessToken) return json({ ok: false, error: 'غير مصرح.' }, 401);
 
     const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {

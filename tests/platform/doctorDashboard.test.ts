@@ -1,6 +1,6 @@
 // اختبارات خالصة لملخص الدكاترة في لوحة الطاقم المتقدمة (بلا شبكة).
 import { describe, it, expect } from 'vitest';
-import { summarizeDoctors } from '../../src/platform/firestore';
+import { summarizeDoctors } from '../../src/platform/database';
 
 const coaches = [
   { uid: 'coach-a', displayName: 'د. أحمد', email: 'a@example.com' },

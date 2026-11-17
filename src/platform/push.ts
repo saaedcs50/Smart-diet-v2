@@ -51,8 +51,12 @@ export async function registerPushSubscription(patientUid: string): Promise<stri
     let subscription = await registration.pushManager.getSubscription();
 
     if (subscription && subscription.options.applicationServerKey) {
-      const currentKey = new Uint8Array(subscription.options.applicationServerKey);
-      const sameKey = currentKey.length === applicationServerKey.length &&
+      const currentApplicationServerKey = subscription.options.applicationServerKey;
+      const currentKey = currentApplicationServerKey
+        ? new Uint8Array(currentApplicationServerKey)
+        : null;
+      const sameKey = currentKey !== null &&
+        currentKey.length === applicationServerKey.length &&
         currentKey.every((value, index) => value === applicationServerKey[index]);
       if (!sameKey) {
         await subscription.unsubscribe();

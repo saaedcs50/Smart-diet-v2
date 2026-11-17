@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DayLog, PlanConfig } from '../../src/types';
-import type { PatientDoc } from '../../src/platform/firestore';
+import type { PatientDoc } from '../../src/platform/database';
 import {
   buildDoctorCsv,
   buildDoctorPdfHtml,

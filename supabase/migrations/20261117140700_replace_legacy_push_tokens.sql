@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.push_subscriptions (
   CONSTRAINT push_subscriptions_endpoint_https
     CHECK (
       length(endpoint) BETWEEN 16 AND 2048
-      AND endpoint ~ '^https://(fcm\\.googleapis\\.com|updates\\.push\\.services\\.mozilla\\.com|web\\.push\\.apple\\.com|[a-z0-9-]+\\.notify\\.windows\\.com)/'
+      AND endpoint ~ '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/'
     )
 );
 
@@ -52,7 +52,7 @@ BEGIN
   END IF;
 
   IF p_endpoint IS NULL OR length(p_endpoint) NOT BETWEEN 16 AND 2048
-     OR p_endpoint !~ '^https://(fcm\\.googleapis\\.com|updates\\.push\\.services\\.mozilla\\.com|web\\.push\\.apple\\.com|[a-z0-9-]+\\.notify\\.windows\\.com)/' THEN
+     OR p_endpoint !~ '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/' THEN
     RAISE EXCEPTION 'Unsupported or invalid push endpoint'
       USING ERRCODE = '22023';
   END IF;
@@ -83,7 +83,7 @@ DECLARE
 BEGIN
   IF to_regclass('public.fcm_tokens') IS NOT NULL THEN
     FOR v_row IN EXECUTE
-      'SELECT patient_id, token FROM public.fcm_tokens CROSS JOIN LATERAL unnest(tokens) AS token'
+      'SELECT ft.patient_id, legacy.token FROM public.fcm_tokens AS ft CROSS JOIN LATERAL unnest(ft.tokens) AS legacy(token)'
     LOOP
       BEGIN
         v_subscription := v_row.token::jsonb;
@@ -93,7 +93,7 @@ BEGIN
       v_endpoint := v_subscription ->> 'endpoint';
       IF v_endpoint IS NOT NULL
          AND length(v_endpoint) BETWEEN 16 AND 2048
-         AND v_endpoint ~ '^https://(fcm\\.googleapis\\.com|updates\\.push\\.services\\.mozilla\\.com|web\\.push\\.apple\\.com|[a-z0-9-]+\\.notify\\.windows\\.com)/' THEN
+         AND v_endpoint ~ '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/' THEN
         INSERT INTO public.push_subscriptions (endpoint, patient_id)
         VALUES (v_endpoint, v_row.patient_id)
         ON CONFLICT (endpoint) DO NOTHING;
