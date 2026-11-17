@@ -257,6 +257,12 @@ The exact source file `20261117170000_revoke_excess_public_table_privileges.sql`
 
 The publication and client-side subscription were inspected, and RLS behavior was covered by SQL tests. A direct browser/WebSocket session test with two authenticated Staging identities has still not been executed; this remains an explicit closure gate.
 
+### Google Cloud OAuth provider investigation (17 November 2026)
+
+A read-only inspection of the signed-in Google Cloud project `smart-diet-platform-trial` found an existing Web OAuth client auto-created for Firebase Authentication. Its redirect URI is the Firebase auth handler, and it does not list the Supabase callback `https://lhjyshlxbsnesayivxpb.supabase.co/auth/v1/callback` or the future Workers origin. This client must not be repurposed because doing so may break the existing Firebase login flow.
+
+The OAuth consent screen is External and In production, with a support email configured. Google Project Checkup currently reports warnings about insecure OAuth flow configuration, loopback IP redirects on an existing Web client, and unverified branding. No client secret was viewed/copied and no Google Cloud settings were changed. A dedicated Supabase Web OAuth client is required, with the Supabase callback URI registered. The app-side feature flag remains disabled until the new client is configured in Supabase.
+
 ### Google OAuth UI guard added
 
 The live Production and Staging projects both have Google OAuth disabled, and valid Google OAuth client credentials were not available in the project connection. To prevent the app from presenting a broken login action, the Phase 1 branch now gates both Google login and staff-invitation buttons behind `VITE_GOOGLE_OAUTH_ENABLED=true`. The default is disabled. Email/password authentication remains unchanged. This removes the code/configuration mismatch from the user interface but does not activate Google OAuth; activating it still requires valid Google provider credentials and the Supabase callback configuration.
