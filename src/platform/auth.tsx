@@ -28,6 +28,12 @@ import type { PlatformRole, PlatformUserProfile } from './database';
 
 export type { PlatformRole, PlatformUserProfile };
 
+const googleOAuthEnabled = (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.VITE_GOOGLE_OAUTH_ENABLED === 'true';
+
+export function isGoogleOAuthEnabled(): boolean {
+  return googleOAuthEnabled;
+}
+
 const PLATFORM_ROLES: ReadonlySet<string> = new Set([
   'patient',
   'coach',
