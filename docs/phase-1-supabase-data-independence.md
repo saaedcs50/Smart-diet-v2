@@ -271,7 +271,7 @@ The connected Cloudflare account is reachable and currently has no Pages project
 
 ### Repeatable schema-export tooling added
 
-Added `scripts/export-production-schema.sh`. It uses `supabase db dump` against an explicitly supplied `SUPABASE_DB_URL` and exports the application-owned `public` and `private` schemas to `supabase/baselines/production-schema.sql` by default. It refuses to report success for an empty export. This makes the full source capture repeatable, but the script has not been run because the database connection string is not exposed to this session. The checked-in placeholder baseline has therefore not been replaced yet; no schema is claimed to have been rebuilt from it.
+Added `scripts/export-production-schema.sh` for repeatable future exports. The branch now contains `supabase/baselines/production-schema.sql`, reconstructed from the live Production catalogs on 17 November 2026. It includes the 11 Production tables, 33 constraints, 23 indexes, 19 routines, 40 RLS policies, 2 triggers, sequences, grants, default privileges, and the current `profiles` Realtime publication prerequisite. The historical `20261031000000_baseline.sql` marker was left unchanged so the existing migration chain is not silently reordered or broken. Added `scripts/validate-production-baseline.mjs` and a CI job that replays the snapshot in an isolated PostgreSQL WASM engine, using stubs only for Supabase-managed Auth/Vault catalog objects and omitting publication DDL (already checked against the live project). This is schema-only; it contains no patient rows or Vault secrets. The CI job is still pending for the latest commit.
 
 ## 6. Findings and remaining closure gates
 
@@ -283,7 +283,7 @@ Added `scripts/export-production-schema.sh`. It uses `supabase db dump` against 
 | Appointment RLS | PASS on Staging | PR #71 remains open; Production intentionally has no appointments schema |
 | Storage | PASS for current design; cloud Storage intentionally unused | No bucket creation required |
 | Realtime profile isolation | Catalog/client/RLS review PASS | Direct two-clinic authenticated WebSocket test still requires two valid Staging sessions; no user tokens were available to run a real browser subscription test |
-| Migration ledger and canonical baseline | **PARTIAL** | Added repeatable schema-export script; still need to run it with the Production DB connection string, reconcile source, and pass a clean rebuild test |
+| Production schema snapshot | **IMPLEMENTED — validation pending** | Live catalog baseline is in `supabase/baselines/production-schema.sql`; isolated PostgreSQL CI replay added. Historical ledger-to-source filename reconciliation remains a separate item |
 | Auth redirect and Google OAuth on another host | **PARTIAL** | Google UI buttons are now disabled by default via `VITE_GOOGLE_OAUTH_ENABLED`; actual provider activation and non-Vercel redirect testing remain open because no Google OAuth provider credentials are configured and the Worker is not deployed yet |
 | Production excess table/default grants | **PASS — applied to Production** | Migration ledger version `20261117165914`; post-apply query found no excess grants; preserved public config SELECT and authenticated application DML |
 | Leaked Password Protection | **PLAN LIMITATION** | Available on Supabase Pro and above; the organization is Free. No billing-tier change was made |
@@ -297,7 +297,7 @@ Added `scripts/export-production-schema.sh`. It uses `supabase db dump` against 
 - Production received one non-destructive privilege-hardening migration: revoke unnecessary `MAINTAIN`, `REFERENCES`, and `TRIGGER` privileges and remove those privileges from `postgres` default table grants. No rows or tables were modified or deleted. No Auth setting or secret was changed.
 - The only database writes attempted were synthetic Staging fixture operations inside rollback-only test transactions. Both tests passed, and post-test checks confirmed that no fixture rows or state changes remained.
 
-**Phase 1 disposition (updated 17 November 2026):** the Production least-privilege migration is applied and verified; Google OAuth UI is safely gated; Staging role tests and existing RLS audit pass. Canonical full baseline, Cloudflare Worker deployment, cross-host Auth, actual Google provider activation, and authenticated two-clinic Realtime WebSocket verification remain open. Production backup/restore is explicitly risk-accepted as unavailable on the current plan, not passed.
+**Phase 1 disposition (updated 17 November 2026):** the Production least-privilege migration is applied and verified; Google OAuth UI is safely gated; Staging role tests and existing RLS audit pass. Canonical Production schema snapshot is now created with automated clean-room validation pending; historical migration ledger reconciliation, Cloudflare Worker deployment, cross-host Auth, actual Google provider activation, and authenticated two-clinic Realtime WebSocket verification remain open. Production backup/restore is explicitly risk-accepted as unavailable on the current plan, not passed.
 
 ## 8. CI and dependency-security finding
 
