@@ -183,6 +183,69 @@ The live migration histories are not identical to the repository's source filena
 
 No migration or baseline was applied. No Production backup was taken because no Production DDL was attempted. Before approving a canonical rebuild baseline, export the complete live schema (tables, types, sequences, indexes, constraints, functions, triggers, policies, grants, extensions, and relevant settings) from each project, compare it with Git, and document per-project version-to-source mapping. Test the resulting baseline by rebuilding a clean disposable database. Do not solve ledger drift by renaming old files or inserting fabricated rows into Supabase migration history.
 
+## 6A. Additional reconciliation findings (17 November 2026)
+
+### The repository baseline is an inventory placeholder, not a bootstrap schema
+
+- `supabase/migrations/20261031000000_baseline.sql` contains comments and an object inventory only; it does not create the listed database objects. Its own text says the full schema is maintained in documentation.
+- `20261109061815_staging_schema_reconciliation.sql` explicitly says it is not a fresh-project bootstrap migration and says the baseline must be replaced by a separately reviewed canonical full baseline.
+- That reconciliation uses `CREATE TABLE IF NOT EXISTS`. When a legacy table already exists, this does not add missing columns or normalize its existing nullability/default/identity attributes. This explains why logically related projects can retain column drift after similar migration names have been applied.
+- `20261109115448_production_legacy_alignment.sql` is described as a Production bridge over a restored legacy schema, not as a clean-room baseline. Do not apply the inventory placeholder to an empty database or call it a reproducible bootstrap.
+
+### Exact live column differences
+
+| Object | Production | Staging |
+|---|---|---|
+| `consents.updated_at` | Absent | Present, `timestamptz NOT NULL DEFAULT now()` |
+| `adherence_scores.note` | Nullable, no default | `NOT NULL DEFAULT ''` |
+| `day_logs.id` | Sequence-backed `bigserial` default | `GENERATED ALWAYS AS IDENTITY` |
+| Day-log unique index | `day_logs_patient_id_log_date_key` | `day_logs_patient_id_log_date_uidx` |
+| Consent unique index | `consents_patient_id_purpose_key` | `consents_patient_purpose_key` |
+| Appointments | Table absent | Table present (12 columns), from open PR #71 |
+
+The Staging reconciliation source creates `consents.updated_at` and a non-null/defaulted adherence note when it creates those tables, but `IF NOT EXISTS` leaves pre-existing tables untouched. `day_logs` was already present in the manually provisioned Staging database and retains its identity definition; the Production legacy table retains its sequence-backed definition. These are real schema differences, not just naming differences.
+
+### Production's excess public-table grants and PostgreSQL defaults
+
+An ACL-level review found that Production's `public` tables had unnecessary non-DML privileges that were not present in Staging's current `postgres`-owned table grants:
+
+- `anon`: `REFERENCES` and `TRIGGER` on 10 of the 11 tables, in addition to the intended `SELECT` on `platform_config`.
+- `authenticated`: `REFERENCES` and `TRIGGER` on 10 tables, in addition to application DML grants.
+- The direct ACL also showed `MAINTAIN` for `anon` and `authenticated` on the Production tables. Staging did not have these non-DML grants on its current `postgres`-owned application tables.
+- Production's `ALTER DEFAULT PRIVILEGES` for role `postgres` in schema `public` also granted `MAINTAIN`, `REFERENCES`, and `TRIGGER` to both `anon` and `authenticated`. Staging's corresponding `postgres` defaults contain only the expected authenticated CRUD privileges and no `anon` table defaults.
+
+This did not expose patient rows in the tests: `anon` still had no `SELECT` grant on `patients`, and the Staging RLS role matrix remained passing. However, the excess grants violate least privilege and would also propagate to future tables created as `postgres`.
+
+A transactional hardening test was run on Production and rolled back. During the transaction it revoked only `MAINTAIN`, `REFERENCES`, and `TRIGGER` from `anon` and `authenticated` on existing `public` tables and from `postgres` default privileges in `public`. The post-revoke assertions passed: no non-DML grants remained; `anon` retained `SELECT` on `platform_config`; authenticated patient/day-log DML stayed available; and patient visibility was not widened. A follow-up read confirmed the transaction rolled back and the pre-existing grants/defaults remain unchanged.
+
+A proposed idempotent migration source was added to this PR as `supabase/migrations/20261117170000_revoke_excess_public_table_privileges.sql`. It includes assertions for the retained public-config SELECT and authenticated patients/day-logs DML grants. **It has not been applied to either project.** Apply only after confirming a usable Production backup/restore point and reviewing the exact project migration sequence.
+
+### Auth URL and OAuth provider configuration
+
+A second live dashboard inspection of Staging confirmed:
+
+- Site URL remains `http://localhost:3000`.
+- The allowed redirect `http://localhost:3000/**` is present. The inspection did not add, remove, or change it.
+- Google OAuth provider is **disabled**.
+
+A separate live inspection of Production confirmed:
+
+- Site URL is `https://smart-diet-v2.vercel.app`.
+- Its only listed redirect is `https://smart-diet-v2.vercel.app/**`.
+- Google OAuth provider is **disabled**; Email is the only enabled Auth provider reported by the dashboard.
+
+The app code exposes `signInWithGoogle()` and labels Google access for staff in its comments/UI, but neither live Supabase project currently enables Google. This means the Google sign-in path is not operational as deployed. No OAuth client ID/secret was read, copied, or modified. Enabling Google requires the correct provider credentials and callback setup; do not infer or fabricate these values.
+
+The organization is on the Supabase Free plan. Supabase's Password Security documentation says Leaked Password Protection is available on Pro and above. Therefore the advisor warning that it is disabled cannot be resolved within the current plan without a billing-tier change. No upgrade was attempted.
+
+### Deployed notification function
+
+Both projects have an active `notify` Edge Function with `verify_jwt = true`. Production reports version 5 and Staging version 1, but both deployed source digests are identical: `4f43d22a810d9e2ffb964a98700a59ba6fa5b8e0840cf9aa83d6e7bcc099010c`. The version number difference alone is not a code divergence.
+
+### Direct Realtime verification remains open
+
+The publication and client-side subscription were inspected, and RLS behavior was covered by SQL tests. A direct browser/WebSocket session test with two authenticated Staging identities has still not been executed; this remains an explicit closure gate.
+
 ## 6. Findings and remaining closure gates
 
 | Item | Result | Evidence still needed |
