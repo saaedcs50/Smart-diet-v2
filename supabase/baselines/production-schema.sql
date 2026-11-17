@@ -31,81 +31,103 @@ CREATE SEQUENCE public.consents_id_seq AS bigint INCREMENT BY 1 MINVALUE 1 MAXVA
 CREATE SEQUENCE public.day_logs_id_seq AS bigint INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1 NO CYCLE;
 
 -- Tables
-CREATE TABLE public.adherence_configs (\n  patient_id uuid NOT NULL,
+CREATE TABLE public.adherence_configs (
+  patient_id uuid NOT NULL,
   axes jsonb NOT NULL,
   updated_by uuid NOT NULL,
-  updated_at timestamp with time zone NOT NULL DEFAULT now()\n);
+  updated_at timestamp with time zone NOT NULL DEFAULT now()
+);
 
-CREATE TABLE public.adherence_scores (\n  id bigint NOT NULL DEFAULT nextval('adherence_scores_id_seq'::regclass),
+CREATE TABLE public.adherence_scores (
+  id bigint NOT NULL DEFAULT nextval('adherence_scores_id_seq'::regclass),
   patient_id uuid NOT NULL,
   score_date date NOT NULL,
   scores jsonb NOT NULL,
   overall numeric NOT NULL,
   entered_by uuid NOT NULL,
   note text,
-  created_at timestamp with time zone NOT NULL DEFAULT now()\n);
+  created_at timestamp with time zone NOT NULL DEFAULT now()
+);
 
-CREATE TABLE public.clinic_subscriptions (\n  clinic_id text NOT NULL,
+CREATE TABLE public.clinic_subscriptions (
+  clinic_id text NOT NULL,
   plan text NOT NULL,
   status text NOT NULL,
   start_at timestamp with time zone,
   expires_at timestamp with time zone,
   grace_ends_at timestamp with time zone,
   payments jsonb NOT NULL DEFAULT '[]'::jsonb,
-  updated_at timestamp with time zone NOT NULL DEFAULT now()\n);
+  updated_at timestamp with time zone NOT NULL DEFAULT now()
+);
 
-CREATE TABLE public.clinics (\n  id text NOT NULL,
+CREATE TABLE public.clinics (
+  id text NOT NULL,
   name text NOT NULL,
   owner_uid text NOT NULL DEFAULT ''::text,
   owner_name text,
   owner_phone text,
   status text NOT NULL DEFAULT 'active'::text,
-  created_at timestamp with time zone NOT NULL DEFAULT now()\n);
+  created_at timestamp with time zone NOT NULL DEFAULT now()
+);
 
-CREATE TABLE public.consents (\n  id bigint NOT NULL DEFAULT nextval('consents_id_seq'::regclass),
+CREATE TABLE public.consents (
+  id bigint NOT NULL DEFAULT nextval('consents_id_seq'::regclass),
   patient_id uuid NOT NULL,
   purpose text NOT NULL,
   consent jsonb NOT NULL,
   granted_by uuid NOT NULL,
-  created_at timestamp with time zone NOT NULL DEFAULT now()\n);
+  created_at timestamp with time zone NOT NULL DEFAULT now()
+);
 
-CREATE TABLE public.day_logs (\n  id bigint NOT NULL DEFAULT nextval('day_logs_id_seq'::regclass),
+CREATE TABLE public.day_logs (
+  id bigint NOT NULL DEFAULT nextval('day_logs_id_seq'::regclass),
   patient_id uuid NOT NULL,
   log_date date NOT NULL,
   log jsonb NOT NULL,
-  created_at timestamp with time zone NOT NULL DEFAULT now()\n);
+  created_at timestamp with time zone NOT NULL DEFAULT now()
+);
 
-CREATE TABLE public.invitations (\n  email text NOT NULL,
+CREATE TABLE public.invitations (
+  email text NOT NULL,
   role text NOT NULL,
   clinic_id text NOT NULL,
   created_by uuid,
   status text NOT NULL DEFAULT 'pending'::text,
-  created_at timestamp with time zone NOT NULL DEFAULT now()\n);
+  created_at timestamp with time zone NOT NULL DEFAULT now()
+);
 
-CREATE TABLE public.patients (\n  id uuid NOT NULL,
+CREATE TABLE public.patients (
+  id uuid NOT NULL,
   clinic_id text NOT NULL,
   profile jsonb NOT NULL DEFAULT '{}'::jsonb,
   plan jsonb,
   invited_by uuid,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
-  tags jsonb NOT NULL DEFAULT '[]'::jsonb\n);
+  tags jsonb NOT NULL DEFAULT '[]'::jsonb
+);
 
-CREATE TABLE public.platform_config (\n  key text NOT NULL,
+CREATE TABLE public.platform_config (
+  key text NOT NULL,
   value jsonb NOT NULL,
-  updated_at timestamp with time zone NOT NULL DEFAULT now()\n);
+  updated_at timestamp with time zone NOT NULL DEFAULT now()
+);
 
-CREATE TABLE public.profiles (\n  id uuid NOT NULL,
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
   role text NOT NULL,
   clinic_id text NOT NULL,
   email text,
   display_name text,
   disabled boolean NOT NULL DEFAULT false,
-  created_at timestamp with time zone NOT NULL DEFAULT now()\n);
+  created_at timestamp with time zone NOT NULL DEFAULT now()
+);
 
-CREATE TABLE public.push_subscriptions (\n  endpoint text NOT NULL,
+CREATE TABLE public.push_subscriptions (
+  endpoint text NOT NULL,
   patient_id uuid NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
-  updated_at timestamp with time zone NOT NULL DEFAULT now()\n);
+  updated_at timestamp with time zone NOT NULL DEFAULT now()
+);
 
 -- Constraints
 ALTER TABLE public.adherence_configs ADD CONSTRAINT adherence_configs_axes_array CHECK (jsonb_typeof(axes) = 'array'::text);
