@@ -327,3 +327,29 @@ The advisory lists affected versions through 4.0.7 and no patched version. The u
 
 The workflow now runs the pull-request base-history fetch and Gitleaks scan with `always()` so a dependency-scan failure cannot silently suppress the secret scan. The resulting Gitleaks execution completed successfully.
 
+
+
+## 8. Follow-up execution status — 17 November 2026
+
+The following live checks were repeated after the initial audit:
+
+- Production project `lhjyshlxbsnesayivxpb` and Staging project `dubevgijagqjgwcibqeo` both report `ACTIVE_HEALTHY`.
+- Production currently records migration version `20261117165914` (`revoke_excess_public_table_privileges`). Staging records the equivalent hardening as `20261117174650`. The ledgers therefore still differ; do not edit either remote migration ledger by hand or assume matching version IDs.
+- Production currently has 11 public application tables, all 11 with RLS enabled. Staging currently has 12, all 12 with RLS enabled; `appointments` remains Staging-only.
+- The canonical Production baseline is stored separately at `supabase/baselines/production-schema.sql`. It was rebuilt in an isolated PGlite/PostgreSQL engine by `scripts/validate-production-baseline.mjs`; CI verified 11 tables, 40 policies, 23 indexes, 19 routines, 2 triggers, 11 RLS-enabled tables, and 33 constraints. Supabase-managed Auth/Vault objects and the Realtime publication are explicitly stubbed/skipped in this local reconstruction test. This is a syntax/rebuild test, not a full restore drill into a fresh Supabase project.
+- The baseline is a reference artifact for a clean project. It must not be run against either existing project. The historical migration sequence has not been reconciled into a safe one-command fresh-install chain.
+- Latest PR validation: application type/lint/tests/build PASS; Worker bundle dry-run PASS; static RLS check PASS; baseline clean-room test PASS; Gitleaks PASS. OSV remains FAIL because the lockfile contains `picomatch@4.0.7` with advisory `GHSA-fc5q-39xc-vjpf` (CVSS 8.7); the scanner reports no fixed version. Do not suppress this finding or invent an override.
+- Cloudflare account access is connected and its `workers.dev` subdomain is `saaedbelal`. No `smart-diet-v2` Worker exists in that account yet. The repository has a manual deployment workflow, but deployment requires four GitHub Actions secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CF_COACH_PIN`, and `CF_SESSION_SECRET`. No secret values are recorded in this repository.
+- Worker validation is only a Wrangler dry-run. No live Worker endpoint or API smoke test has been completed.
+- Google Cloud's existing OAuth client is for Firebase; no Supabase-specific client/callback has been confirmed. Do not reuse or modify the Firebase client. Supabase Auth redirect allow-list and Google provider settings remain unverified.
+- The Realtime QA page is a test harness only. A direct authenticated WebSocket test between two independent clinic users has not yet passed and remains a closure gate.
+
+### Remaining closure gates
+
+1. Resolve the `picomatch` advisory when an upstream fixed release becomes available, then rerun OSV and all checks.
+2. Reconcile Production/Staging migration histories with repository migration files without fabricating ledger entries; keep the Staging-only appointments feature separate.
+3. Perform a full clean Supabase restore drill, including Auth/Vault prerequisites and Realtime publication verification.
+4. Complete authenticated Realtime isolation testing using two distinct Staging clinic accounts.
+5. Configure and verify Supabase Auth redirects and a dedicated Google OAuth client without touching Firebase.
+6. Add the four deployment secrets through GitHub's secret UI, run the manual Worker deployment, and verify health/API/auth/PWA behavior before any traffic cutover.
+
