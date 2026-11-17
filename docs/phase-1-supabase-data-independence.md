@@ -263,7 +263,11 @@ The live Production and Staging projects both have Google OAuth disabled, and va
 
 ### Non-Vercel hosting discovery
 
-The connected Cloudflare account is reachable and currently has no Pages projects. Cloudflare's documented Git integration requires installing/authorizing the Cloudflare GitHub App for the repository; Direct Upload requires a prebuilt `dist` directory and a Pages-scoped API token in the deployment workflow. Neither integration nor deployment credentials are configured in the connected account/repository. No project or deployment was fabricated. The hosting cutover remains open until the repository is authorized for Cloudflare Git integration or a Direct Upload credential is securely provisioned.
+The connected Cloudflare account is reachable and currently has no Pages projects. More importantly, this is not a static-only Vite app: `server.ts` runs Express and mounts `src/server/api.ts`, which provides `/health` and stateful `/coach-session` routes backed by `coachGuardStore` (Upstash configuration). A plain Pages static deployment would omit these routes and is not a valid replacement. Cloudflare Git integration also requires installing/authorizing the Cloudflare GitHub App; Direct Upload requires a prebuilt asset bundle and a Pages-scoped API token in CI. Neither is configured. A correct Cloudflare migration must port the Express routes to Workers/Pages Functions and replace/verify the persistent guard-store adapter before traffic is switched. No project or deployment was fabricated.
+
+### Repeatable schema-export tooling added
+
+Added `scripts/export-production-schema.sh`. It uses `supabase db dump` against an explicitly supplied `SUPABASE_DB_URL` and exports the application-owned `public` and `private` schemas to `supabase/baselines/production-schema.sql` by default. It refuses to report success for an empty export. This makes the full source capture repeatable, but the script has not been run because the database connection string is not exposed to this session. The checked-in placeholder baseline has therefore not been replaced yet; no schema is claimed to have been rebuilt from it.
 
 ## 6. Findings and remaining closure gates
 
@@ -274,8 +278,8 @@ The connected Cloudflare account is reachable and currently has no Pages project
 | Core multi-clinic RLS | PASS on Staging | Do not seed synthetic test users into Production |
 | Appointment RLS | PASS on Staging | PR #71 remains open; Production intentionally has no appointments schema |
 | Storage | PASS for current design; cloud Storage intentionally unused | No bucket creation required |
-| Realtime profile isolation | Catalog/client/RLS review PASS | Direct two-clinic authenticated WebSocket test |
-| Migration ledger and canonical baseline | **OPEN** | Baseline remains a placeholder; need a full schema-only export from Production, source reconciliation, and clean rebuild validation |
+| Realtime profile isolation | Catalog/client/RLS review PASS | Direct two-clinic authenticated WebSocket test still requires two valid Staging sessions; no user tokens were available to run a real browser subscription test |
+| Migration ledger and canonical baseline | **PARTIAL** | Added repeatable schema-export script; still need to run it with the Production DB connection string, reconcile source, and pass a clean rebuild test |
 | Auth redirect and Google OAuth on another host | **PARTIAL** | Google UI buttons are now disabled by default via `VITE_GOOGLE_OAUTH_ENABLED`; actual provider activation and non-Vercel redirect testing remain open because no Google OAuth client credentials or deployed alternate host are configured |
 | Production excess table/default grants | **PASS — applied to Production** | Migration ledger version `20261117165914`; post-apply query found no excess grants; preserved public config SELECT and authenticated application DML |
 | Leaked Password Protection | **PLAN LIMITATION** | Available on Supabase Pro and above; the organization is Free. No billing-tier change was made |
@@ -289,7 +293,7 @@ The connected Cloudflare account is reachable and currently has no Pages project
 - Production received one non-destructive privilege-hardening migration: revoke unnecessary `MAINTAIN`, `REFERENCES`, and `TRIGGER` privileges and remove those privileges from `postgres` default table grants. No rows or tables were modified or deleted. No Auth setting or secret was changed.
 - The only database writes attempted were synthetic Staging fixture operations inside rollback-only test transactions. Both tests passed, and post-test checks confirmed that no fixture rows or state changes remained.
 
-**Phase 1 disposition (updated 17 November 2026):** the Production least-privilege migration is applied and verified; Google OAuth UI is safely gated; Staging role tests and existing RLS audit pass. Canonical full baseline, Cloudflare Pages deployment and cross-host Auth, actual Google provider activation, and authenticated two-clinic Realtime WebSocket verification remain open. Production backup/restore is explicitly risk-accepted as unavailable on the current plan, not passed.
+**Phase 1 disposition (updated 17 November 2026):** the Production least-privilege migration is applied and verified; Google OAuth UI is safely gated; Staging role tests and existing RLS audit pass. Canonical full baseline, a Cloudflare-compatible replacement for the Express runtime, cross-host Auth, actual Google provider activation, and authenticated two-clinic Realtime WebSocket verification remain open. Production backup/restore is explicitly risk-accepted as unavailable on the current plan, not passed.
 
 ## 8. CI and dependency-security finding
 
