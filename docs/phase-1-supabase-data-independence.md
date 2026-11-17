@@ -64,7 +64,7 @@ The `profiles` table currently has one `owner` profile in Production and six syn
 
 ### RLS policy shape
 
-Production has four policies each on `profiles`, `clinics`, `clinic_subscriptions`, `invitations`, `patients`, `adherence_configs`, and `adherence_scores); five on `platform_config`; three on `consents`; three on `push_subscriptions`; and one on `day_logs`.
+Production has four policies each on `profiles`, `clinics`, `clinic_subscriptions`, `invitations`, `patients`, `adherence_configs`, and `adherence_scores`; five on `platform_config`; three on `consents`; three on `push_subscriptions`; and one on `day_logs`.
 
 Staging has those same policy counts plus three policies on `appointments`.
 
