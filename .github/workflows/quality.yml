@@ -48,6 +48,10 @@ jobs:
           scan-args: |-
             --lockfile=package-lock.json
 
+      - name: Fetch pull request base history for secret scanning
+        if: github.event_name == 'pull_request'
+        run: git fetch --no-tags origin "${{ github.event.pull_request.base.sha }}"
+
       - name: Gitleaks secret scan
         uses: gitleaks/gitleaks-action@v2
         env:
