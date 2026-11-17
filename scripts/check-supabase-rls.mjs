@@ -11,7 +11,7 @@ const requiredTables = [
   'day_logs',
   'adherence_configs',
   'adherence_scores',
-  'fcm_tokens',
+  'push_subscriptions',
   'consents',
 ];
 
@@ -57,10 +57,8 @@ const expectedStagingMigrations = [
 ];
 const missingStagingMigrations = expectedStagingMigrations
   .filter((name) => !migrationFiles.includes(name));
-const rlsManifest = await readFile(
-  path.join(migrationDir, '20261109072730_explicit_rls_all_platform_tables.sql'),
-  'utf8',
-);
+// Include additive migrations so newly introduced tables are checked too.
+const rlsManifest = allSql;
 
 const policyStatements = [...allSql.matchAll(/CREATE\s+POLICY\b[\s\S]*?;/gi)]
   .map((match) => match[0]);

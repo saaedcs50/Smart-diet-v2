@@ -12,7 +12,7 @@
 --
 -- Matrix tables: profiles, clinics, clinic_subscriptions, platform_config,
 -- invitations, patients, day_logs, adherence_configs, adherence_scores,
--- fcm_tokens, consents.
+-- push_subscriptions, consents.
 
 BEGIN;
 SET LOCAL ROLE authenticated;
@@ -175,8 +175,12 @@ BEGIN
 
   INSERT INTO public.day_logs(patient_id,log_date,log)
   VALUES ('f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8','2099-12-31','{}'::jsonb);
-  INSERT INTO public.fcm_tokens(patient_id,tokens)
-  VALUES ('f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8',ARRAY['rls-matrix-token']);
+  PERFORM public.claim_push_subscription(
+    'https://updates.push.services.mozilla.com/wpush/v2/rls-matrix-token'
+  );
+  IF (SELECT count(*) FROM public.push_subscriptions) <> 1 THEN
+    RAISE EXCEPTION 'patient-a: own push subscription was not registered';
+  END IF;
   INSERT INTO public.consents(patient_id,purpose,consent,granted_by)
   VALUES ('f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8','rls-matrix-test',
     '{"granted":true}'::jsonb,'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8');

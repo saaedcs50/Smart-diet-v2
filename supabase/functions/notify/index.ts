@@ -1,266 +1,198 @@
-// ============================================================================
-// Supabase Edge Function: notify — إرسال إشعارات Web Push للمرضى (v3)
-// ----------------------------------------------------------------------------
-// إصلاح SDV2-INT-004: توقيع VAPID يستخدم raw r||s من WebCrypto (ليس DER)
-// إصلاح SDV2-SEC-001: التحقق من disabled وحالة الاشتراك
-// ============================================================================
+// Supabase Edge Function: deliver empty-payload Web Push notifications.
+// No patient name, clinical text, or health data is sent to a push provider.
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
-import { createPushDisabledResponse, PUSH_DELIVERY_ENABLED } from './pushGate.ts';
-
-const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY') ?? '';
-const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') ?? '';
-const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') ?? 'mailto:admin@smart-diet.app';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY') ?? '';
+const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') ?? '';
+const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') ?? '';
 
-interface PushSubscriptionJSON {
-  endpoint: string;
-  keys?: { p256dh?: string; auth?: string };
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+function json(body: Record<string, unknown>, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+  });
 }
 
-function b64uE(d: Uint8Array): string {
-  let b = '';
-  for (let i = 0; i < d.length; i++) b += String.fromCharCode(d[i]);
-  return btoa(b).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function base64UrlEncode(bytes: Uint8Array): string {
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
 }
 
-function b64uD(s: string): Uint8Array {
-  const b = s.replace(/-/g, '+').replace(/_/g, '/');
-  const p = b + '='.repeat((4 - (b.length % 4)) % 4);
-  const bin = atob(p);
-  const r = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) r[i] = bin.charCodeAt(i);
-  return r;
+function base64UrlDecode(value: string): Uint8Array {
+  const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
-// SDV2-INT-004 FIX: WebCrypto returns raw 64-byte r||s, NOT DER.
-// Use the signature directly without DER parsing.
-async function createVapidAuth(audience: string): Promise<string> {
-  const enc = new TextEncoder();
-  const privRaw = b64uD(VAPID_PRIVATE_KEY);
+async function createVapidAuthorization(audience: string): Promise<string> {
+  const privateKey = base64UrlDecode(VAPID_PRIVATE_KEY);
+  if (privateKey.length !== 32) throw new Error('Invalid VAPID private key.');
 
-  // Convert raw 32-byte private key to PKCS8 for import
   const pkcs8Header = new Uint8Array([
     0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d,
     0x02, 0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01,
     0x07, 0x04, 0x27, 0x30, 0x25, 0x02, 0x01, 0x01, 0x04, 0x20,
   ]);
-  const pkcs8 = new Uint8Array(pkcs8Header.length + privRaw.length);
-  pkcs8.set(pkcs8Header, 0);
-  pkcs8.set(privRaw, pkcs8Header.length);
-
+  const pkcs8 = new Uint8Array(pkcs8Header.length + privateKey.length);
+  pkcs8.set(pkcs8Header);
+  pkcs8.set(privateKey, pkcs8Header.length);
   const key = await crypto.subtle.importKey(
-    'pkcs8', pkcs8.buffer,
+    'pkcs8',
+    pkcs8,
     { name: 'ECDSA', namedCurve: 'P-256' },
-    false, ['sign'],
+    false,
+    ['sign'],
   );
 
   const now = Math.floor(Date.now() / 1000);
-  const hb = b64uE(enc.encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
-  const cb = b64uE(enc.encode(JSON.stringify({
+  const header = base64UrlEncode(new TextEncoder().encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
+  const claims = base64UrlEncode(new TextEncoder().encode(JSON.stringify({
     aud: audience,
-    exp: now + 43200,
+    exp: now + 12 * 60 * 60,
     sub: VAPID_SUBJECT,
   })));
-  const unsigned = `${hb}.${cb}`;
-
-  // WebCrypto returns raw r||s (64 bytes) — use directly, NO DER parsing
-  const rawSig = new Uint8Array(
-    await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, enc.encode(unsigned)),
-  );
-
-  return `vapid t=${unsigned}.${b64uE(rawSig)}, k=${VAPID_PUBLIC_KEY}`;
+  const unsigned = `${header}.${claims}`;
+  const signature = new Uint8Array(await crypto.subtle.sign(
+    { name: 'ECDSA', hash: 'SHA-256' },
+    key,
+    new TextEncoder().encode(unsigned),
+  ));
+  return `vapid t=${unsigned}.${base64UrlEncode(signature)}, k=${VAPID_PUBLIC_KEY}`;
 }
 
-async function sendWebPush(
-  sub: PushSubscriptionJSON,
-  title: string,
-  body: string,
-): Promise<boolean> {
+function isApprovedPushEndpoint(endpoint: string): boolean {
   try {
-    if (!PUSH_DELIVERY_ENABLED) return false;
-    if (!sub.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) return false;
-    if (!sub.endpoint.startsWith('https://')) return false;
-
-    const url = new URL(sub.endpoint);
-    const audience = `${url.protocol}//${url.host}`;
-    const vapidAuth = await createVapidAuth(audience);
-
-    const payload = JSON.stringify({ title, body });
-
-    // Note: Sending without payload encryption (RFC 8291 aes128gcm not implemented).
-    // This is a known limitation — see SDV2-INT-004 remediation.
-    const res = await fetch(sub.endpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: vapidAuth,
-        'Content-Type': 'application/octet-stream',
-        TTL: '86400',
-      },
-      body: new TextEncoder().encode(payload),
-    });
-
-    // 410 Gone = subscription expired, 404 = not found
-    return res.status === 201 || res.status === 200;
+    const url = new URL(endpoint);
+    if (url.protocol !== 'https:' || url.username || url.password || url.port) return false;
+    const host = url.hostname.toLowerCase();
+    return host === 'fcm.googleapis.com' ||
+      host === 'updates.push.services.mozilla.com' ||
+      host === 'web.push.apple.com' ||
+      host.endsWith('.notify.windows.com');
   } catch {
     return false;
   }
 }
 
-serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
+async function sendEmptyPush(endpoint: string): Promise<'sent' | 'expired' | 'failed'> {
+  if (!isApprovedPushEndpoint(endpoint)) return 'failed';
+  const url = new URL(endpoint);
+  const authorization = await createVapidAuthorization(`${url.protocol}//${url.host}`);
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, content-type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        Authorization: authorization,
+        TTL: '60',
+        Urgency: 'normal',
       },
     });
+    if (response.status === 404 || response.status === 410) return 'expired';
+    return response.status === 201 || response.status === 202 || response.status === 200
+      ? 'sent'
+      : 'failed';
+  } catch {
+    return 'failed';
   }
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ ok: false }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+}
 
-  // Defense in depth: deny direct calls until RFC 8291 payload encryption is implemented.
-  if (!PUSH_DELIVERY_ENABLED) {
-    return createPushDisabledResponse();
+Deno.serve(async (request: Request) => {
+  if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
+  if (request.method !== 'POST') return json({ ok: false, error: 'Method not allowed.' }, 405);
+
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY ||
+      !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !VAPID_SUBJECT) {
+    return json({ ok: false, error: 'Push delivery is not configured.' }, 503);
   }
 
   try {
-    const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
-    if (!token) {
-      return new Response(JSON.stringify({ ok: false, error: 'غير مصرح' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    const authorization = request.headers.get('Authorization') ?? '';
+    const accessToken = authorization.replace(/^Bearer\\s+/i, '');
+    if (!accessToken) return json({ ok: false, error: 'غير مصرح.' }, 401);
+
+    const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data: { user }, error: authError } = await authClient.auth.getUser(accessToken);
+    if (authError || !user) return json({ ok: false, error: 'جلسة الدخول غير صالحة.' }, 401);
+
+    const input = await request.json().catch(() => null) as { patientUid?: unknown } | null;
+    if (!input || typeof input.patientUid !== 'string' ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input.patientUid)) {
+      return json({ ok: false, error: 'معرف المريض غير صالح.' }, 400);
     }
 
-    const sbAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { data: { user }, error } = await sbAuth.auth.getUser(token);
-    if (error || !user) {
-      return new Response(JSON.stringify({ ok: false, error: 'توكن غير صالح' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const { patientUid, title, body } = await req.json();
-    if (!patientUid || !title) {
-      return new Response(JSON.stringify({ ok: false, error: 'بيانات ناقصة' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Validate input size (SDV2-SEC-001)
-    if (title.length > 200 || (body ?? '').length > 1000) {
-      return new Response(JSON.stringify({ ok: false, error: 'النص طويل جدًا' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    // SDV2-SEC-001 FIX: Check disabled status
-    const { data: cp } = await sb
+    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data: caller, error: callerError } = await admin
       .from('profiles')
       .select('role, clinic_id, disabled')
       .eq('id', user.id)
-      .single();
-    if (!cp) {
-      return new Response(JSON.stringify({ ok: false, error: 'لا يوجد ملف' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    if ((cp as { disabled?: boolean }).disabled) {
-      return new Response(JSON.stringify({ ok: false, error: 'الحساب معطل' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      .maybeSingle();
+    if (callerError || !caller || caller.disabled) {
+      return json({ ok: false, error: 'الحساب غير مفعل أو لا يملك ملف صلاحيات.' }, 403);
     }
 
-    const { data: pat } = await sb
+    const { data: patient, error: patientError } = await admin
       .from('patients')
       .select('clinic_id, invited_by')
-      .eq('id', patientUid)
-      .single();
-    if (!pat) {
-      return new Response(JSON.stringify({ ok: false, error: 'المريض غير موجود' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+      .eq('id', input.patientUid)
+      .maybeSingle();
+    if (patientError || !patient) return json({ ok: false, error: 'المريض غير موجود.' }, 404);
 
-    const role = (cp as { role: string }).role;
-    const cc = (cp as { clinic_id: string }).clinic_id;
-    const pc = (pat as { clinic_id: string }).clinic_id;
-    const ib = (pat as { invited_by: string | null }).invited_by;
+    const authorized = caller.role === 'owner' ||
+      (caller.role === 'admin' && caller.clinic_id === patient.clinic_id) ||
+      (caller.role === 'coach' && caller.clinic_id === patient.clinic_id && patient.invited_by === user.id);
+    if (!authorized) return json({ ok: false, error: 'غير مخول لإرسال تنبيه لهذا المريض.' }, 403);
 
-    const authorized =
-      role === 'owner' ||
-      (role === 'admin' && cc === pc) ||
-      (role === 'coach' && cc === pc && ib === user.id);
-    if (!authorized) {
-      return new Response(JSON.stringify({ ok: false, error: 'غير مخول' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    // SDV2-SEC-001 FIX: Check clinic subscription status
-    if (role !== 'owner') {
-      const { data: sub } = await sb
+    if (caller.role !== 'owner') {
+      const { data: subscription, error: subscriptionError } = await admin
         .from('clinic_subscriptions')
         .select('status')
-        .eq('clinic_id', pc)
-        .single();
-      const status = (sub as { status?: string } | null)?.status;
-      if (status !== 'active' && status !== 'grace') {
-        return new Response(JSON.stringify({ ok: false, error: 'اشتراك العيادة غير نشط' }), {
-          status: 403,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        .eq('clinic_id', patient.clinic_id)
+        .maybeSingle();
+      if (subscriptionError || !subscription ||
+          (subscription.status !== 'active' && subscription.status !== 'grace')) {
+        return json({ ok: false, error: 'اشتراك العيادة غير نشط.' }, 403);
       }
     }
 
-    const { data: tr } = await sb
-      .from('fcm_tokens')
-      .select('tokens')
-      .eq('patient_id', patientUid)
-      .single();
-    const tokens: string[] = (tr as { tokens?: string[] } | null)?.tokens ?? [];
+    const { data: subscriptions, error: subscriptionsError } = await admin
+      .from('push_subscriptions')
+      .select('endpoint')
+      .eq('patient_id', input.patientUid);
+    if (subscriptionsError) throw subscriptionsError;
+    if (!subscriptions?.length) return json({ ok: true, sent: 0, removed: 0 });
 
     let sent = 0;
-    let invalid = 0;
-    for (const t of tokens) {
-      try {
-        const parsed = JSON.parse(t) as PushSubscriptionJSON;
-        if (await sendWebPush(parsed, title, body ?? '')) {
-          sent++;
-        }
-      } catch {
-        invalid++;
+    let removed = 0;
+    for (const row of subscriptions as Array<{ endpoint: string }>) {
+      const result = await sendEmptyPush(row.endpoint);
+      if (result === 'sent') sent += 1;
+      if (result === 'expired') {
+        const { error: deleteError } = await admin
+          .from('push_subscriptions')
+          .delete()
+          .eq('patient_id', input.patientUid)
+          .eq('endpoint', row.endpoint);
+        if (!deleteError) removed += 1;
       }
     }
-
-    return new Response(JSON.stringify({ ok: true, sent, invalid }), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
-  } catch {
-    return new Response(JSON.stringify({ ok: false, error: 'خطأ داخلي' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return json({ ok: true, sent, removed });
+  } catch (error) {
+    console.error('notify edge function failed', error);
+    return json({ ok: false, error: 'تعذر إرسال التنبيه.' }, 500);
   }
 });

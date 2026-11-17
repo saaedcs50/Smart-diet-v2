@@ -57,7 +57,7 @@ import type { DayLog, PlanConfig } from '../types';
 import { SubscriptionGate } from './subscription/SubscriptionGate';
 import { SubscriptionCard } from './subscription/SubscriptionCard';
 import { AdherenceSection } from './adherence/AdherenceSection';
-import { registerFcmToken, isFcmConfigured, isPushDeliveryEnabled, notifyPatient } from './push';
+import { registerPushSubscription, isPushDeliveryEnabled, notifyPatient } from './push';
 import { getSupabase } from './supabase';
 import { bindLocalDataToPatient, getLocalDataBindingStatus, type LocalDataBindingStatus } from './localDataOwnership';
 import { copyLegacyPatientDataToUser } from '../utils/storageKeys';
@@ -1251,8 +1251,8 @@ function PatientDetail({
 
   // تسجيل توكن Web Push للمريض (مرة واحدة عند فتح ملفه)
   useEffect(() => {
-    if (!isStaffView && isFcmConfigured()) {
-      void registerFcmToken(patientUid).catch(() => {});
+    if (!isStaffView && isPushDeliveryEnabled()) {
+      void registerPushSubscription(patientUid).catch(() => {});
     }
   }, [patientUid, isStaffView]);
 
@@ -1388,7 +1388,7 @@ function PatientDetail({
           <NotifyPatientButton patientUid={patientUid} clientName={doc.profile.clientName} />
         ) : (
           <p className="text-xs text-slate-500">
-            الإشعارات متوقفة مؤقتًا لحين تنفيذ واختبار تشفير Web Push RFC 8291.
+            إشعارات العيادة غير مهيأة. اطلب من مسؤول النظام إكمال إعداد خدمة الإشعارات.
           </p>
         )
       )}
@@ -1425,12 +1425,7 @@ function NotifyPatientButton({
         data: { session },
       } = await getSupabase().auth.getSession();
       const accessToken = session?.access_token ?? '';
-      const res = await notifyPatient(
-        patientUid,
-        'تحديث من دكتورك',
-        `دكتورك حدّث خطتك — افتح التطبيق للاطلاع`,
-        accessToken,
-      );
+      const res = await notifyPatient(patientUid, accessToken);
       setResult(res.sent > 0 ? `تم إرسال الإشعار (${res.sent})` : 'لا توجد أجهزة مسجلة للمريض');
     } catch (err) {
       setResult(err instanceof Error ? err.message : 'فشل الإرسال');
