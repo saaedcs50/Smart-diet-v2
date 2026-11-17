@@ -1,0 +1,6 @@
+[allowlist]
+description = "Historical credential findings retained until the affected credentials are rotated in every dependent system."
+commits = [
+  "da94de20692e28c3f087f5d1af70bf43a1eb9e99",
+  "baa0bacccf0fbd762b4dcf2b44a2842226c03844"
+]

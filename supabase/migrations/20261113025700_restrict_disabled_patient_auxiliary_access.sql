@@ -3,18 +3,6 @@
 
 BEGIN;
 
-DROP POLICY IF EXISTS fcm_tokens_patient_manage_own ON public.fcm_tokens;
-CREATE POLICY fcm_tokens_patient_manage_own
-  ON public.fcm_tokens FOR ALL TO authenticated
-  USING (
-    patient_id = (SELECT auth.uid())
-    AND (SELECT private.caller_role()) = 'patient'
-  )
-  WITH CHECK (
-    patient_id = (SELECT auth.uid())
-    AND (SELECT private.caller_role()) = 'patient'
-  );
-
 DROP POLICY IF EXISTS consents_patient_insert_own ON public.consents;
 CREATE POLICY consents_patient_insert_own
   ON public.consents FOR INSERT TO authenticated

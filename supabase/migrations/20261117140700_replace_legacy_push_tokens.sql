@@ -1,6 +1,5 @@
--- Replace legacy serialized push tokens with one endpoint per browser subscription.
--- Existing Web Push endpoints are retained; private browser keys are not required
--- because this function sends empty-payload notifications only.
+-- Create the browser subscription registry used by the Supabase notification service.
+-- Push messages are empty by design; no clinical content or private browser keys are stored.
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS public.push_subscriptions (
@@ -84,36 +83,6 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.claim_push_subscription(text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.claim_push_subscription(text) TO authenticated;
-
--- Migrate valid browser-generated endpoints from the legacy serialized token table.
-DO $migration$
-DECLARE
-  v_row record;
-  v_subscription jsonb;
-  v_endpoint text;
-BEGIN
-  IF to_regclass('public.fcm_tokens') IS NOT NULL THEN
-    FOR v_row IN EXECUTE
-      'SELECT ft.patient_id, legacy.token FROM public.fcm_tokens AS ft CROSS JOIN LATERAL unnest(ft.tokens) AS legacy(token)'
-    LOOP
-      BEGIN
-        v_subscription := v_row.token::jsonb;
-      EXCEPTION WHEN others THEN
-        CONTINUE;
-      END;
-      v_endpoint := v_subscription ->> 'endpoint';
-      IF v_endpoint IS NOT NULL
-         AND length(v_endpoint) BETWEEN 16 AND 2048
-         AND v_endpoint ~ '^https://(updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/' THEN
-        INSERT INTO public.push_subscriptions (endpoint, patient_id)
-        VALUES (v_endpoint, v_row.patient_id)
-        ON CONFLICT (endpoint) DO NOTHING;
-      END IF;
-    END LOOP;
-    DROP TABLE public.fcm_tokens;
-  END IF;
-END;
-$migration$;
 
 -- Server-only access to signing keys stored in Supabase Vault.
 CREATE OR REPLACE FUNCTION public.get_push_signing_config()
