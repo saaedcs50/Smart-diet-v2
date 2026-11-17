@@ -2,9 +2,10 @@ import { useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient, type RealtimeChannel, type SupabaseClient } from '@supabase/supabase-js';
 
-const enabled = import.meta.env.VITE_REALTIME_QA_ENABLED === 'true';
-const url = import.meta.env.VITE_SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const buildEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
+const enabled = buildEnv.VITE_REALTIME_QA_ENABLED === 'true';
+const url = buildEnv.VITE_SUPABASE_URL;
+const key = buildEnv.VITE_SUPABASE_ANON_KEY;
 
 type Credentials = { email: string; password: string };
 type Profile = { id: string; clinic_id: string; role: string; display_name: string | null };
@@ -137,10 +138,19 @@ async function runIsolationTest(a: Credentials, b: Credentials, owner: Credentia
   } finally {
     if (profiles.length === 2) {
       // Restore only the synthetic Staging profiles whose display_name was changed.
-      const restores: Promise<unknown>[] = [];
-      if (markerAChanged) restores.push(ownerClient.from('profiles').update({ display_name: profiles[0].display_name }).eq('id', profiles[0].id));
-      if (markerBChanged) restores.push(ownerClient.from('profiles').update({ display_name: profiles[1].display_name }).eq('id', profiles[1].id));
-      await Promise.all(restores);
+      const restores: Array<() => Promise<unknown>> = [];
+      if (markerAChanged) {
+        restores.push(async () => ownerClient.from('profiles').update({ display_name: profiles[0].display_name }).eq('id', profiles[0].id));
+      }
+      if (markerBChanged) {
+        restores.push(async () => ownerClient.from('profiles').update({ display_name: profiles[1].display_name }).eq('id', profiles[1].id));
+      }
+      const restoreResults = await Promise.all(restores.map((restore) => restore()));
+      for (const item of restoreResults) {
+        if (item && typeof item === 'object' && 'error' in item && item.error) {
+          console.error('Failed to restore a synthetic Staging profile after Realtime QA:', item.error);
+        }
+      }
     }
     await Promise.all(channels.map((channel) => channel.unsubscribe()));
     await Promise.all([
