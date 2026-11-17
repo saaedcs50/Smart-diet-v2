@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient, type RealtimeChannel, type SupabaseClient } from '@supabase/supabase-js';
 
@@ -75,7 +75,8 @@ async function runIsolationTest(a: Credentials, b: Credentials, owner: Credentia
   const ownerClient = makeClient();
   const channels: RealtimeChannel[] = [];
   let profiles: Profile[] = [];
-  let markersWritten = false;
+  let markerAChanged = false;
+  let markerBChanged = false;
 
   const counts: Counts = {
     patientAOwn: 0,
@@ -101,26 +102,20 @@ async function runIsolationTest(a: Credentials, b: Credentials, owner: Credentia
     if (ownerProfile.role !== 'owner') throw new Error('The third test identity must be the Staging platform owner');
 
     const suffix = crypto.randomUUID();
-    channels.push(
-      await subscribe(clientA, `phase1-own-a-${suffix}`, profileA.id, () => { counts.patientAOwn += 1; }),
-      await subscribe(clientA, `phase1-cross-a-${suffix}`, profileB.id, () => { counts.patientACross += 1; }),
-      await subscribe(clientB, `phase1-own-b-${suffix}`, profileB.id, () => { counts.patientBOwn += 1; }),
-      await subscribe(clientB, `phase1-cross-b-${suffix}`, profileA.id, () => { counts.patientBCross += 1; }),
-    );
+    channels.push(await subscribe(clientA, `phase1-own-a-${suffix}`, profileA.id, () => { counts.patientAOwn += 1; }));
+    channels.push(await subscribe(clientA, `phase1-cross-a-${suffix}`, profileB.id, () => { counts.patientACross += 1; }));
+    channels.push(await subscribe(clientB, `phase1-own-b-${suffix}`, profileB.id, () => { counts.patientBOwn += 1; }));
+    channels.push(await subscribe(clientB, `phase1-cross-b-${suffix}`, profileA.id, () => { counts.patientBCross += 1; }));
 
     const markerA = `phase1-rt-${suffix}-a`;
     const markerB = `phase1-rt-${suffix}-b`;
 
-    const [touchA, touchB] = await Promise.all([
-      ownerClient.from('profiles').update({ display_name: markerA }).eq('id', profileA.id).select('id'),
-      ownerClient.from('profiles').update({ display_name: markerB }).eq('id', profileB.id).select('id'),
-    ]);
-    if (touchA.error) throw new Error(`Could not generate Staging event for clinic A: ${touchA.error.message}`);
-    if (touchB.error) throw new Error(`Could not generate Staging event for clinic B: ${touchB.error.message}`);
-    if (touchA.data?.length !== 1 || touchB.data?.length !== 1) {
-      throw new Error('Owner test account did not update exactly the two synthetic Staging profiles');
-    }
-    markersWritten = true;
+    const touchA = await ownerClient.from('profiles').update({ display_name: markerA }).eq('id', profileA.id).select('id');
+    if (touchA.error || touchA.data?.length !== 1) throw new Error(`Could not generate Staging event for clinic A: ${touchA.error?.message || 'no row updated'}`);
+    markerAChanged = true;
+    const touchB = await ownerClient.from('profiles').update({ display_name: markerB }).eq('id', profileB.id).select('id');
+    if (touchB.error || touchB.data?.length !== 1) throw new Error(`Could not generate Staging event for clinic B: ${touchB.error?.message || 'no row updated'}`);
+    markerBChanged = true;
 
     // Allow the authenticated WebSocket subscriptions to receive the Postgres changes.
     await wait(2500);
@@ -140,12 +135,12 @@ async function runIsolationTest(a: Credentials, b: Credentials, owner: Credentia
         : 'Realtime delivery or cross-clinic isolation did not match the expected result.',
     };
   } finally {
-    if (markersWritten && profiles.length === 2) {
-      // Restore the original values of the two synthetic Staging profiles.
-      await Promise.all([
-        ownerClient.from('profiles').update({ display_name: profiles[0].display_name }).eq('id', profiles[0].id),
-        ownerClient.from('profiles').update({ display_name: profiles[1].display_name }).eq('id', profiles[1].id),
-      ]);
+    if (profiles.length === 2) {
+      // Restore only the synthetic Staging profiles whose display_name was changed.
+      const restores: Promise<unknown>[] = [];
+      if (markerAChanged) restores.push(ownerClient.from('profiles').update({ display_name: profiles[0].display_name }).eq('id', profiles[0].id));
+      if (markerBChanged) restores.push(ownerClient.from('profiles').update({ display_name: profiles[1].display_name }).eq('id', profiles[1].id));
+      await Promise.all(restores);
     }
     await Promise.all(channels.map((channel) => channel.unsubscribe()));
     await Promise.all([
@@ -176,7 +171,7 @@ function App() {
     return <main><h1>Realtime QA unavailable</h1><p>This test route is disabled for this deployment.</p></main>;
   }
 
-  async function start(event: React.FormEvent<HTMLFormElement>) {
+  async function start(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setResult(null);
