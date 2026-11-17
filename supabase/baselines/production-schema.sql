@@ -530,7 +530,6 @@ AS $function$
   LIMIT 1;
 $function$;
 
-
 CREATE OR REPLACE FUNCTION public.caller_role()
  RETURNS text
  LANGUAGE sql
@@ -544,6 +543,17 @@ AS $function$
   LIMIT 1;
 $function$;
 
+CREATE OR REPLACE FUNCTION public.clinic_sub_active(cid text)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  SELECT EXISTS (
+    SELECT 1 FROM public.clinic_subscriptions
+    WHERE clinic_id = cid AND status IN ('active', 'grace')
+  );
+$function$;
 
 CREATE OR REPLACE FUNCTION public.can_access_patient(pid uuid)
  RETURNS boolean
@@ -567,7 +577,6 @@ AS $function$
     ELSE pid = auth.uid() AND public.clinic_sub_active(public.caller_clinic_id())
   END;
 $function$;
-
 
 CREATE OR REPLACE FUNCTION public.claim_push_subscription(p_endpoint text)
  RETURNS void
@@ -617,20 +626,6 @@ BEGIN
 END;
 $function$;
 
-
-CREATE OR REPLACE FUNCTION public.clinic_sub_active(cid text)
- RETURNS boolean
- LANGUAGE sql
- STABLE SECURITY DEFINER
- SET search_path TO ''
-AS $function$
-  SELECT EXISTS (
-    SELECT 1 FROM public.clinic_subscriptions
-    WHERE clinic_id = cid AND status IN ('active', 'grace')
-  );
-$function$;
-
-
 CREATE OR REPLACE FUNCTION public.enforce_invitation_consume()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -667,7 +662,6 @@ BEGIN
 END;
 $function$;
 
-
 CREATE OR REPLACE FUNCTION public.get_clinic_subscription_gate(p_clinic_id text)
  RETURNS TABLE(plan text, status text, start_at timestamp with time zone, expires_at timestamp with time zone, grace_ends_at timestamp with time zone, updated_at timestamp with time zone)
  LANGUAGE sql
@@ -677,7 +671,6 @@ AS $function$
   SELECT *
   FROM private.get_clinic_subscription_gate(p_clinic_id);
 $function$;
-
 
 CREATE OR REPLACE FUNCTION public.get_push_signing_config()
  RETURNS TABLE(vapid_public_key text, vapid_private_key text, vapid_subject text)
@@ -690,7 +683,6 @@ AS $function$
     (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'smart_diet_vapid_private_key' LIMIT 1),
     (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'smart_diet_vapid_subject' LIMIT 1);
 $function$;
-
 
 CREATE OR REPLACE FUNCTION public.owner_create_clinic_with_owner(p_name text, p_owner_name text, p_owner_email text, p_owner_phone text DEFAULT ''::text)
  RETURNS text
@@ -760,7 +752,6 @@ BEGIN
   RETURN v_clinic_id;
 END;
 $function$;
-
 
 CREATE OR REPLACE FUNCTION public.owner_review_clinic_payment(p_clinic_id text, p_action text, p_plan text DEFAULT NULL::text, p_payment_index integer DEFAULT NULL::integer, p_note text DEFAULT NULL::text)
  RETURNS void
@@ -888,7 +879,6 @@ BEGIN
   END IF;
 END;
 $function$;
-
 
 CREATE OR REPLACE FUNCTION public.submit_clinic_payment_request(p_clinic_id text, p_request_id uuid, p_method text, p_amount numeric, p_reference text, p_note text DEFAULT ''::text)
  RETURNS void
@@ -1026,7 +1016,6 @@ BEGIN
   END IF;
 END;
 $function$;
-
 
 -- Revoke default PUBLIC and anon EXECUTE from all application routines
 REVOKE ALL ON FUNCTION private.caller_clinic_id() FROM PUBLIC, anon;
