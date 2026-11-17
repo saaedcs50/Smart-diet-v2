@@ -5,5 +5,4 @@ BEGIN;
 DROP POLICY IF EXISTS adherence_config_access ON public.adherence_configs;
 DROP POLICY IF EXISTS adherence_scores_access ON public.adherence_scores;
 DROP POLICY IF EXISTS consents_access ON public.consents;
-DROP POLICY IF EXISTS fcm_tokens_access ON public.fcm_tokens;
 COMMIT;

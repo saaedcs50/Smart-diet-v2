@@ -1,6 +1,0 @@
-# Historical credential findings retained so full-history secret scanning remains accurate.
-# The original credentials were found in removed files in earlier commits.
-# Keep these exact fingerprints until the affected historical credentials are rotated
-# in every system that still depends on them. This file does not make the credentials safe.
-da94de20692e28c3f087f5d1af70bf43a1eb9e99:firebase-applet-config.json:gcp-api-key:4
-baa0bacccf0fbd762b4dcf2b44a2842226c03844:src/platform/firebase.ts:gcp-api-key:26

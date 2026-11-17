@@ -30,12 +30,6 @@ CREATE TABLE IF NOT EXISTS public.adherence_scores (
   CONSTRAINT adherence_scores_scores_array CHECK (jsonb_typeof(scores) = 'array')
 );
 
-CREATE TABLE IF NOT EXISTS public.fcm_tokens (
-  patient_id uuid PRIMARY KEY REFERENCES public.patients(id) ON DELETE CASCADE,
-  tokens text[] NOT NULL DEFAULT '{}',
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
 CREATE TABLE IF NOT EXISTS public.consents (
   id bigserial PRIMARY KEY,
   patient_id uuid NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
@@ -80,7 +74,6 @@ CREATE INDEX IF NOT EXISTS adherence_scores_patient_date_idx
 -- ---------------------------------------------------------------------------
 ALTER TABLE public.adherence_configs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.adherence_scores ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.fcm_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.consents ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS adherence_configs_patient_or_staff_read ON public.adherence_configs;
@@ -152,12 +145,6 @@ CREATE POLICY adherence_scores_staff_delete
     (SELECT private.caller_role()) IN ('owner', 'admin', 'coach')
     AND (SELECT private.can_access_patient(patient_id))
   );
-
-DROP POLICY IF EXISTS fcm_tokens_patient_manage_own ON public.fcm_tokens;
-CREATE POLICY fcm_tokens_patient_manage_own
-  ON public.fcm_tokens FOR ALL TO authenticated
-  USING (patient_id = (SELECT auth.uid()))
-  WITH CHECK (patient_id = (SELECT auth.uid()));
 
 DROP POLICY IF EXISTS consents_patient_read_own ON public.consents;
 CREATE POLICY consents_patient_read_own
