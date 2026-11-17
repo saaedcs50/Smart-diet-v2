@@ -197,7 +197,6 @@ AS $function$
   LIMIT 1;
 $function$;
 
-
 CREATE OR REPLACE FUNCTION private.caller_role()
  RETURNS text
  LANGUAGE sql
@@ -210,46 +209,6 @@ AS $function$
     AND p.disabled IS NOT TRUE
   LIMIT 1;
 $function$;
-
-
-CREATE OR REPLACE FUNCTION private.can_access_patient(pid uuid)
- RETURNS boolean
- LANGUAGE sql
- STABLE SECURITY DEFINER
- SET search_path TO ''
-AS $function$
-SELECT CASE
- WHEN private.caller_role() = 'owner' THEN TRUE
- WHEN private.caller_role() = 'admin' THEN EXISTS (
-   SELECT 1 FROM public.patients p
-   WHERE p.id = pid AND p.clinic_id = private.caller_clinic_id()
-     AND private.clinic_sub_active(p.clinic_id))
- WHEN private.caller_role() = 'coach' THEN EXISTS (
-   SELECT 1 FROM public.patients p
-   WHERE p.id = pid AND p.clinic_id = private.caller_clinic_id()
-     AND p.invited_by = auth.uid() AND private.clinic_sub_active(p.clinic_id))
- ELSE pid = auth.uid() AND private.clinic_sub_active(private.caller_clinic_id())
-END;
-$function$;
-
-
-CREATE OR REPLACE FUNCTION private.can_claim_invitation(p_role text, p_clinic_id text)
- RETURNS boolean
- LANGUAGE sql
- STABLE SECURITY DEFINER
- SET search_path TO ''
-AS $function$
-  SELECT auth.uid() IS NOT NULL
-    AND EXISTS (
-      SELECT 1
-      FROM public.invitations i
-      WHERE i.email = lower(btrim(coalesce(auth.jwt() ->> 'email', '')))
-        AND i.status = 'pending'
-        AND i.role = p_role
-        AND i.clinic_id = p_clinic_id
-    );
-$function$;
-
 
 CREATE OR REPLACE FUNCTION private.clinic_sub_active(cid text)
  RETURNS boolean
@@ -272,6 +231,79 @@ AS $function$
     );
 $function$;
 
+CREATE OR REPLACE FUNCTION private.can_claim_invitation(p_role text, p_clinic_id text)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  SELECT auth.uid() IS NOT NULL
+    AND EXISTS (
+      SELECT 1
+      FROM public.invitations i
+      WHERE i.email = lower(btrim(coalesce(auth.jwt() ->> 'email', '')))
+        AND i.status = 'pending'
+        AND i.role = p_role
+        AND i.clinic_id = p_clinic_id
+    );
+$function$;
+
+CREATE OR REPLACE FUNCTION private.get_clinic_subscription_gate(p_clinic_id text)
+ RETURNS TABLE(plan text, status text, start_at timestamp with time zone, expires_at timestamp with time zone, grace_ends_at timestamp with time zone, updated_at timestamp with time zone)
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_role text;
+  v_clinic_id text;
+  v_disabled boolean;
+BEGIN
+  IF v_uid IS NULL OR p_clinic_id IS NULL OR length(p_clinic_id) = 0 THEN
+    RETURN;
+  END IF;
+
+  SELECT p.role, p.clinic_id, p.disabled
+    INTO v_role, v_clinic_id, v_disabled
+  FROM public.profiles p
+  WHERE p.id = v_uid;
+
+  IF NOT FOUND OR v_disabled IS TRUE
+     OR v_role NOT IN ('admin', 'coach', 'patient')
+     OR v_clinic_id IS DISTINCT FROM p_clinic_id THEN
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  SELECT s.plan, s.status, s.start_at, s.expires_at, s.grace_ends_at, s.updated_at
+  FROM public.clinic_subscriptions s
+  JOIN public.clinics c ON c.id = s.clinic_id
+  WHERE s.clinic_id = p_clinic_id
+    AND c.status <> 'suspended'
+  LIMIT 1;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION private.can_access_patient(pid uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+SELECT CASE
+ WHEN private.caller_role() = 'owner' THEN TRUE
+ WHEN private.caller_role() = 'admin' THEN EXISTS (
+   SELECT 1 FROM public.patients p
+   WHERE p.id = pid AND p.clinic_id = private.caller_clinic_id()
+     AND private.clinic_sub_active(p.clinic_id))
+ WHEN private.caller_role() = 'coach' THEN EXISTS (
+   SELECT 1 FROM public.patients p
+   WHERE p.id = pid AND p.clinic_id = private.caller_clinic_id()
+     AND p.invited_by = auth.uid() AND private.clinic_sub_active(p.clinic_id))
+ ELSE pid = auth.uid() AND private.clinic_sub_active(private.caller_clinic_id())
+END;
+$function$;
 
 CREATE OR REPLACE FUNCTION private.enforce_invitation_consume()
  RETURNS trigger
@@ -329,45 +361,6 @@ BEGIN
   RAISE EXCEPTION 'Invalid or unauthorized invitation status transition';
 END;
 $function$;
-
-
-CREATE OR REPLACE FUNCTION private.get_clinic_subscription_gate(p_clinic_id text)
- RETURNS TABLE(plan text, status text, start_at timestamp with time zone, expires_at timestamp with time zone, grace_ends_at timestamp with time zone, updated_at timestamp with time zone)
- LANGUAGE plpgsql
- STABLE SECURITY DEFINER
- SET search_path TO ''
-AS $function$
-DECLARE
-  v_uid uuid := auth.uid();
-  v_role text;
-  v_clinic_id text;
-  v_disabled boolean;
-BEGIN
-  IF v_uid IS NULL OR p_clinic_id IS NULL OR length(p_clinic_id) = 0 THEN
-    RETURN;
-  END IF;
-
-  SELECT p.role, p.clinic_id, p.disabled
-    INTO v_role, v_clinic_id, v_disabled
-  FROM public.profiles p
-  WHERE p.id = v_uid;
-
-  IF NOT FOUND OR v_disabled IS TRUE
-     OR v_role NOT IN ('admin', 'coach', 'patient')
-     OR v_clinic_id IS DISTINCT FROM p_clinic_id THEN
-    RETURN;
-  END IF;
-
-  RETURN QUERY
-  SELECT s.plan, s.status, s.start_at, s.expires_at, s.grace_ends_at, s.updated_at
-  FROM public.clinic_subscriptions s
-  JOIN public.clinics c ON c.id = s.clinic_id
-  WHERE s.clinic_id = p_clinic_id
-    AND c.status <> 'suspended'
-  LIMIT 1;
-END;
-$function$;
-
 
 CREATE OR REPLACE FUNCTION private.guard_clinic_subscription_payment_append()
  RETURNS trigger
@@ -522,7 +515,6 @@ BEGIN
   RETURN NEW;
 END;
 $function$;
-
 
 -- Public application routines
 CREATE OR REPLACE FUNCTION public.caller_clinic_id()
