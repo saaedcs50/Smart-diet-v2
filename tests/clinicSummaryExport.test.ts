@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PatientDoc, StaffEntry } from '../src/platform/firestore';
+import type { PatientDoc, StaffEntry } from '../src/platform/database';
 import type { PatientProgressSummary } from '../src/platform/patientProgressSummary';
 import {
   buildClinicSummaryCsv,
