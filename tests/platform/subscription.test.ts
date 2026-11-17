@@ -19,7 +19,7 @@ function subWithExpiry(daysFromNow: number): ClinicSubscriptionDoc {
   return {
     plan: 'monthly',
     status: 'active',
-    expiresAt: { toDate: () => d } as unknown as ClinicSubscriptionDoc['expiresAt'],
+    expiresAt: d.toISOString(),
     payments: [],
   };
 }
