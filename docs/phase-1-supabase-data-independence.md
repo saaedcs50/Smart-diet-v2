@@ -242,6 +242,16 @@ The organization is on the Supabase Free plan. Supabase's Password Security docu
 
 Both projects have an active `notify` Edge Function with `verify_jwt = true`. Production reports version 5 and Staging version 1, but both deployed source digests are identical: `4f43d22a810d9e2ffb964a98700a59ba6fa5b8e0840cf9aa83d6e7bcc099010c`. The version number difference alone is not a code divergence.
 
+### Production backup/restore availability
+
+A read-only inspection of the Production project's Backups page confirmed that the organization is on the Free plan and **project backups are not included**. The page shows no completed backup timestamp. Scheduled backups (up to 7 days), PITR, and Restore to New Project are locked behind Pro. No backup, restore, retention, or billing setting was changed.
+
+This is a hard safety gate for permanent Production DDL. A schema-only catalog export is not a substitute for a recoverable backup of patient and clinic data. The proposed grants migration must remain unapplied to Production until a usable backup/restore path is available. Enabling a paid plan is a billing decision and was not performed.
+
+### Transactional test of the proposed grants migration
+
+The exact source file `20261117170000_revoke_excess_public_table_privileges.sql` was executed twice with its terminal `COMMIT` replaced by `ROLLBACK`: once on Production and once on Staging. Both executions completed without assertion errors. The tests verified that the excess non-DML table privileges and the `postgres` default grants would be removed while preserving the public `platform_config` SELECT grant and authenticated patients/day-logs DML. A subsequent Production read confirmed the old privileges/defaults remained, proving the test transaction rolled back. The migration exists in Git for review only; it has not been installed in either live migration ledger.
+
 ### Direct Realtime verification remains open
 
 The publication and client-side subscription were inspected, and RLS behavior was covered by SQL tests. A direct browser/WebSocket session test with two authenticated Staging identities has still not been executed; this remains an explicit closure gate.
@@ -258,7 +268,7 @@ The publication and client-side subscription were inspected, and RLS behavior wa
 | Realtime profile isolation | Catalog/client/RLS review PASS | Direct two-clinic authenticated WebSocket test |
 | Migration ledger and canonical baseline | **OPEN** | Full schema export, exact source mapping, clean rebuild test |
 | Auth redirect and Google OAuth on another host | **OPEN** | Production allows only the existing Vercel origin; Staging allows localhost only; Google is disabled in both projects. A new test origin and valid provider credentials/callback are still required |
-| Production excess table/default grants | **OPEN — migration drafted** | Transactional revoke test passed and rolled back; verify Production backup/restore point before applying the new hardening migration |
+| Production excess table/default grants | **OPEN — migration drafted** | Exact migration passed rollback-only tests in both projects; Production has no backup on Free plan, so permanent DDL is blocked pending a recoverable backup path |
 | Leaked Password Protection | **PLAN LIMITATION** | Available on Supabase Pro and above; the organization is Free. No billing-tier change was made |
 
 ## 7. Change and safety record
