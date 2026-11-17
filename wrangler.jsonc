@@ -1,0 +1,38 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "smart-diet-v2",
+  "main": "./cloudflare-worker.mjs",
+  "compatibility_date": "2026-11-17",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*",
+      "/health",
+      "/coach-session"
+    ]
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "COACH_GUARD",
+        "class_name": "CoachGuardDurableObject"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "CoachGuardDurableObject"
+      ]
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
