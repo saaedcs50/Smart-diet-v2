@@ -1,15 +1,6 @@
-# 2026-10-24: Historical Google API key finding (firebase-applet-config.json, commit da94de2, 2026-09-06).
-# The file was removed from the tree in f8c481e. Allowlisted by the repo owner's explicit decision
-# (2026-10-24) WITHOUT rotation, because the key is still in use elsewhere. This entry silences CI
-# for the historical finding only — it does not protect the key.
-# Never add live secrets to this file.
+# Historical credential findings retained so full-history secret scanning remains accurate.
+# The original credentials were found in removed files in earlier commits.
+# Keep these exact fingerprints until the affected historical credentials are rotated
+# in every system that still depends on them. This file does not make the credentials safe.
 da94de20692e28c3f087f5d1af70bf43a1eb9e99:firebase-applet-config.json:gcp-api-key:4
-
-# 2026-10-24: Trial Firebase web client key finding (src/platform/firebase.ts, commit baa0bac, line 26).
-# This is a Firebase web app client identifier, not a server secret: by design it ships in the
-# client bundle, and real protection comes from Firestore rules (deny by default). The literal
-# value was moved to Vite environment variables in a later commit on this branch, so the current
-# tree contains no key at all. This entry silences CI for the historical commit only — it does
-# not protect the key. Restricting the trial key in the Cloud console is a separate step.
-# Never add live secrets to this file.
 baa0bacccf0fbd762b4dcf2b44a2842226c03844:src/platform/firebase.ts:gcp-api-key:26
