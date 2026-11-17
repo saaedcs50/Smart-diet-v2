@@ -284,15 +284,19 @@ The publication and client-side subscription were inspected, and RLS behavior wa
 
 ## 8. CI and dependency-security finding
 
-The PR check run before the latest workflow adjustment reported:
+The latest completed PR check run for the branch reported:
 
-- `Types, lint, tests, build`: **PASS** (type-check and ESLint passed, unit tests passed, production build passed).
+- `Types, lint, tests, build`: **PASS** — TypeScript, ESLint, unit tests, and production build all completed successfully.
 - `Supabase RLS policy static validation`: **PASS**.
 - `Vercel Preview Comments`: **PASS**.
-- `Dependency & secret scanning`: **FAIL** because OSV Scanner found one High-severity advisory in the lockfile; Gitleaks was skipped by the workflow's default success-only step condition.
+- `Gitleaks secret scan`: **PASS** after the workflow adjustment below.
+- `Dependency & secret scanning` job: **FAIL** only because OSV Scanner reports one High-severity lockfile advisory. The Gitleaks step itself passed; it is no longer skipped when OSV fails.
 
-The flagged package is `picomatch@4.0.7` (`GHSA-fc5q-39xc-vjpf`, `CVE-2026-112366`), a ReDoS issue involving crafted single-branch repeated extglob patterns. The lockfile contains one copy; it is pulled transitively through `fdir`, `tinyglobby`, `vite`, and `vitest`. `vite` and `vitest` are declared devDependencies, and no direct app-level `picomatch` import was found in the repository search. This reduces direct production-runtime exposure, but does not make the dependency warning disappear.
+The flagged package is `picomatch@4.0.7` (`GHSA-fc5q-39xc-vjpf`, `CVE-2026-112366`), a ReDoS issue involving crafted single-branch repeated extglob patterns. The lockfile contains one copy; it is pulled transitively through `fdir`, `tinyglobby`, `vite`, and `vitest`. `vite` and `vitest` are declared devDependencies, and no direct app-level `picomatch` import was found in the repository search. This reduces direct production-runtime exposure, but does not remove the dependency warning.
+
+The `package-lock.json` blob SHA is identical on `main` and this branch (`6c8debd6e379dc3555b00ad49fe4d7eee156602c`), so this finding predates Phase 1 and was not introduced by these changes.
 
 The advisory lists affected versions through 4.0.7 and no patched version. The upstream releases page still lists 4.0.7 as the latest release at this audit point. No override to an older version, unreviewed fork, or speculative patch was applied.
 
-The workflow was adjusted so the PR base-history fetch and Gitleaks scan run with `always()` rather than being silently skipped after an OSV failure. A new workflow run was queued for the updated commit; its final Gitleaks result is not yet available in this report.
+The workflow now runs the pull-request base-history fetch and Gitleaks scan with `always()` so a dependency-scan failure cannot silently suppress the secret scan. The resulting Gitleaks execution completed successfully.
+
