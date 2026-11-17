@@ -19,19 +19,12 @@ async function sha256Hex(value) {
 export class CoachGuardDurableObject extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
-    this.ctx.storage.sql.exec(`
-      CREATE TABLE IF NOT EXISTS coach_rate_limits (
-        ip_hash TEXT PRIMARY KEY,
-        attempt_count INTEGER NOT NULL,
-        locked_until INTEGER NOT NULL,
-        lockouts INTEGER NOT NULL,
-        expires_at INTEGER NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS coach_revoked_tokens (
-        token_hash TEXT PRIMARY KEY,
-        expires_at INTEGER NOT NULL
-      );
-    `);
+    this.ctx.storage.sql.exec(
+      "CREATE TABLE IF NOT EXISTS coach_rate_limits (ip_hash TEXT PRIMARY KEY, attempt_count INTEGER NOT NULL, locked_until INTEGER NOT NULL, lockouts INTEGER NOT NULL, expires_at INTEGER NOT NULL)"
+    );
+    this.ctx.storage.sql.exec(
+      "CREATE TABLE IF NOT EXISTS coach_revoked_tokens (token_hash TEXT PRIMARY KEY, expires_at INTEGER NOT NULL)"
+    );
   }
 
   async fetch(request) {
@@ -131,10 +124,13 @@ export class CoachGuardDurableObject extends DurableObject {
 
   async revokeToken(token, expiresAt) {
     const tokenHash = await sha256Hex(token);
-    this.ctx.storage.sql.exec(
-      "INSERT INTO coach_revoked_tokens (token_hash, expires_at) VALUES (?1, ?2) ON CONFLICT(token_hash) DO UPDATE SET expires_at=excluded.expires_at",
-      tokenHash, expiresAt,
-    );
+    this.ctx.storage.transactionSync(() => {
+      this.ctx.storage.sql.exec("DELETE FROM coach_revoked_tokens WHERE expires_at <= ?1", Date.now());
+      this.ctx.storage.sql.exec(
+        "INSERT INTO coach_revoked_tokens (token_hash, expires_at) VALUES (?1, ?2) ON CONFLICT(token_hash) DO UPDATE SET expires_at=excluded.expires_at",
+        tokenHash, expiresAt,
+      );
+    });
   }
 
   async isRevoked(token) {
