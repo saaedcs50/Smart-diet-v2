@@ -5,9 +5,6 @@ import { createClient } from 'npm:@supabase/supabase-js@2.118.0';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY') ?? '';
-const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') ?? '';
-const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') ?? '';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -35,13 +32,13 @@ function base64UrlDecode(value: string): Uint8Array {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
-async function createVapidAuthorization(audience: string): Promise<string> {
-  const privateKey = base64UrlDecode(VAPID_PRIVATE_KEY);
-  const publicKey = base64UrlDecode(VAPID_PUBLIC_KEY);
+async function createVapidAuthorization(audience: string, vapid: { publicKey: string; privateKey: string; subject: string }): Promise<string> {
+  const privateKey = base64UrlDecode(vapid.privateKey);
+  const publicKey = base64UrlDecode(vapid.publicKey);
   if (privateKey.length !== 32 || publicKey.length !== 65 || publicKey[0] !== 4) {
     throw new Error('Invalid VAPID key pair.');
   }
-  if (!(VAPID_SUBJECT.startsWith('mailto:') || VAPID_SUBJECT.startsWith('https://'))) {
+  if (!(vapid.subject.startsWith('mailto:') || vapid.subject.startsWith('https://'))) {
     throw new Error('Invalid VAPID contact subject.');
   }
 
@@ -66,7 +63,7 @@ async function createVapidAuthorization(audience: string): Promise<string> {
   const claims = base64UrlEncode(new TextEncoder().encode(JSON.stringify({
     aud: audience,
     exp: now + 12 * 60 * 60,
-    sub: VAPID_SUBJECT,
+    sub: vapid.subject,
   })));
   const unsigned = `${header}.${claims}`;
   const signature = new Uint8Array(await crypto.subtle.sign(
@@ -74,7 +71,7 @@ async function createVapidAuthorization(audience: string): Promise<string> {
     key,
     new TextEncoder().encode(unsigned),
   ));
-  return `vapid t=${unsigned}.${base64UrlEncode(signature)}, k=${VAPID_PUBLIC_KEY}`;
+  return `vapid t=${unsigned}.${base64UrlEncode(signature)}, k=${vapid.publicKey}`;
 }
 
 function isApprovedPushEndpoint(endpoint: string): boolean {
@@ -82,7 +79,7 @@ function isApprovedPushEndpoint(endpoint: string): boolean {
     const url = new URL(endpoint);
     if (url.protocol !== 'https:' || url.username || url.password || url.port) return false;
     const host = url.hostname.toLowerCase();
-    host === 'updates.push.services.mozilla.com' ||
+    return host === 'updates.push.services.mozilla.com' ||
       host === 'web.push.apple.com' ||
       host.endsWith('.notify.windows.com');
   } catch {
@@ -90,10 +87,10 @@ function isApprovedPushEndpoint(endpoint: string): boolean {
   }
 }
 
-async function sendEmptyPush(endpoint: string): Promise<'sent' | 'expired' | 'failed'> {
+async function sendEmptyPush(endpoint: string, vapid: { publicKey: string; privateKey: string; subject: string }): Promise<'sent' | 'expired' | 'failed'> {
   if (!isApprovedPushEndpoint(endpoint)) return 'failed';
   const url = new URL(endpoint);
-  const authorization = await createVapidAuthorization(`${url.protocol}//${url.host}`);
+  const authorization = await createVapidAuthorization(`${url.protocol}//${url.host}`, vapid);
   try {
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -116,8 +113,7 @@ Deno.serve(async (request: Request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
   if (request.method !== 'POST') return json({ ok: false, error: 'Method not allowed.' }, 405);
 
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY ||
-      !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !VAPID_SUBJECT) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
     return json({ ok: false, error: 'Push delivery is not configured.' }, 503);
   }
 
@@ -189,10 +185,25 @@ Deno.serve(async (request: Request) => {
     if (subscriptionsError) throw subscriptionsError;
     if (!subscriptions?.length) return json({ ok: true, sent: 0, removed: 0 });
 
+    const { data: signingConfig, error: signingConfigError } = await admin
+      .rpc('get_push_signing_config')
+      .maybeSingle();
+    if (signingConfigError || !signingConfig ||
+        typeof signingConfig.vapid_public_key !== 'string' ||
+        typeof signingConfig.vapid_private_key !== 'string' ||
+        typeof signingConfig.vapid_subject !== 'string') {
+      return json({ ok: false, error: 'إعدادات توقيع التنبيهات غير متاحة.' }, 503);
+    }
+    const vapid = {
+      publicKey: signingConfig.vapid_public_key,
+      privateKey: signingConfig.vapid_private_key,
+      subject: signingConfig.vapid_subject,
+    };
+
     let sent = 0;
     let removed = 0;
     for (const row of subscriptions as Array<{ endpoint: string }>) {
-      const result = await sendEmptyPush(row.endpoint);
+      const result = await sendEmptyPush(row.endpoint, vapid);
       if (result === 'sent') sent += 1;
       if (result === 'expired') {
         const { error: deleteError } = await admin

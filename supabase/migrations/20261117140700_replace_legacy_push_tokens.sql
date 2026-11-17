@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.push_subscriptions (
   CONSTRAINT push_subscriptions_endpoint_https
     CHECK (
       length(endpoint) BETWEEN 16 AND 2048
-      AND endpoint ~ '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/'
+      AND endpoint ~ '^https://(updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/'
     )
 );
 
@@ -53,13 +53,18 @@ BEGIN
   END IF;
 
   IF p_endpoint IS NULL OR length(p_endpoint) NOT BETWEEN 16 AND 2048
-     OR p_endpoint !~ '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/' THEN
+     OR p_endpoint !~ '^https://(updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/' THEN
     RAISE EXCEPTION 'Unsupported or invalid push endpoint'
       USING ERRCODE = '22023';
   END IF;
 
   v_clinic_id := private.caller_clinic_id();
-  IF v_clinic_id IS NULL OR NOT private.clinic_sub_active(v_clinic_id) THEN
+  IF v_clinic_id IS NULL
+     OR NOT private.clinic_sub_active(v_clinic_id)
+     OR NOT EXISTS (
+       SELECT 1 FROM public.clinics c
+       WHERE c.id = v_clinic_id AND c.status = 'active'
+     ) THEN
     RAISE EXCEPTION 'Clinic subscription is not active'
       USING ERRCODE = '42501';
   END IF;
@@ -99,7 +104,7 @@ BEGIN
       v_endpoint := v_subscription ->> 'endpoint';
       IF v_endpoint IS NOT NULL
          AND length(v_endpoint) BETWEEN 16 AND 2048
-         AND v_endpoint ~ '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/' THEN
+         AND v_endpoint ~ '^https://(updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/' THEN
         INSERT INTO public.push_subscriptions (endpoint, patient_id)
         VALUES (v_endpoint, v_row.patient_id)
         ON CONFLICT (endpoint) DO NOTHING;
@@ -109,6 +114,29 @@ BEGIN
   END IF;
 END;
 $migration$;
+
+-- Server-only access to signing keys stored in Supabase Vault.
+CREATE OR REPLACE FUNCTION public.get_push_signing_config()
+RETURNS TABLE (
+  vapid_public_key text,
+  vapid_private_key text,
+  vapid_subject text
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+  SELECT
+    (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'smart_diet_vapid_public_key' LIMIT 1),
+    (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'smart_diet_vapid_private_key' LIMIT 1),
+    (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'smart_diet_vapid_subject' LIMIT 1);
+$function$;
+
+REVOKE ALL ON FUNCTION public.get_push_signing_config() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_push_signing_config() TO service_role;
+
+COMMENT ON FUNCTION public.get_push_signing_config() IS
+  'Returns VAPID signing keys from Supabase Vault to service_role only.';
 
 COMMENT ON TABLE public.push_subscriptions IS
   'Browser Web Push endpoints only. No patient names, clinical content, or private browser keys are stored.';
