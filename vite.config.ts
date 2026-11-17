@@ -13,6 +13,10 @@ export default defineConfig(() => {
     },
     build: {
       rollupOptions: {
+        input: {
+          index: path.resolve(__dirname, 'index.html'),
+          realtimeQa: path.resolve(__dirname, 'realtime-qa.html'),
+        },
         output: {
           // فصل مكتبات البائع في شحنة ثابتة تُخزَّن مؤقتًا عبر الإصدارات
           manualChunks: {
