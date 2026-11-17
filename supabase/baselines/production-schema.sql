@@ -193,7 +193,7 @@ AS $function$
   WHERE p.id = auth.uid()
     AND p.disabled IS NOT TRUE
   LIMIT 1;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.caller_role()
@@ -207,7 +207,7 @@ AS $function$
   WHERE p.id = auth.uid()
     AND p.disabled IS NOT TRUE
   LIMIT 1;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.can_access_patient(pid uuid)
@@ -228,7 +228,7 @@ SELECT CASE
      AND p.invited_by = auth.uid() AND private.clinic_sub_active(p.clinic_id))
  ELSE pid = auth.uid() AND private.clinic_sub_active(private.caller_clinic_id())
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.can_claim_invitation(p_role text, p_clinic_id text)
@@ -246,7 +246,7 @@ AS $function$
         AND i.role = p_role
         AND i.clinic_id = p_clinic_id
     );
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.clinic_sub_active(cid text)
@@ -268,7 +268,7 @@ AS $function$
       WHERE s.clinic_id = cid
         AND s.status IN ('active', 'grace')
     );
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.enforce_invitation_consume()
@@ -326,7 +326,7 @@ BEGIN
 
   RAISE EXCEPTION 'Invalid or unauthorized invitation status transition';
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.get_clinic_subscription_gate(p_clinic_id text)
@@ -364,7 +364,7 @@ BEGIN
     AND c.status <> 'suspended'
   LIMIT 1;
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.guard_clinic_subscription_payment_append()
@@ -519,7 +519,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$function$
+$function$;
 
 
 -- Public application routines
@@ -534,7 +534,7 @@ AS $function$
   WHERE p.id = auth.uid()
     AND p.disabled IS NOT TRUE
   LIMIT 1;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.caller_role()
@@ -548,7 +548,7 @@ AS $function$
   WHERE p.id = auth.uid()
     AND p.disabled IS NOT TRUE
   LIMIT 1;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.can_access_patient(pid uuid)
@@ -572,7 +572,7 @@ AS $function$
     )
     ELSE pid = auth.uid() AND public.clinic_sub_active(public.caller_clinic_id())
   END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.claim_push_subscription(p_endpoint text)
@@ -621,7 +621,7 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.clinic_sub_active(cid text)
@@ -634,7 +634,7 @@ AS $function$
     SELECT 1 FROM public.clinic_subscriptions
     WHERE clinic_id = cid AND status IN ('active', 'grace')
   );
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.enforce_invitation_consume()
@@ -671,7 +671,7 @@ BEGIN
 
   RAISE EXCEPTION 'Invalid invitation status transition: % -> %', OLD.status, NEW.status;
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_clinic_subscription_gate(p_clinic_id text)
@@ -682,7 +682,7 @@ CREATE OR REPLACE FUNCTION public.get_clinic_subscription_gate(p_clinic_id text)
 AS $function$
   SELECT *
   FROM private.get_clinic_subscription_gate(p_clinic_id);
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_push_signing_config()
@@ -695,7 +695,7 @@ AS $function$
     (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'smart_diet_vapid_public_key' LIMIT 1),
     (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'smart_diet_vapid_private_key' LIMIT 1),
     (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'smart_diet_vapid_subject' LIMIT 1);
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.owner_create_clinic_with_owner(p_name text, p_owner_name text, p_owner_email text, p_owner_phone text DEFAULT ''::text)
@@ -765,7 +765,7 @@ BEGIN
 
   RETURN v_clinic_id;
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.owner_review_clinic_payment(p_clinic_id text, p_action text, p_plan text DEFAULT NULL::text, p_payment_index integer DEFAULT NULL::integer, p_note text DEFAULT NULL::text)
@@ -893,7 +893,7 @@ BEGIN
     RAISE EXCEPTION 'Subscription review did not update exactly one row';
   END IF;
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.submit_clinic_payment_request(p_clinic_id text, p_request_id uuid, p_method text, p_amount numeric, p_reference text, p_note text DEFAULT ''::text)
@@ -1031,7 +1031,7 @@ BEGIN
     RAISE EXCEPTION 'Payment request was not appended to exactly one subscription';
   END IF;
 END;
-$function$
+$function$;
 
 
 -- Revoke default PUBLIC and anon EXECUTE from all application routines
