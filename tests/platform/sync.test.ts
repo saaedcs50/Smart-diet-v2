@@ -1,4 +1,4 @@
-// اختبارات ترحيل المزامنة بحقن كتّاب وهميين (بلا Firebase ولا شبكة).
+// اختبارات ترحيل المزامنة بحقن كتّاب وهميين (بلا شبكة).
 import { describe, it, expect } from 'vitest';
 import {
   loadSyncStatus,

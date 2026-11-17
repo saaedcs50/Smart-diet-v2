@@ -2,7 +2,7 @@
 // واجهة المنصة — المرحلة الثانية من بناء المنصة
 // ----------------------------------------------------------------------------
 // - تعمل فقط عندما يكون وضع المنصة مفعّلًا (VITE_PLATFORM_ENABLED=true —
-//   يفرضه App.tsx قبل تركيب هذا المكوّن)، وبلا إعدادات Firebase تُعرض
+//   يفرضه App.tsx قبل تركيب هذا المكوّن)، وبلا إعدادات Supabase تُعرض
 //   رسالة إعداد واضحة بدل انكسار غامض.
 // - لا تسجيل ذاتي: التسجيل بدعوة فقط (البريد المدعو به + كلمة مرور)،
 //   ودخول Google عند إنشاء الحساب للطاقم فقط (تفرضه invitations.ts).
@@ -36,7 +36,7 @@ import {
   type PatientDoc,
   type RecentDayLogDetail,
   type StaffEntry,
-} from './firestore';
+} from './database';
 import {
   createInvitation,
   registerStaffWithGoogleInvitation,
@@ -57,7 +57,7 @@ import type { DayLog, PlanConfig } from '../types';
 import { SubscriptionGate } from './subscription/SubscriptionGate';
 import { SubscriptionCard } from './subscription/SubscriptionCard';
 import { AdherenceSection } from './adherence/AdherenceSection';
-import { registerFcmToken, isFcmConfigured, isPushDeliveryEnabled, notifyPatient } from './fcm';
+import { registerPushSubscription, isPushDeliveryEnabled, notifyPatient } from './push';
 import { getSupabase } from './supabase';
 import { bindLocalDataToPatient, getLocalDataBindingStatus, type LocalDataBindingStatus } from './localDataOwnership';
 import { copyLegacyPatientDataToUser } from '../utils/storageKeys';
@@ -1247,16 +1247,7 @@ function PatientDetail({
     };
   };
 
-  useEffect(load, [patientUid]);
-
-  // تسجيل توكن FCM للمريض (مرة واحدة عند فتح ملفه)
-  useEffect(() => {
-    if (!isStaffView && isFcmConfigured()) {
-      void registerFcmToken(patientUid).catch(() => {});
-    }
-  }, [patientUid, isStaffView]);
-
-  if (loading) return <p className="text-sm text-slate-500">جاري تحميل بيانات المريض…</p>;
+  useEffect(load, [patientUid]);if (loading) return <p className="text-sm text-slate-500">جاري تحميل بيانات المريض…</p>;
   if (error) return <p className="text-sm font-bold text-red-600">{error}</p>;
   if (!doc) return (
     <EmptyState
@@ -1383,12 +1374,15 @@ function PatientDetail({
         uid={viewerUid}
         isStaffView={isStaffView}
       />
+      {!isStaffView && isPushDeliveryEnabled() && (
+        <EnablePatientPushButton patientUid={patientUid} />
+      )}
       {isStaffView && (
         isPushDeliveryEnabled() ? (
           <NotifyPatientButton patientUid={patientUid} clientName={doc.profile.clientName} />
         ) : (
           <p className="text-xs text-slate-500">
-            الإشعارات متوقفة مؤقتًا لحين تنفيذ واختبار تشفير Web Push RFC 8291.
+            إشعارات العيادة غير مهيأة. اطلب من مسؤول النظام إكمال إعداد خدمة الإشعارات.
           </p>
         )
       )}
@@ -1402,7 +1396,43 @@ function PatientDetail({
   );
 }
 
-// زر إشعار المريض (للدكتور) — يرسل FCM عبر الـ Worker.
+// زر إشعار المريض (للدكتور) — يرسل Web Push عبر الـ Worker.
+function EnablePatientPushButton({ patientUid }: { patientUid: string }) {
+  const [busy, setBusy] = useState(false);
+  const [enabled, setEnabled] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function enable() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const endpoint = await registerPushSubscription(patientUid);
+      if (!endpoint) {
+        setMessage('لم يتم تفعيل التنبيهات. تحقق من إذن المتصفح ودعم الإشعارات.');
+      } else {
+        setEnabled(true);
+        setMessage('تم تفعيل التنبيهات على هذا الجهاز.');
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+      <button
+        type="button"
+        onClick={() => void enable()}
+        disabled={busy || enabled}
+        className="rounded-lg border border-indigo-300 px-4 py-2 text-sm font-bold text-indigo-700 disabled:opacity-50 dark:border-indigo-800 dark:text-indigo-300"
+      >
+        {busy ? 'جارٍ التفعيل…' : enabled ? 'التنبيهات مفعّلة' : 'تفعيل التنبيهات على هذا الجهاز'}
+      </button>
+      {message && <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{message}</p>}
+    </div>
+  );
+}
+
 function NotifyPatientButton({
   patientUid,
   clientName,
@@ -1425,12 +1455,7 @@ function NotifyPatientButton({
         data: { session },
       } = await getSupabase().auth.getSession();
       const accessToken = session?.access_token ?? '';
-      const res = await notifyPatient(
-        patientUid,
-        'تحديث من دكتورك',
-        `دكتورك حدّث خطتك — افتح التطبيق للاطلاع`,
-        accessToken,
-      );
+      const res = await notifyPatient(patientUid, accessToken);
       setResult(res.sent > 0 ? `تم إرسال الإشعار (${res.sent})` : 'لا توجد أجهزة مسجلة للمريض');
     } catch (err) {
       setResult(err instanceof Error ? err.message : 'فشل الإرسال');

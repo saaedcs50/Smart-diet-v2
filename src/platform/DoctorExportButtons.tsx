@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   listDoctorPatientsForExport,
   listPatientDayLogsForExport,
-} from './firestore';
+} from './database';
 import { getAdherenceExportData } from './adherence';
 import {
   buildDoctorCsv,

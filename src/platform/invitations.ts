@@ -17,11 +17,11 @@
 //   ثم استهلاك الدعوة.
 // - لا توجد أي قيم حقيقية هنا: البريد والدور والعيادة تأتي من مدخلات
 //   الطاقم/المدعو وقت التشغيل فقط.
-// - ترحيل 2026-10-31: Firebase Auth/Firestore ← Supabase Auth/Postgres
+// - تعتمد المنصة على Supabase Auth وPostgres كمصدر موحّد للبيانات.
 // ============================================================================
 
 import { getSupabase } from './supabase';
-import { ensurePatientDoc, type PlatformRole } from './firestore';
+import { ensurePatientDoc, type PlatformRole } from './database';
 
 export type InvitationStatus = 'pending' | 'consumed';
 

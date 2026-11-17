@@ -11,7 +11,7 @@ const requiredTables = [
   'day_logs',
   'adherence_configs',
   'adherence_scores',
-  'fcm_tokens',
+  'push_subscriptions',
   'consents',
 ];
 
@@ -54,13 +54,13 @@ const expectedStagingMigrations = [
   '20261109073735_restrict_remaining_public_policies.sql',
   '20261109074419_consolidate_remaining_rls_policies.sql',
   '20261109074506_split_platform_config_read.sql',
+  '20261117140700_replace_legacy_push_tokens.sql',
+  '20261117150000_harden_push_subscription_registration.sql',
 ];
 const missingStagingMigrations = expectedStagingMigrations
   .filter((name) => !migrationFiles.includes(name));
-const rlsManifest = await readFile(
-  path.join(migrationDir, '20261109072730_explicit_rls_all_platform_tables.sql'),
-  'utf8',
-);
+// Include additive migrations so newly introduced tables are checked too.
+const rlsManifest = allSql;
 
 const policyStatements = [...allSql.matchAll(/CREATE\s+POLICY\b[\s\S]*?;/gi)]
   .map((match) => match[0]);

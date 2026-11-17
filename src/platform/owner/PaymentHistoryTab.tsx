@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listAllClinics, type ClinicSummary } from '../owner';
-import type { PaymentRecord } from '../firestore';
+import type { PaymentRecord } from '../database';
 import { EmptyState } from '../../components/EmptyState';
 
 type Filter = 'all' | 'pending' | 'approved' | 'rejected';

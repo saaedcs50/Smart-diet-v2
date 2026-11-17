@@ -30,7 +30,7 @@
 | SDV2-OWNER-001 | Clinic provisioning not atomic | DOCUMENTED | linkClinicOwner added; RPC documented |
 | SDV2-OWNER-002 | Payment race condition | DOCUMENTED | Analysis in docs/remediation/OWNER-002-analysis.md |
 | SDV2-SEC-005 | TRUNCATE overgrant | VERIFIED | Revoked via dashboard |
-| SDV2-CONF-003 | Stale Cloudflare/Firebase files | VERIFIED | fcm-worker/ removed (PR #32). Analysis in CONF-003-analysis.md: firebase.json, firebase-messaging-sw.js, firebase.ts safe to remove (zero refs); firestore.rules kept for CI test:rules job. |
+| SDV2-CONF-003 | Legacy backend artifacts | IN PROGRESS | The branch removes obsolete client SDK, worker, emulator and configuration files, and replaces notification storage and delivery with Supabase-managed endpoints. |
 | SDV2-CLIN-003 | BMI wording | VERIFIED | Added 'مؤشر فحص وليس تشخيصًا' disclaimer to all BMI labels; softened 'مثالي تمامًا' → 'في النطاق الطبيعي', 'سمنة مفرطة' → 'من الدرجة الثانية فأعلى — استشر مختصًا'. |
 | SDV2-PERF-001 | Performance advisor warnings | VERIFIED | INFO only — documented. No code changes needed. |
 

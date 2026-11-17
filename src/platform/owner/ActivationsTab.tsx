@@ -7,7 +7,7 @@ import {
   rejectActivation,
   type PendingActivation,
 } from '../owner';
-import type { SubscriptionPlan } from '../firestore';
+import type { SubscriptionPlan } from '../database';
 import { EmptyState } from '../../components/EmptyState';
 
 const PLAN_LABELS: Record<SubscriptionPlan, string> = {

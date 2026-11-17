@@ -1,4 +1,4 @@
-import type { PaymentRecord } from './firestore';
+import type { PaymentRecord } from './database';
 import type { ClinicSummary } from './owner';
 
 export interface OwnerPaymentRequest {

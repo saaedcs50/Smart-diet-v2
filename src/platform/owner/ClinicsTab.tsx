@@ -8,7 +8,7 @@ import {
   unsuspendClinic,
   type ClinicSummary,
 } from '../owner';
-import type { SubscriptionPlan } from '../firestore';
+import type { SubscriptionPlan } from '../database';
 import { daysRemaining } from '../ownerDashboard';
 import { EmptyState } from '../../components/EmptyState';
 

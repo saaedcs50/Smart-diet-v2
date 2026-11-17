@@ -71,8 +71,9 @@ INSERT INTO public.adherence_scores(id,patient_id,score_date,scores,overall,ente
 VALUES (900000000000001,'c0000000-0000-4000-8000-000000000005',current_date,'[]',85,'c0000000-0000-4000-8000-000000000003');
 INSERT INTO public.consents(id,patient_id,purpose,consent,granted_by)
 VALUES (900000000000001,'c0000000-0000-4000-8000-000000000005','sync','{"granted":true}','c0000000-0000-4000-8000-000000000005');
-INSERT INTO public.fcm_tokens(patient_id,tokens)
-VALUES ('c0000000-0000-4000-8000-000000000005',ARRAY['synthetic-token']);
+INSERT INTO public.push_subscriptions(endpoint,patient_id)
+VALUES ('https://updates.push.services.mozilla.com/wpush/v2/synthetic-token',
+  'c0000000-0000-4000-8000-000000000005');
 INSERT INTO public.invitations(email,role,clinic_id,created_by,status)
 VALUES ('sdv2-invitee@example.invalid','patient','sdv2-smoke-a','c0000000-0000-4000-8000-000000000002','pending');
 INSERT INTO public.platform_config(key,value)
@@ -182,7 +183,7 @@ SELECT 'patient A sees own adherence score',true,count(*)=1,'visible='||count(*)
 INSERT INTO sdv2_rls_results
 SELECT 'patient A sees own consent',true,count(*)=1,'visible='||count(*) FROM public.consents WHERE patient_id='c0000000-0000-4000-8000-000000000005';
 INSERT INTO sdv2_rls_results
-SELECT 'patient A sees own FCM token',true,count(*)=1,'visible='||count(*) FROM public.fcm_tokens WHERE patient_id='c0000000-0000-4000-8000-000000000005';
+SELECT 'patient A sees own push endpoint',true,count(*)=1,'visible='||count(*) FROM public.push_subscriptions WHERE patient_id='c0000000-0000-4000-8000-000000000005';
 INSERT INTO sdv2_rls_results
 SELECT 'patient A cannot see patient B',true,count(*)=0,'visible='||count(*) FROM public.patients WHERE id='c0000000-0000-4000-8000-000000000006';
 WITH changed AS (

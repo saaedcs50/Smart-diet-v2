@@ -70,40 +70,34 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  let data = {
-    title: defaultReminderTitle(),
-    body: 'حان موعد وجبتك المحددة أو شرب الماء!',
-    icon: logoSrc(),
-    badge: logoSrc(),
-    data: { url: '/' },
-  };
+  // تنبيه عام بلا محتوى طبي؛ تُرسل خدمة الخادم دفعة فارغة عمدًا.
+  let title = 'تحديث جديد من العيادة';
+  let body = 'افتح التطبيق للاطلاع على التحديثات.';
 
-  try {
-    if (event.data) {
-      data = { ...data, ...event.data.json() };
-    }
-  } catch (e) {
-    if (event.data) {
-      data.body = event.data.text();
+  // يظل استقبال النص متاحًا فقط لرسائل محلية/مستقبلية غير سريرية.
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      if (typeof payload.title === 'string' && payload.title.length <= 80) title = payload.title;
+      if (typeof payload.body === 'string' && payload.body.length <= 160) body = payload.body;
+    } catch {
+      // تجاهل أي payload غير صالح، ولا تعرض نصًا خامًا غير موثوق.
     }
   }
 
-  const options = {
-    body: data.body,
-    icon: data.icon || logoSrc(),
-    badge: data.badge || logoSrc(),
-    vibrate: data.vibrate || [200, 100, 200, 100, 300],
-    data: data.data || { url: '/' },
-    actions: [
-      { action: 'open', title: 'فتح التطبيق 📱' },
-      { action: 'close', title: 'إغلاق ✕' },
-    ],
-    tag: data.tag || 'clinic-reminder',
-    renotify: true,
-  };
-
   event.waitUntil(
-    self.registration.showNotification(data.title || defaultReminderTitle(), options)
+    self.registration.showNotification(title, {
+      body,
+      icon: logoSrc(),
+      badge: logoSrc(),
+      data: { url: '/' },
+      tag: 'clinic-update',
+      renotify: true,
+      actions: [
+        { action: 'open', title: 'فتح التطبيق 📱' },
+        { action: 'close', title: 'إغلاق ✕' },
+      ],
+    })
   );
 });
 

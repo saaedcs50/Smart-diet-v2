@@ -1,5 +1,5 @@
 import type { DayLog, PlanConfig } from '../types';
-import type { PatientDoc } from './firestore';
+import type { PatientDoc } from './database';
 import type { AdherenceConfig, AdherenceScore } from './adherence';
 
 export interface DoctorExportPatient {

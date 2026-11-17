@@ -1,4 +1,4 @@
-import type { PatientDoc, StaffEntry } from './firestore';
+import type { PatientDoc, StaffEntry } from './database';
 import type { PatientProgressSummary } from './patientProgressSummary';
 import {
   buildCsvFromSheets,
