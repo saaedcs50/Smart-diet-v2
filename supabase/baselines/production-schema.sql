@@ -1015,37 +1015,39 @@ $function$
 -- Revoke default PUBLIC and anon EXECUTE from all application routines
 REVOKE ALL ON FUNCTION private.caller_clinic_id() FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION private.caller_role() FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION private.can_access_patient(pid uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION private.can_claim_invitation(p_role text, p_clinic_id text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION private.clinic_sub_active(cid text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION private.can_access_patient(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION private.can_claim_invitation(text, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION private.clinic_sub_active(text) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION private.enforce_invitation_consume() FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION private.get_clinic_subscription_gate(p_clinic_id text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION private.get_clinic_subscription_gate(text) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION private.guard_clinic_subscription_payment_append() FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.caller_clinic_id() FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.caller_role() FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.can_access_patient(pid uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.claim_push_subscription(p_endpoint text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.clinic_sub_active(cid text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.can_access_patient(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.claim_push_subscription(text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.clinic_sub_active(text) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.enforce_invitation_consume() FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.get_clinic_subscription_gate(p_clinic_id text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.get_clinic_subscription_gate(text) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.get_push_signing_config() FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.owner_create_clinic_with_owner(p_name text, p_owner_name text, p_owner_email text, p_owner_phone text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.owner_review_clinic_payment(p_clinic_id text, p_action text, p_plan text, p_payment_index integer, p_note text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.submit_clinic_payment_request(p_clinic_id text, p_request_id uuid, p_method text, p_amount numeric, p_reference text, p_note text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.owner_create_clinic_with_owner(text, text, text, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.owner_review_clinic_payment(text, text, text, integer, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.submit_clinic_payment_request(text, uuid, text, numeric, text, text) FROM PUBLIC, anon;
 
 -- Intended routine EXECUTE grants
 GRANT EXECUTE ON FUNCTION private.caller_clinic_id() TO authenticated;
 GRANT EXECUTE ON FUNCTION private.caller_role() TO authenticated;
-GRANT EXECUTE ON FUNCTION private.can_access_patient(pid uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION private.can_claim_invitation(p_role text, p_clinic_id text) TO authenticated;
-GRANT EXECUTE ON FUNCTION private.clinic_sub_active(cid text) TO authenticated;
-GRANT EXECUTE ON FUNCTION private.get_clinic_subscription_gate(p_clinic_id text) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.claim_push_subscription(p_endpoint text) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_clinic_subscription_gate(p_clinic_id text) TO authenticated;
+GRANT EXECUTE ON FUNCTION private.can_access_patient(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION private.can_claim_invitation(text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION private.clinic_sub_active(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION private.get_clinic_subscription_gate(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_push_subscription(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_clinic_subscription_gate(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_push_signing_config() TO service_role;
-GRANT EXECUTE ON FUNCTION public.owner_create_clinic_with_owner(p_name text, p_owner_name text, p_owner_email text, p_owner_phone text) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.owner_review_clinic_payment(p_clinic_id text, p_action text, p_plan text, p_payment_index integer, p_note text) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.submit_clinic_payment_request(p_clinic_id text, p_request_id uuid, p_method text, p_amount numeric, p_reference text, p_note text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.owner_create_clinic_with_owner(text, text, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.owner_review_clinic_payment(text, text, text, integer, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.submit_clinic_payment_request(text, uuid, text, numeric, text, text) TO authenticated;
+
+-- Intended routine EXECUTE grants
 
 -- Triggers
 CREATE TRIGGER clinic_subscription_payment_append_guard BEFORE UPDATE ON clinic_subscriptions FOR EACH ROW EXECUTE FUNCTION private.guard_clinic_subscription_payment_append();
