@@ -35,7 +35,7 @@ No Production schema, account, data, secret, or project setting was changed. Bot
 
 ### Auth configuration still to verify
 
-The connected project-management operations exposed database and project inspection, but not the Auth redirect URL allow-list or the Google OAuth provider callback configuration. No non-Vercel test hostname was selected or deployed during this phase, so no redirect entry was added or removed. Preserve the Production origin when the actual test hostname is selected. Sign-in, sign-out, session restoration, and Google OAuth must be exercised from that origin before this item can close.
+The connected project-management operations exposed database and project inspection, but not the Auth redirect URL allow-list or the Google OAuth provider callback configuration. The Phase 0 baseline records `https://smart-diet-v2.vercel.app/` as the Production frontend and records that the latest inspected Vercel Preview returned HTTP 500 for `/api/health`; it did not record a stable Preview hostname. Preview was therefore not treated as a healthy Auth test surface, and no non-Vercel test hostname was selected or deployed during this phase. No redirect entry was added or removed. Preserve the Production origin when the actual test hostname is selected. Sign-in, sign-out, session restoration, and Google OAuth must be exercised from that origin before this item can close.
 
 The Supabase Security Advisor reports **Leaked Password Protection is disabled** in both projects. This is an Auth security-setting warning, not an RLS failure. It was not changed because Auth settings were not exposed by the available project-management interface; enable and verify it in Supabase Auth settings.
 
