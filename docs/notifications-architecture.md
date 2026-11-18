@@ -40,7 +40,7 @@ The notification client must continue to call the Supabase function URL directly
 
 ## Compatibility and security notes
 
-- The endpoint allow-list includes Mozilla, Apple, Windows, and the Chrome/Chromium Web Push endpoint `https://fcm.googleapis.com/fcm/send/{token}`. This is Web Push with VAPID, not the retired legacy FCM server-key API.
+- The endpoint allow-list includes Mozilla, Apple, Windows, and (in PR #76) the Chrome/Chromium Web Push endpoint `https://fcm.googleapis.com/fcm/send/{token}`. The additive schema migration and Edge Function update are applied to Staging only so far; Production remains on its previous allow-list until the PR and release migration are approved. This is Web Push with VAPID, not the retired legacy FCM server-key API.
 - Only endpoint URLs are stored in `push_subscriptions`; browser `p256dh`/`auth` keys are not stored by this implementation.
 - Only the public VAPID key is exposed as `VITE_VAPID_PUBLIC_KEY`. The private signing key and VAPID subject stay in Supabase Vault.
 - Edge Function JWT verification remains enabled.
