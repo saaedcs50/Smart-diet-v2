@@ -54,6 +54,6 @@ Verified on 18 November 2026:
 - Edge Function `notify` is ACTIVE in both projects and has `verify_jwt = true`.
 - Both projects have the push endpoint registry and hardened registration function.
 - `src/platform/push.ts` calls the Supabase Edge Function directly.
-- No Smart Diet Cloudflare Worker deployment was found; PR #75's deployment workflow is manual and the PR states it has not deployed a Worker.
+- Cloudflare account inventory returned one unrelated Worker named `youngtube-worker` and its own Durable Object namespaces; no Worker named `smart-diet-v2` was present. PR #75's Smart Diet deployment workflow is manual and the PR states it has not deployed a Worker.
 
 Live device delivery across Chrome, Firefox, Safari, and Windows still requires browser/device E2E validation; the repository's unit tests do not prove delivery to a real device.
