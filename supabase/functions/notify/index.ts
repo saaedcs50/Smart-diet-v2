@@ -1,6 +1,7 @@
 // Supabase Edge Function: deliver empty-payload Web Push notifications.
 // No patient name, clinical text, or health data is sent to a push provider.
 import { createClient } from 'npm:@supabase/supabase-js@2.118.0';
+import { isApprovedPushEndpoint } from './pushEndpoint.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
@@ -74,18 +75,7 @@ async function createVapidAuthorization(audience: string, vapid: { publicKey: st
   return `vapid t=${unsigned}.${base64UrlEncode(signature)}, k=${vapid.publicKey}`;
 }
 
-function isApprovedPushEndpoint(endpoint: string): boolean {
-  try {
-    const url = new URL(endpoint);
-    if (url.protocol !== 'https:' || url.username || url.password || url.port) return false;
-    const host = url.hostname.toLowerCase();
-    return host === 'updates.push.services.mozilla.com' ||
-      host === 'web.push.apple.com' ||
-      host.endsWith('.notify.windows.com');
-  } catch {
-    return false;
-  }
-}
+
 
 async function sendEmptyPush(endpoint: string, vapid: { publicKey: string; privateKey: string; subject: string }): Promise<'sent' | 'expired' | 'failed'> {
   if (!isApprovedPushEndpoint(endpoint)) return 'failed';
