@@ -30,15 +30,31 @@ permissions:
   contents: read
 
 jobs:
+  # The `matrix` context is not available in a job-level `if`, so the chain
+  # selection is computed here and fed to the restore job as a dynamic matrix.
+  setup:
+    name: Select chains
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        run: |
+          if [ "${{ inputs.chain }}" = "both" ]; then
+            echo 'matrix=["production","staging"]' >> "$GITHUB_OUTPUT"
+          else
+            echo "matrix=[\"${{ inputs.chain }}\"]" >> "$GITHUB_OUTPUT"
+          fi
+
   restore:
     name: Restore (${{ matrix.chain }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    needs: setup
     strategy:
       fail-fast: false
       matrix:
-        chain: [production, staging]
-    if: inputs.chain == 'both' || inputs.chain == matrix.chain
+        chain: ${{ fromJSON(needs.setup.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
         with:
