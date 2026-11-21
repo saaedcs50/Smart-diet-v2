@@ -1,0 +1,96 @@
+# C1 — Supabase restore test (Phase 1 close-out item C1 / Gate 4).
+#
+# Rebuilds each environment from the documented bootstrap seed + migration chain
+# on a throwaway Supabase local stack (real PostgreSQL 17, GoTrue, Realtime,
+# PostgREST, Vault — the services the PGlite drill stubs), then verifies the
+# end state and the services. Manual dispatch only: it starts a Docker stack
+# and pulls ~2 GB of images, so it must not run on every push.
+#
+# Design + evidence: docs/supabase-restore-test-2026-11-21.md
+# Seed + chains: scripts/supabase-restore-test/ (chains.json is the source
+# of truth for the ordered file lists; the seed files document the bootstrap
+# gap the migration files alone cannot close).
+#
+# Safety: local stack only (CLI v3 targets local by default; no --remote flag
+# anywhere, no hosted project is touched). Synthetic data only. No secrets:
+# the local stack keys are the CLI's well-known development defaults for a
+# throwaway database; they are masked and never printed.
+name: Supabase Restore Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      chain:
+        description: 'Chain to test'
+        type: choice
+        options: [both, production, staging]
+        default: both
+
+permissions:
+  contents: read
+
+jobs:
+  restore:
+    name: Restore (${{ matrix.chain }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        chain: [production, staging]
+    if: inputs.chain == 'both' || inputs.chain == matrix.chain
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # CLI 3.2.0 (verified 2026-11-21): v3 targets the local stack by default
+      # and needs no --yes for local commands. Pinned so a future major
+      # release cannot silently change the test.
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 3.2.0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install pg client (verification only)
+        run: npm install --no-save --package-lock=false pg
+
+      - name: Build restore workdir
+        run: node scripts/supabase-restore-test/build-workdir.mjs --chain ${{ matrix.chain }} --workdir /tmp/restore-${{ matrix.chain }}
+
+      - name: Start Supabase local stack
+        run: supabase start --workdir /tmp/restore-${{ matrix.chain }}
+
+      - name: Capture local stack credentials
+        run: |
+          STATUS_JSON="$(supabase status --workdir /tmp/restore-${{ matrix.chain }} -o json)"
+          echo "status keys: $(echo "$STATUS_JSON" | jq -r 'keys | join(",")')"
+          ANON_KEY="$(echo "$STATUS_JSON" | jq -r '.ANON_KEY')"
+          SERVICE_KEY="$(echo "$STATUS_JSON" | jq -r '.SERVICE_ROLE_KEY')"
+          if [ -z "$ANON_KEY" ] || [ "$ANON_KEY" = "null" ] || [ -z "$SERVICE_KEY" ] || [ "$SERVICE_KEY" = "null" ]; then
+            echo "ERROR: could not read ANON_KEY / SERVICE_ROLE_KEY from supabase status"
+            exit 1
+          fi
+          echo "::add-mask::$ANON_KEY"
+          echo "::add-mask::$SERVICE_KEY"
+          echo "SUPABASE_ANON_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_KEY" >> "$GITHUB_ENV"
+
+      - name: Verify restored schema
+        run: node scripts/supabase-restore-test/verify-schema.mjs --chain ${{ matrix.chain }}
+
+      - name: Test Supabase services (Auth, Realtime, Vault)
+        run: node scripts/supabase-restore-test/test-services.mjs --chain ${{ matrix.chain }}
+        env:
+          SUPABASE_URL: http://localhost:54321
+
+      - name: Stop Supabase local stack
+        if: always()
+        run: supabase stop --no-backup --workdir /tmp/restore-${{ matrix.chain }} || true
