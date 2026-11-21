@@ -29,7 +29,8 @@ import pg from 'pg';
 import { createClient } from '@supabase/supabase-js';
 
 const args = process.argv.slice(2);
-const chain = args[args.indexOf('--chain') + 1];
+const chainIdx = args.indexOf('--chain');
+const chain = chainIdx === -1 ? undefined : args[chainIdx + 1];
 if (!['production', 'staging'].includes(chain)) {
   console.error('usage: test-services.mjs --chain production|staging');
   process.exit(2);

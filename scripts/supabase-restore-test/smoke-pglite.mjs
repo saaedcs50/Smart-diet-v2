@@ -111,9 +111,9 @@ async function runChain(chain) {
   }
 }
 
+const chainIdx = process.argv.indexOf('--chain');
 const arg = process.argv.find((a) => a.startsWith('--chain='))?.slice('--chain='.length)
-  ?? process.argv[process.argv.indexOf('--chain') + 1]
-  ?? 'both';
+  ?? (chainIdx === -1 ? 'both' : process.argv[chainIdx + 1]);
 const chains = arg === 'both' ? ['production', 'staging'] : [arg];
 if (!chains.every((c) => c === 'production' || c === 'staging')) {
   console.error('usage: --chain production|staging|both');

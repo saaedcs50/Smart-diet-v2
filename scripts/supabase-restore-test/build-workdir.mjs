@@ -20,8 +20,10 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from
 import { join } from 'node:path';
 
 const args = process.argv.slice(2);
-const chain = args[args.indexOf('--chain') + 1];
-const workdir = args[args.indexOf('--workdir') + 1];
+const chainIdx = args.indexOf('--chain');
+const workdirIdx = args.indexOf('--workdir');
+const chain = chainIdx === -1 ? undefined : args[chainIdx + 1];
+const workdir = workdirIdx === -1 ? undefined : args[workdirIdx + 1];
 if (!['production', 'staging'].includes(chain) || !workdir) {
   console.error('usage: build-workdir.mjs --chain production|staging --workdir <dir>');
   process.exit(2);

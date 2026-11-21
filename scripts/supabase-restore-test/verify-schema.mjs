@@ -12,10 +12,12 @@ import pg from 'pg';
 import { runChecks } from './checks.mjs';
 
 const args = process.argv.slice(2);
-const chain = args[args.indexOf('--chain') + 1];
-const dbUrl =
-  args[args.indexOf('--db-url') + 1]
-  ?? 'postgres://postgres:postgres@localhost:54322/postgres';
+const chainIdx = args.indexOf('--chain');
+const chain = chainIdx === -1 ? undefined : args[chainIdx + 1];
+const dbUrlIdx = args.indexOf('--db-url');
+const dbUrl = dbUrlIdx === -1
+  ? 'postgres://postgres:postgres@localhost:54322/postgres'
+  : args[dbUrlIdx + 1];
 if (!['production', 'staging'].includes(chain)) {
   console.error('usage: verify-schema.mjs --chain production|staging [--db-url <url>]');
   process.exit(2);
