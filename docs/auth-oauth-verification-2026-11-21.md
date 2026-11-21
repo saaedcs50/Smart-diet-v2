@@ -4,6 +4,12 @@
 (Staging only) · **main HEAD at time of writing:** `7ca8cd78` (PR #80 merged)
 · **Scope:** verification only — no auth/OAuth configuration was changed anywhere.
 
+> **Status update (21 Nov 2026, evening):** the Google OAuth OPEN item recorded here
+> (§3) was closed by an explicit product-owner decision — Google OAuth stays disabled
+> for now; Email/Password is the approved auth method. See
+> `docs/phase-1-final-closure-report.md` §7 decision 5. This document is otherwise
+> unchanged as the point-in-time verification record of the morning of 21 Nov.
+
 ## Verdict
 
 | Question | Verdict |
