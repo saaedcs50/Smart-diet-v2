@@ -1,9 +1,12 @@
 node_modules/
 build/
 dist/
+dist-cf/
 dist-clients/
 coverage/
 .DS_Store
 *.log
 .env*
 !.env.example
+.dev.vars
+.wrangler/

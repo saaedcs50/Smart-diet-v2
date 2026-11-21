@@ -1,0 +1,58 @@
+name: Cloudflare Worker deployment
+
+# Manual only. Deploys the Smart Diet v2 preview (workers.dev, Staging) to
+# Cloudflare Workers + Static Assets. Does not change Vercel, DNS, Supabase
+# Auth redirects, or production traffic.
+#
+# Required repository secrets (Settings > Secrets and variables > Actions):
+#   CLOUDFLARE_API_TOKEN   Account-scoped token with Workers Scripts:Edit.
+#   CLOUDFLARE_ACCOUNT_ID  Cloudflare account ID.
+# Required repository variables (same page, Variables tab — public values):
+#   VITE_SUPABASE_URL      Staging Supabase project URL.
+#   VITE_SUPABASE_ANON_KEY Staging Supabase public anon key.
+# Worker secrets are set out of band (wrangler secret put, or the Cloudflare
+# dashboard) and are NOT managed by this workflow:
+#   COACH_PIN, SESSION_SECRET, UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+# See docs/cloudflare-preview-deployment.md for the full setup.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and deploy Smart Diet to Cloudflare Workers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build frontend assets for Cloudflare
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_PLATFORM_ENABLED: "true"
+          VITE_REALTIME_QA_ENABLED: "true"
+          VITE_GOOGLE_OAUTH_ENABLED: "false"
+        run: |
+          test -n "$VITE_SUPABASE_URL" || { echo "Missing repository variable VITE_SUPABASE_URL"; exit 1; }
+          test -n "$VITE_SUPABASE_ANON_KEY" || { echo "Missing repository variable VITE_SUPABASE_ANON_KEY"; exit 1; }
+          npm run build:cloudflare
+
+      - name: Validate Wrangler configuration
+        run: npx --yes wrangler@4.166.0 deploy --dry-run --outdir .wrangler-dry-run
+
+      - name: Deploy Worker and static assets
+        env:
+CLOUDFLARE_API_TOKEN: <redacted>
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4.166.0 deploy --config wrangler.jsonc
