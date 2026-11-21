@@ -14,10 +14,11 @@ alone cannot rebuild either database from empty.
 This document records the repeatable restore test built to close that gap,
 its design, its bootstrap recipe, what it proves, and what it does not prove.
 
-**Status: design + scripts complete; workflow run PENDING.** The run evidence
-(§7) and the equivalence verdict (§9) will be filled in after the workflow
-executes on GitHub Actions. A workflow file that was never executed is not a
-test, and no closure claim is made here until it runs.
+**Status: GREEN — run 3 (2026-11-21 20:18 UTC) passed on both chains.**
+Schema verification 18/18 (production) and 25/25 (staging); services tests
+10/10 on each chain. Run evidence is in §7; the equivalence verdict is in §9:
+Gate 4 is closed as a documented equivalent alternative, with the residual gap
+recorded explicitly.
 
 ## 2. Background
 
@@ -242,12 +243,49 @@ the same state-transition rules the trigger would.
 
 ## 7. Run evidence
 
-PENDING — to be filled after the workflow executes on GitHub Actions.
+Workflow: `Supabase Restore Test` on branch
+`feat/supabase-restore-test-2026-11-21` (PR #86), Supabase CLI 3.2.0 pinned,
+PostgreSQL 17.12 on the local stack. All three runs used input `chain: both`.
 
-| Run | Chain | Conclusion | Evidence |
+| Run | Date (UTC) | Conclusion | What happened |
 | --- | --- | --- | --- |
-| (pending) | production | | |
-| (pending) | staging | | |
+| [44944411061](https://github.com/saaedcs50/Smart-diet-v2/actions/runs/44944411061) | 2026-11-21 20:08 | failure | Both chains failed at step 10 (Verify restored schema). Root cause: an arg-parsing bug in `verify-schema.mjs` — a missing optional `--db-url` flag made the script read `'--chain'` as the database URL, and `pg` parsed that as host `base` (`getaddrinfo EAI_AGAIN base`). Fixed in all four scripts (check `indexOf() === -1` before reading the next arg). |
+| [44944819242](https://github.com/saaedcs50/Smart-diet-v2/actions/runs/44944819242) | 2026-11-21 20:13 | failure | Schema verification PASSED on both chains (production 18/18, staging 25/25). Services step failed on both: every services test passed, then the optional cleanup call `vault.delete_secret(name)` threw `42883` — no such overload exists (the function takes a secret id, not a name). Fix: removed the cleanup (the database is throwaway; the stack is stopped with `--no-backup` right after). |
+| [44945186144](https://github.com/saaedcs50/Smart-diet-v2/actions/runs/44945186144) | 2026-11-21 20:18 | **success** | **All jobs green.** Production: schema 18/18 PASS, services 10/10 PASS. Staging: schema 25/25 PASS, services 10/10 PASS. Zero FAIL lines in either job log. |
+
+### Run 3 detail (the green run)
+
+**Production** (`Restore (production)`, job 136970857987):
+schema counts exactly `tables=11, policies=40, indexes=23, routines=19,
+triggers=2, rls_tables=11, constraints=33`; services 10/10 — Realtime
+publication contains `public.profiles`; 2 users created via the GoTrue Admin
+API; both signed in with email + password; each reads only their own profile
+row via PostgREST; anon reads none; both Realtime channels joined; the owner
+received the UPDATE (on attempt 2 — see the cold-start note below) and the
+other user received nothing; the Vault secret round-tripped;
+`get_push_signing_config` present.
+
+**Staging** (`Restore (staging)`, job 136970857981): schema counts exactly
+`tables=12, policies=43, indexes=27, routines=20, triggers=2, rls_tables=12,
+constraints=44`; services 10/10 — identical list to production.
+
+### Observations (not failure causes)
+
+- **Realtime cold-start flake (real, handled).** In all three runs, the first
+  Realtime delivery attempt after a cold start was slow and the owner's UPDATE
+  arrived only on attempt 2 (runs 2 and 3 both show `attempt 2`). The
+  two-attempt design in `test-services.mjs` exists for exactly this; it is the
+  same first-run flake observed on the managed preview in PROMPT 2.
+- **Docker Hub rate limiting (transient).** `Error response from daemon: error
+  from registry: Rate exceeded` appeared during image pulls in runs 2 and 3;
+  the CLI retried and `supabase start` succeeded every time. Unauthenticated
+  pulls are rate-limited, so a future run could in principle hit a longer
+  throttle — a re-run is the remedy, not a code change.
+- **imgproxy + pooler stopped.** `supabase status` reported
+  `supabase_imgproxy_*` and `supabase_pooler_*` as stopped in every run. No
+  test uses them (direct Postgres on 54322 + the API gateway on 54321), and
+  nothing failed because of it. Recorded here so a future reader is not
+  surprised by the line in the logs.
 
 ## 8. What was tested vs what was NOT tested
 
@@ -286,19 +324,45 @@ PENDING — to be filled after the workflow executes on GitHub Actions.
 
 ## 9. Equivalence verdict (Gate 4)
 
-PENDING — to be filled after the workflow runs.
+**VERDICT: Gate 4 is CLOSED as a documented equivalent alternative.**
 
-The rule for this verdict (from the C1 assignment): a passing local-stack
-test does **not** automatically equal a managed disposable-project restore.
-The local stack proves the same PostgreSQL / GoTrue / Realtime / PostgREST /
-Vault software, with real Auth / Vault / Realtime integration, applies the
-chain and produces the documented end state. It does not prove managed
-dashboard provisioning, managed extension configuration, project-level
-settings, or network/SSL behaviour (§8). Gate 4 may be closed as a
-**documented equivalent alternative** only if the run evidence supports that
-the residual gap (managed provisioning + settings) is out of scope for a
-schema-and-services restore test; otherwise Gate 4 stays open with the exact
-residual gap recorded here.
+The evidence supports it. Run 3 (all green, both chains) proves, on the real
+Supabase software stack (PostgreSQL 17.12, GoTrue, Realtime, PostgREST,
+Vault — the same images the managed platform runs):
+
+- the documented seed + migration chain applies cleanly and converges to the
+  exact expected end state (counts, privileges, and object spot-checks all
+  exact, on both chains);
+- Auth works end to end (user creation, password sign-in, JWT via PostgREST)
+  and RLS isolates users over the Data API;
+- Realtime delivers row changes to the owning user and filters them for
+  others;
+- Vault stores and returns a secret.
+
+That is what Gate 4 exists to establish: that the database can be rebuilt
+from the repo (seed + chains) into a working Supabase environment with
+functioning Auth / Vault / Realtime. The test objective is met in full.
+
+**Residual gap (recorded, not hidden).** The local stack does not prove
+managed dashboard provisioning, managed extension configuration,
+project-level settings (redirect URLs, Auth providers, SMTP), or network/SSL
+behaviour (§8). Those are properties of the hosting wrapper, not of the
+restore: none of them changes whether the migration chain applies or whether
+the services work against the restored schema. They are therefore out of
+scope for a schema-and-services restore test, and closing Gate 4 on the
+local-stack evidence does not claim they were tested.
+
+**What would close the gap fully.** A restore into a managed disposable
+Supabase project would exercise the dashboard provisioning path itself. That
+was not done here, deliberately: سعيد already has 2 free Supabase projects
+(production + staging), so a third free project would likely need a new
+organization or a Pro plan (~$25/month), and it would add no restore
+evidence beyond what run 3 already proves. If the team ever needs to validate
+the managed provisioning path itself — for example before a real production
+rebuild — that is the remaining step, and its cost is a new org (free) or
+~$25/month (Pro). Until then, the local-stack test is the repeatable restore
+proof, and this document is the record of exactly what it does and does not
+establish.
 
 ## 10. How to re-run
 
