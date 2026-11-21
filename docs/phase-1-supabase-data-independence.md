@@ -1,0 +1,355 @@
+# Phase 1 — Supabase Data Independence Audit
+
+**Audit date:** 17 November 2026  
+**Repository:** `saaedcs50/Smart-diet-v2`  
+**Audited branch / commit:** `main` / `8d48f7d782236e78b011a9033f84a89578c70a9c`  
+**Production:** `smart-diet-platform` (`lhjyshlxbsnesayivxpb`)  
+**Staging:** `smart-diet-v2-staging` (`dubevgijagqjgwcibqeo`)  
+**Related PRs:** [Phase 0 #74](https://github.com/saaedcs50/Smart-diet-v2/pull/74), [Appointments #71](https://github.com/saaedcs50/Smart-diet-v2/pull/71)
+
+## Executive result
+
+The Supabase client and database authorization model are not tied to Vercel. Both live projects are healthy, every inspected application table has RLS enabled, the database role helpers fail closed for disabled users, and the Staging role matrix passed.
+
+No Production schema, account, data, secret, or project setting was changed. Both SQL test suites were run against Staging inside transactions and rolled back; post-test queries confirmed that their fixture writes were absent.
+
+**Phase 1 is not marked closed.** The deployed migration ledgers do not map cleanly to migration source filenames in Git; Supabase Auth redirect settings and Google OAuth callbacks could not be verified against a new non-Vercel test origin; and a direct Realtime WebSocket isolation test remains outstanding. These are explicit closure gates, not assumed successes.
+
+## 1. Supabase client and authentication
+
+### Client configuration
+
+- `src/platform/supabase.ts` reads `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+- `getSupabase()` caches the client rather than constructing one for every call.
+- The inspected client module does not derive the project URL from the frontend hostname, a Vercel URL, or an API base URL.
+- Project selection is controlled by build-time environment values, not by the frontend host. A new host must receive the same intended project URL and public anon key; it must never receive a service-role secret.
+
+### Identity and role resolution
+
+- `src/platform/auth.tsx` restores the persisted session with `auth.getSession()` and listens for Auth changes.
+- The platform profile is fetched from `public.profiles` using the authenticated UID.
+- Accepted application roles are `owner`, `admin`, `coach`, and `patient`. The application role is parsed from the database profile rather than trusted from a browser-supplied role claim.
+- Google OAuth redirects to `window.location.origin + '/platform'`, not a hard-coded Vercel hostname.
+- Live database helpers `private.caller_role()` and `private.caller_clinic_id()` both require `profiles.disabled IS NOT TRUE`. `private.can_access_patient()` applies owner/admin/assigned-coach/patient scope and the active-clinic subscription gate.
+- The Staging tests verified that a disabled coach and a suspended clinic lose operational access.
+
+### Auth configuration still to verify
+
+The connected project-management operations exposed database and project inspection, but not the Auth redirect URL allow-list or the Google OAuth provider callback configuration. The Phase 0 baseline records `https://smart-diet-v2.vercel.app/` as the Production frontend and records that the latest inspected Vercel Preview returned HTTP 500 for `/api/health`; it did not record a stable Preview hostname. Preview was therefore not treated as a healthy Auth test surface, and no non-Vercel test hostname was selected or deployed during this phase. No redirect entry was added or removed. Preserve the Production origin when the actual test hostname is selected. Sign-in, sign-out, session restoration, and Google OAuth must be exercised from that origin before this item can close.
+
+The Supabase Security Advisor reports **Leaked Password Protection is disabled** in both projects. This is an Auth security-setting warning, not an RLS failure. It was not changed because Auth settings were not exposed by the available project-management interface; enable and verify it in Supabase Auth settings.
+
+## 2. Live schema inventory
+
+The following counts were queried from live PostgreSQL catalogs on 17 November 2026.
+
+| Catalog item | Production | Staging |
+|---|---:|---:|
+| Application tables in `public` | 11 | 12 |
+| Tables with RLS enabled | 11 | 12 |
+| Policies on `public` tables | 40 | 43 |
+| Indexes in `public` | 23 | 26 |
+| Constraints on `public` tables | 33 | 36 |
+| `SECURITY DEFINER` functions in `public` / `private` | 13 | 11 |
+| Such functions missing `search_path = ''` | 0 | 0 |
+| Such functions executable by `anon` | 0 | 0 |
+| Storage buckets / Storage policies | 0 / 0 | 0 / 0 |
+| Tables in `supabase_realtime` publication | `public.profiles` | `public.profiles` |
+
+The 11 Production tables are: `profiles`, `clinics`, `clinic_subscriptions`, `invitations`, `patients`, `day_logs`, `adherence_configs`, `adherence_scores`, `consents`, `platform_config`, and `push_subscriptions`.
+
+Staging has those same 11 tables plus `appointments`. Production has no `appointments` table. The Staging appointment schema is associated with open PR #71 and is not present on `main`.
+
+The `profiles` table currently has one `owner` profile in Production and six synthetic test profiles in Staging (one owner, one admin, one coach, and three patients). Neither project currently has a profile with `disabled = true`. These are profile-row counts, not counts of all Supabase Auth identities.
+
+### RLS policy shape
+
+Production has four policies each on `profiles`, `clinics`, `clinic_subscriptions`, `invitations`, `patients`, `adherence_configs`, and `adherence_scores`; five on `platform_config`; three on `consents`; three on `push_subscriptions`; and one on `day_logs`.
+
+Staging has those same policy counts plus three policies on `appointments`.
+
+The policies and helper functions enforce the current clinic model: an admin is scoped to their clinic; a coach is scoped to patients assigned/invited by that coach; a patient is scoped to their own patient data; and the platform owner has only the explicitly defined owner paths. Clinic subscription and suspended-clinic checks are applied in the database layer. Anonymous access is limited to the explicitly public platform-configuration path; the live role matrix confirmed that anonymous access did not expose patient, clinic, or subscription data.
+
+### SECURITY DEFINER review
+
+Live catalog inspection found no `SECURITY DEFINER` function in the inspected `public` or `private` schemas with a missing/non-empty search path, and none was executable by `anon`. Helper functions intentionally granted to `authenticated` support RLS or narrow application RPC paths. Legacy public helper duplicates have no client execution grant.
+
+This is a catalog-level review. It does not replace a source-to-live SQL body comparison, which remains part of migration reconciliation.
+
+## 3. Live Staging RLS tests
+
+### Core role matrix
+
+Executed repository file `supabase/tests/rls_role_matrix_staging.sql` (blob SHA `2480b5ea4d0b7d7735f30cb0d910f9c560a59e9a`) against Staging only.
+
+**Result: `rls_role_matrix_staging: PASS`.**
+
+Coverage includes owner visibility and owner-only changes; admin clinic scope; coach scope limited to assigned patients; patient access limited to their own data; cross-clinic rejection; invitation consumption and reopening rules; push endpoint anti-takeover; disabled-coach and suspended-clinic fail-closed behavior; and anonymous access limited to public platform configuration.
+
+### Appointments role matrix
+
+Executed `supabase/tests/appointments_rls_staging.sql` from the still-open PR #71 branch (blob SHA `bc2f7c2c9ce4d15bff3f8d1f44ed8cb11afa41a3`) against Staging only.
+
+**Result: `appointments_rls_staging: PASS`.**
+
+Coverage includes clinic-admin booking, doctor scope, patient read-only scope, cross-clinic rejection, platform-owner isolation, and conflicting provider/patient bookings. After rollback, `public.appointments` still contained zero rows.
+
+The base role-matrix rollback check also confirmed that its temporary invitation, push endpoint, day log, adherence rows, disabled flag, and clinic suspension did not remain.
+
+### Production test boundary
+
+No synthetic fixtures were inserted into Production. The role matrix was executed on the synthetic Staging project. Production was checked read-only for table RLS, policies, function security, grants, and publication membership.
+
+## 4. Storage and Realtime
+
+### Storage is intentionally not a cloud feature in this application
+
+There are no Supabase Storage buckets or Storage policies in either live project. The application source explicitly documents that cloud photo storage was disabled by the owner. Progress photos are stored in browser IndexedDB, with local storage scopes separated by account UID; the photo migration helper copies between local IndexedDB scopes and does not upload files.
+
+The absence of Supabase Storage buckets is **intentional and consistent with the current code**, not a missing bucket to create during hosting separation. Do not create public buckets or convert patient photos into public URLs as part of this work.
+
+### Realtime
+
+Both projects publish only `public.profiles` to `supabase_realtime`. The Auth provider subscribes to a per-user channel named `profile-<uid>` and applies the row filter `id=eq.<uid>`. The live RLS role matrix confirms that each role can select only its authorized profile rows.
+
+No direct authenticated WebSocket test was performed. Publication membership, the client filter, and database RLS were inspected; a final browser-level subscription test across two authenticated Staging clinics remains open.
+
+## 5. Migration ledger reconciliation
+
+The live migration histories are not identical to the repository's source filenames, and Production and Staging do not share one common version sequence.
+
+### Production — 15 recorded migrations
+
+| Version | Name |
+|---|---|
+| 20261109115448 | production_legacy_alignment |
+| 20261109115743 | drop_legacy_public_data_policies |
+| 20261113023307 | atomic_clinic_payment_requests |
+| 20261113023310 | consolidate_clinic_subscription_update_policy |
+| 20261113023312 | harden_payment_request_idempotency |
+| 20261113023315 | fix_payment_request_jsonb_keys |
+| 20261113023422 | remove_duplicate_production_indexes |
+| 20261113023618 | secure_patient_subscription_gate |
+| 20261113023848 | fail_closed_disabled_and_suspended_access |
+| 20261113023914 | restrict_disabled_patient_auxiliary_access |
+| 20261113023953 | restrict_clinic_record_updates_to_owner |
+| 20261113024146 | revoke_public_helper_execute |
+| 20261114045803 | add_patient_custom_tags |
+| 20261117153100 | replace_legacy_push_tokens |
+| 20261117153103 | harden_push_subscription_registration |
+
+### Staging — 26 recorded migrations
+
+| Version | Name |
+|---|---|
+| 20261109061815 | staging_schema_reconciliation |
+| 20261109062015 | performance_policy_tuning |
+| 20261109063122 | owner_atomic_operations |
+| 20261109063451 | owner_rpc_argument_validation |
+| 20261109063920 | owner_rpc_security_invoker |
+| 20261109072358 | profiles_admin_only_visibility |
+| 20261109072730 | explicit_rls_all_platform_tables |
+| 20261109073443 | consolidate_clinic_subscription_policies |
+| 20261109073735 | restrict_remaining_public_policies |
+| 20261109074419 | consolidate_remaining_rls_policies |
+| 20261109074506 | split_platform_config_read |
+| 20261113020248 | atomic_clinic_payment_requests |
+| 20261113020409 | consolidate_clinic_subscription_update_policy |
+| 20261113022823 | harden_payment_request_idempotency |
+| 20261113022850 | fix_payment_request_jsonb_keys |
+| 20261113023420 | remove_duplicate_production_indexes |
+| 20261113023617 | secure_patient_subscription_gate |
+| 20261113023846 | fail_closed_disabled_and_suspended_access |
+| 20261113023913 | restrict_disabled_patient_auxiliary_access |
+| 20261113023952 | restrict_clinic_record_updates_to_owner |
+| 20261113024145 | revoke_public_helper_execute |
+| 20261114045406 | add_patient_custom_tags |
+| 20261114064838 | clinic_appointments |
+| 20261114064903 | appointments_created_by_idx |
+| 20261117144922 | replace_legacy_push_tokens |
+| 20261117145227 | harden_push_subscription_registration |
+
+### Source-to-live drift
+
+- Repository source files use version prefixes such as `20261113020248`, `20261113021000`, and `20261113025000`; Production records similarly named changes under different IDs such as `20261113023307`, `20261113023312`, and `20261113023618`.
+- Several Staging records also differ from similarly named Git source files. For push registration, repository filenames are `20261117140700` and `20261117150000`, while Staging records `20261117144922` and `20261117145227`; Production records `20261117153100` and `20261117153103`.
+- Staging has 11 November 9 reconciliation/security migrations absent from the Production ledger. Production instead records two Production legacy-alignment migrations.
+- Staging has the two appointments migrations, but their files currently exist only on open PR #71, not on `main`; Production has neither the appointments table nor those migration records.
+- The repository contains a baseline source file, but neither live ledger reports that filename/version as an applied migration. Do not infer that the baseline is safe to replay.
+- `scripts/check-supabase-rls.mjs` is a static repository check. It does not query either live migration ledger and cannot prove that a live database applied the exact SQL bytes present in Git.
+- The migration history returned version/name records, not SQL checksums. This audit therefore does not claim byte-for-byte identity between a Git SQL file and SQL previously executed in either environment.
+
+### Safe migration decision
+
+No migration or baseline was applied. No Production backup was taken because no Production DDL was attempted. Before approving a canonical rebuild baseline, export the complete live schema (tables, types, sequences, indexes, constraints, functions, triggers, policies, grants, extensions, and relevant settings) from each project, compare it with Git, and document per-project version-to-source mapping. Test the resulting baseline by rebuilding a clean disposable database. Do not solve ledger drift by renaming old files or inserting fabricated rows into Supabase migration history.
+
+## 6A. Additional reconciliation findings (17 November 2026)
+
+### The repository baseline is an inventory placeholder, not a bootstrap schema
+
+- `supabase/migrations/20261031000000_baseline.sql` contains comments and an object inventory only; it does not create the listed database objects. Its own text says the full schema is maintained in documentation.
+- `20261109061815_staging_schema_reconciliation.sql` explicitly says it is not a fresh-project bootstrap migration and says the baseline must be replaced by a separately reviewed canonical full baseline.
+- That reconciliation uses `CREATE TABLE IF NOT EXISTS`. When a legacy table already exists, this does not add missing columns or normalize its existing nullability/default/identity attributes. This explains why logically related projects can retain column drift after similar migration names have been applied.
+- `20261109115448_production_legacy_alignment.sql` is described as a Production bridge over a restored legacy schema, not as a clean-room baseline. Do not apply the inventory placeholder to an empty database or call it a reproducible bootstrap.
+
+### Exact live column differences
+
+| Object | Production | Staging |
+|---|---|---|
+| `consents.updated_at` | Absent | Present, `timestamptz NOT NULL DEFAULT now()` |
+| `adherence_scores.note` | Nullable, no default | `NOT NULL DEFAULT ''` |
+| `day_logs.id` | Sequence-backed `bigserial` default | `GENERATED ALWAYS AS IDENTITY` |
+| Day-log unique index | `day_logs_patient_id_log_date_key` | `day_logs_patient_id_log_date_uidx` |
+| Consent unique index | `consents_patient_id_purpose_key` | `consents_patient_purpose_key` |
+| Appointments | Table absent | Table present (12 columns), from open PR #71 |
+
+The Staging reconciliation source creates `consents.updated_at` and a non-null/defaulted adherence note when it creates those tables, but `IF NOT EXISTS` leaves pre-existing tables untouched. `day_logs` was already present in the manually provisioned Staging database and retains its identity definition; the Production legacy table retains its sequence-backed definition. These are real schema differences, not just naming differences.
+
+### Production's excess public-table grants and PostgreSQL defaults
+
+An ACL-level review found that Production's `public` tables had unnecessary non-DML privileges that were not present in Staging's current `postgres`-owned table grants:
+
+- `anon`: `REFERENCES` and `TRIGGER` on 10 of the 11 tables, in addition to the intended `SELECT` on `platform_config`.
+- `authenticated`: `REFERENCES` and `TRIGGER` on 10 tables, in addition to application DML grants.
+- The direct ACL also showed `MAINTAIN` for `anon` and `authenticated` on the Production tables. Staging did not have these non-DML grants on its current `postgres`-owned application tables.
+- Production's `ALTER DEFAULT PRIVILEGES` for role `postgres` in schema `public` also granted `MAINTAIN`, `REFERENCES`, and `TRIGGER` to both `anon` and `authenticated`. Staging's corresponding `postgres` defaults contain only the expected authenticated CRUD privileges and no `anon` table defaults.
+
+This did not expose patient rows in the tests: `anon` still had no `SELECT` grant on `patients`, and the Staging RLS role matrix remained passing. However, the excess grants violate least privilege and would also propagate to future tables created as `postgres`.
+
+A transactional hardening test was run on Production and rolled back. During the transaction it revoked only `MAINTAIN`, `REFERENCES`, and `TRIGGER` from `anon` and `authenticated` on existing `public` tables and from `postgres` default privileges in `public`. The post-revoke assertions passed: no non-DML grants remained; `anon` retained `SELECT` on `platform_config`; authenticated patient/day-log DML stayed available; and patient visibility was not widened. A follow-up read confirmed the transaction rolled back and the pre-existing grants/defaults remain unchanged.
+
+A proposed idempotent migration source was added to this PR as `supabase/migrations/20261117170000_revoke_excess_public_table_privileges.sql`. It includes assertions for the retained public-config SELECT and authenticated patients/day-logs DML grants. **Production application status updated 17 November 2026:** the migration was applied to Production through Supabase migration tooling as `20261117165914_revoke_excess_public_table_privileges`. The migration ledger now records that version. A post-apply catalog query returned no remaining `MAINTAIN`, `REFERENCES`, or `TRIGGER` grants to `anon`/`authenticated` on `public` tables. Public `platform_config SELECT` and authenticated patient/day-log DML assertions passed during application. Staging was not changed by this production-only hardening.
+
+### Auth URL and OAuth provider configuration
+
+A second live dashboard inspection of Staging confirmed:
+
+- Site URL remains `http://localhost:3000`.
+- The allowed redirect `http://localhost:3000/**` is present. The inspection did not add, remove, or change it.
+- Email password sign-in is **enabled**.
+- Google OAuth provider is **disabled**.
+
+A separate live inspection of Production confirmed:
+
+- Site URL is `https://smart-diet-v2.vercel.app`.
+- Its only listed redirect is `https://smart-diet-v2.vercel.app/**`.
+- Google OAuth provider is **disabled**; Email is the only enabled Auth provider reported by the dashboard.
+
+The app code exposes `signInWithGoogle()` and labels Google access for staff in its comments/UI, but neither live Supabase project currently enables Google. This means the Google sign-in path is not operational as deployed. No OAuth client ID/secret was read, copied, or modified. Enabling Google requires the correct provider credentials and callback setup; do not infer or fabricate these values.
+
+The organization is on the Supabase Free plan. Supabase's Password Security documentation says Leaked Password Protection is available on Pro and above. Therefore the advisor warning that it is disabled cannot be resolved within the current plan without a billing-tier change. No upgrade was attempted.
+
+### Deployed notification function
+
+Both projects have an active `notify` Edge Function with `verify_jwt = true`. Production reports version 5 and Staging version 1, but both deployed source digests are identical: `4f43d22a810d9e2ffb964a98700a59ba6fa5b8e0840cf9aa83d6e7bcc099010c`. The version number difference alone is not a code divergence.
+
+### Production backup/restore availability
+
+A read-only inspection of the Production project's Backups page confirmed that the organization is on the Free plan and **project backups are not included**. The page shows no completed backup timestamp. Scheduled backups (up to 7 days), PITR, and Restore to New Project are locked behind Pro. No backup, restore, retention, or billing setting was changed.
+
+This is a hard safety gate for permanent Production DDL. A schema-only catalog export is not a substitute for a recoverable backup of patient and clinic data. The owner explicitly accepted proceeding without a managed backup/restore path. This is a recorded risk acceptance, not evidence of recoverability. A manual logical export remains the only no-cost mitigation and must be kept outside the Production project.
+
+### Transactional test of the proposed grants migration
+
+The exact source file `20261117170000_revoke_excess_public_table_privileges.sql` was executed twice with its terminal `COMMIT` replaced by `ROLLBACK`: once on Production and once on Staging. Both executions completed without assertion errors. The tests verified that the excess non-DML table privileges and the `postgres` default grants would be removed while preserving the public `platform_config` SELECT grant and authenticated patients/day-logs DML. A subsequent Production read confirmed the old privileges/defaults remained, proving the test transaction rolled back. The migration exists in Git for review only; it has not been installed in either live migration ledger.
+
+### Direct Realtime verification remains open
+
+The publication and client-side subscription were inspected, and RLS behavior was covered by SQL tests. A direct browser/WebSocket session test with two authenticated Staging identities has still not been executed; this remains an explicit closure gate.
+
+### Google Cloud OAuth provider investigation (17 November 2026)
+
+A read-only inspection of the signed-in Google Cloud project `smart-diet-platform-trial` found an existing Web OAuth client auto-created for Firebase Authentication. Its redirect URI is the Firebase auth handler, and it does not list the Supabase callback `https://lhjyshlxbsnesayivxpb.supabase.co/auth/v1/callback` or the future Workers origin. This client must not be repurposed because doing so may break the existing Firebase login flow.
+
+The OAuth consent screen is External and In production, with a support email configured. Google Project Checkup currently reports warnings about insecure OAuth flow configuration, loopback IP redirects on an existing Web client, and unverified branding. No client secret was viewed/copied and no Google Cloud settings were changed. A dedicated Supabase Web OAuth client is required, with the Supabase callback URI registered. The app-side feature flag remains disabled until the new client is configured in Supabase.
+
+### Dedicated Google OAuth client created (17 November 2026)
+
+Created a separate Web OAuth client named `Smart Diet Supabase Auth` in the Google Cloud project `smart-diet-platform-trial`. The original Firebase auto-created client was left unchanged. The new client is configured with JavaScript origins `https://smart-diet-v2.vercel.app` and `https://smart-diet-v2.saaedbelal.workers.dev`, and the Supabase redirect URI `https://lhjyshlxbsnesayivxpb.supabase.co/auth/v1/callback`. The Client ID and Secret were not committed to the repository or this report.
+
+### Google OAuth UI guard added
+
+The live Production and Staging projects both have Google OAuth disabled, and valid Google OAuth client credentials were not available in the project connection. To prevent the app from presenting a broken login action, the Phase 1 branch now gates both Google login and staff-invitation buttons behind `VITE_GOOGLE_OAUTH_ENABLED=true`. The default is disabled. Email/password authentication remains unchanged. This removes the code/configuration mismatch from the user interface but does not activate Google OAuth; activating it still requires valid Google provider credentials and the Supabase callback configuration.
+
+### Cloudflare Worker implementation added
+
+The branch now contains a full-stack Worker entrypoint, Wrangler configuration, and a manual GitHub Actions deploy workflow. It preserves the existing Express endpoints, serves the Vite output as static assets, and replaces Upstash for this deployment with a SQLite-backed Durable Object guard store. The workflow is manually triggered and does not switch traffic. CI now includes a no-deploy Wrangler bundle-validation job. The connected Cloudflare account has workers.dev subdomain `saaedbelal`, and no paid upgrade is required for the SQLite-backed Durable Object under Cloudflare Free quotas. Runtime deployment is not yet active because the Cloudflare API token and the two server secrets must be provisioned to GitHub Actions.
+
+### Non-Vercel hosting discovery
+
+The connected Cloudflare account is reachable and currently has no Pages projects. More importantly, this is not a static-only Vite app: `server.ts` runs Express and mounts `src/server/api.ts`, which provides `/health` and stateful `/coach-session` routes backed by `coachGuardStore` (Upstash configuration). A plain Pages static deployment would omit these routes and is not a valid replacement. Cloudflare Git integration also requires installing/authorizing the Cloudflare GitHub App; Direct Upload requires a prebuilt asset bundle and a Pages-scoped API token in CI. Neither is configured. A correct Cloudflare Worker path is now implemented in the branch, including the persistent Durable Object adapter. No production Worker has been deployed yet; the GitHub Actions credentials and server secrets must be set before invoking its manual deployment workflow.
+
+### Repeatable schema-export tooling added
+
+Added `scripts/export-production-schema.sh` for repeatable future exports. The branch now contains `supabase/baselines/production-schema.sql`, reconstructed from the live Production catalogs on 17 November 2026. It includes the 11 Production tables, 33 constraints, 23 indexes, 19 routines, 40 RLS policies, 2 triggers, sequences, grants, default privileges, and the current `profiles` Realtime publication prerequisite. The historical `20261031000000_baseline.sql` marker was left unchanged so the existing migration chain is not silently reordered or broken. Added `scripts/validate-production-baseline.mjs` and a CI job that replays the snapshot in an isolated PostgreSQL WASM engine, using stubs only for Supabase-managed Auth/Vault catalog objects and omitting publication DDL (already checked against the live project). This is schema-only; it contains no patient rows or Vault secrets. The CI job is still pending for the latest commit.
+
+## 6. Findings and remaining closure gates
+
+| Item | Result | Evidence still needed |
+|---|---|---|
+| Supabase client independence from Vercel | PASS | Supply the same intended Supabase environment values to the new frontend host |
+| Role source and database-side disabled-user enforcement | PASS in code/catalog; Staging test PASS | None for database enforcement |
+| Core multi-clinic RLS | PASS on Staging | Do not seed synthetic test users into Production |
+| Appointment RLS | PASS on Staging | PR #71 remains open; Production intentionally has no appointments schema |
+| Storage | PASS for current design; cloud Storage intentionally unused | No bucket creation required |
+| Realtime profile isolation | Catalog/client/RLS review PASS | Direct two-clinic authenticated WebSocket test still requires two valid Staging sessions; no user tokens were available to run a real browser subscription test |
+| Production schema snapshot | **IMPLEMENTED — validation pending** | Live catalog baseline is in `supabase/baselines/production-schema.sql`; isolated PostgreSQL CI replay added. Historical ledger-to-source filename reconciliation remains a separate item |
+| Auth redirect and Google OAuth on another host | **PARTIAL** | Google UI buttons are now disabled by default via `VITE_GOOGLE_OAUTH_ENABLED`; actual provider activation and non-Vercel redirect testing remain open because no Google OAuth provider credentials are configured and the Worker is not deployed yet |
+| Excess public table/default grants | **PASS — applied to both projects** | Production ledger `20261117165914`, Staging ledger `20261117174650`; post-apply queries found no excess grants; preserved public config SELECT and authenticated application DML |
+| Leaked Password Protection | **PLAN LIMITATION** | Available on Supabase Pro and above; the organization is Free. No billing-tier change was made |
+
+## 7. Change and safety record
+
+- Audited the source commit shown above. PR #74 remained open and unmerged at audit time.
+- PR #71 remained open and unmerged; its appointments schema is present in Staging only.
+- No application data was copied, transformed, deleted, or migrated.
+- No Supabase project was created, paused, restored, reconfigured, or replaced.
+- Production received one non-destructive privilege-hardening migration: revoke unnecessary `MAINTAIN`, `REFERENCES`, and `TRIGGER` privileges and remove those privileges from `postgres` default table grants. No rows or tables were modified or deleted. No Auth setting or secret was changed.
+- The only database writes attempted were synthetic Staging fixture operations inside rollback-only test transactions. Both tests passed, and post-test checks confirmed that no fixture rows or state changes remained.
+
+**Phase 1 disposition (updated 17 November 2026):** the Production least-privilege migration is applied and verified; Google OAuth UI is safely gated; Staging role tests and existing RLS audit pass. Canonical Production schema snapshot is now created with automated clean-room validation pending; historical migration ledger reconciliation, Cloudflare Worker deployment, cross-host Auth, actual Google provider activation, and authenticated two-clinic Realtime WebSocket verification remain open. Production backup/restore is explicitly risk-accepted as unavailable on the current plan, not passed.
+
+## 8. CI and dependency-security finding
+
+The latest completed PR check run for the branch reported:
+
+- `Types, lint, tests, build`: **PASS** — TypeScript, ESLint, unit tests, and production build all completed successfully.
+- `Supabase RLS policy static validation`: **PASS**.
+- `Vercel Preview Comments`: **PASS**.
+- `Gitleaks secret scan`: **PASS** after the workflow adjustment below.
+- `Dependency & secret scanning` job: **FAIL** only because OSV Scanner reports one High-severity lockfile advisory. The Gitleaks step itself passed; it is no longer skipped when OSV fails.
+
+The flagged package is `picomatch@4.0.7` (`GHSA-fc5q-39xc-vjpf`, `CVE-2026-112366`), a ReDoS issue involving crafted single-branch repeated extglob patterns. The lockfile contains one copy; it is pulled transitively through `fdir`, `tinyglobby`, `vite`, and `vitest`. `vite` and `vitest` are declared devDependencies, and no direct app-level `picomatch` import was found in the repository search. This reduces direct production-runtime exposure, but does not remove the dependency warning.
+
+The `package-lock.json` blob SHA is identical on `main` and this branch (`6c8debd6e379dc3555b00ad49fe4d7eee156602c`), so this finding predates Phase 1 and was not introduced by these changes.
+
+The advisory lists affected versions through 4.0.7 and no patched version. The upstream releases page still lists 4.0.7 as the latest release at this audit point. No override to an older version, unreviewed fork, or speculative patch was applied.
+
+The workflow now runs the pull-request base-history fetch and Gitleaks scan with `always()` so a dependency-scan failure cannot silently suppress the secret scan. The resulting Gitleaks execution completed successfully.
+
+
+
+## 8. Follow-up execution status — 17 November 2026
+
+The following live checks were repeated after the initial audit:
+
+- Production project `lhjyshlxbsnesayivxpb` and Staging project `dubevgijagqjgwcibqeo` both report `ACTIVE_HEALTHY`.
+- Production currently records migration version `20261117165914` (`revoke_excess_public_table_privileges`). Staging records the equivalent hardening as `20261117174650`. The ledgers therefore still differ; do not edit either remote migration ledger by hand or assume matching version IDs.
+- Production currently has 11 public application tables, all 11 with RLS enabled. Staging currently has 12, all 12 with RLS enabled; `appointments` remains Staging-only.
+- The canonical Production baseline is stored separately at `supabase/baselines/production-schema.sql`. It was rebuilt in an isolated PGlite/PostgreSQL engine by `scripts/validate-production-baseline.mjs`; CI verified 11 tables, 40 policies, 23 indexes, 19 routines, 2 triggers, 11 RLS-enabled tables, and 33 constraints. Supabase-managed Auth/Vault objects and the Realtime publication are explicitly stubbed/skipped in this local reconstruction test. This is a syntax/rebuild test, not a full restore drill into a fresh Supabase project.
+- The baseline is a reference artifact for a clean project. It must not be run against either existing project. The historical migration sequence has not been reconciled into a safe one-command fresh-install chain.
+- Latest PR validation: application type/lint/tests/build PASS; Worker bundle dry-run PASS; static RLS check PASS; baseline clean-room test PASS; Gitleaks PASS. OSV remains FAIL because the lockfile contains `picomatch@4.0.7` with advisory `GHSA-fc5q-39xc-vjpf` (CVSS 8.7); the scanner reports no fixed version. Do not suppress this finding or invent an override.
+- Cloudflare account access is connected and its `workers.dev` subdomain is `saaedbelal`. No `smart-diet-v2` Worker exists in that account yet. The repository has a manual deployment workflow, but deployment requires four GitHub Actions secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CF_COACH_PIN`, and `CF_SESSION_SECRET`. No secret values are recorded in this repository.
+- Worker validation is only a Wrangler dry-run. No live Worker endpoint or API smoke test has been completed.
+- Google Cloud's existing OAuth client is for Firebase; no Supabase-specific client/callback has been confirmed. Do not reuse or modify the Firebase client. Supabase Auth redirect allow-list and Google provider settings remain unverified.
+- The Realtime QA page is a test harness only. A direct authenticated WebSocket test between two independent clinic users has not yet passed and remains a closure gate.
+
+### Remaining closure gates
+
+1. Resolve the `picomatch` advisory when an upstream fixed release becomes available, then rerun OSV and all checks.
+2. Reconcile Production/Staging migration histories with repository migration files without fabricating ledger entries; keep the Staging-only appointments feature separate.
+3. Perform a full clean Supabase restore drill, including Auth/Vault prerequisites and Realtime publication verification.
+4. Complete authenticated Realtime isolation testing using two distinct Staging clinic accounts.
+5. Configure and verify Supabase Auth redirects and a dedicated Google OAuth client without touching Firebase.
+6. Add the four deployment secrets through GitHub's secret UI, run the manual Worker deployment, and verify health/API/auth/PWA behavior before any traffic cutover.
+

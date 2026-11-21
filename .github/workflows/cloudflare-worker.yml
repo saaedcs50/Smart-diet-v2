@@ -1,0 +1,52 @@
+name: Cloudflare Worker deployment
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and deploy Smart Diet to Cloudflare Workers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Validate Wrangler configuration
+        run: npx --yes wrangler@4.164.0 deploy --dry-run --outdir .wrangler-dry-run
+
+      - name: Set persistent coach PIN
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SECRET_VALUE: ${{ secrets.CF_COACH_PIN }}
+        run: |
+          test -n "$SECRET_VALUE" || { echo "Missing CF_COACH_PIN"; exit 1; }
+          printf '%s' "$SECRET_VALUE" | npx --yes wrangler@4.164.0 secret put COACH_PIN --config wrangler.jsonc
+
+      - name: Set coach session signing secret
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SECRET_VALUE: ${{ secrets.CF_SESSION_SECRET }}
+        run: |
+          test -n "$SECRET_VALUE" || { echo "Missing CF_SESSION_SECRET"; exit 1; }
+          printf '%s' "$SECRET_VALUE" | npx --yes wrangler@4.164.0 secret put SESSION_SECRET --config wrangler.jsonc
+
+      - name: Deploy Worker and static assets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4.164.0 deploy --config wrangler.jsonc

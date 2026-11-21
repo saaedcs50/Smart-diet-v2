@@ -40,9 +40,10 @@ const duplicateMigrationVersions = [...versionCounts.entries()]
   .filter(([, names]) => names.length > 1)
   .map(([version, names]) => version + ': ' + names.join(', '));
 
-// These versions were confirmed in the active Staging migration history.
-// Keep this snapshot in sync whenever a Staging migration is intentionally applied.
-const expectedStagingMigrations = [
+// Required canonical repository source files. These filenames are not a
+// comparison against the live Production or Staging version identifiers;
+// the per-project deployed ledgers are audited separately.
+const requiredMigrationSources = [
   '20261109061815_staging_schema_reconciliation.sql',
   '20261109062015_performance_policy_tuning.sql',
   '20261109063122_owner_atomic_operations.sql',
@@ -57,7 +58,7 @@ const expectedStagingMigrations = [
   '20261117140700_replace_legacy_push_tokens.sql',
   '20261117150000_harden_push_subscription_registration.sql',
 ];
-const missingStagingMigrations = expectedStagingMigrations
+const missingMigrationSources = requiredMigrationSources
   .filter((name) => !migrationFiles.includes(name));
 // Include additive migrations so newly introduced tables are checked too.
 const rlsManifest = allSql;
@@ -72,8 +73,8 @@ for (const name of invalidMigrationNames) {
 for (const duplicate of duplicateMigrationVersions) {
   failures.push('duplicate migration version: ' + duplicate);
 }
-for (const name of missingStagingMigrations) {
-  failures.push(name + ': Staging ledger migration is missing from the repository');
+for (const name of missingMigrationSources) {
+  failures.push(name + ': required migration source file is missing from the repository');
 }
 for (const table of requiredTables) {
   const rlsPattern = new RegExp(

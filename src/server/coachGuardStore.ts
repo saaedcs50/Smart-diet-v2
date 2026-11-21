@@ -1,8 +1,10 @@
 // ============================================================================
 // مخزن حارس جلسة الطبيبة: حدّ محاولات الـ PIN وإبطال الرموز.
 // ----------------------------------------------------------------------------
-// - الافتراضي مخزن في الذاكرة (للاختبارات والتطوير المحلي، وللإنتاج عند
-//   غياب Upstash) — بنفس سلوك الكود القديم: 5 محاولات ثم قفل 5 دقائق
+// - المخزن الافتراضي في الذاكرة للاختبارات والتطوير المحلي فقط.
+// - يمكن حقن مخزن دائم خاص بمنصة الاستضافة (مثل Cloudflare Durable Objects).
+// - مخزن Upstash Redis REST مدعوم أيضًا على الاستضافات الأخرى.
+// - سلوك المحاولات: 5 محاولات ثم قفل 5 دقائق
 //   يتضاعف حتى سقف 60 دقيقة.
 // - المخزن الدائم عبر Upstash Redis REST (fetch فقط، بلا SDK) يُفعَّل فقط
 //   عند وجود UPSTASH_REDIS_REST_URL وUPSTASH_REDIS_REST_TOKEN معًا.
@@ -12,6 +14,7 @@
 // ============================================================================
 
 import crypto from 'crypto';
+import { getServerRuntimeEnv } from './runtimeEnv.js';
 
 export const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 5 * 60 * 1000;
@@ -184,14 +187,22 @@ class UpstashCoachGuardStore implements CoachGuardStore {
 
 // --- الاختيار -----------------------------------------------------------------
 let store: CoachGuardStore | null = null;
+let injectedStore: CoachGuardStore | null = null;
+
+/** Inject a platform-native persistent store (e.g. Cloudflare Durable Objects). */
+export function configureCoachGuardStore(next: CoachGuardStore): void {
+  injectedStore = next;
+  store = null;
+}
 
 export function getCoachGuardStore(): CoachGuardStore {
+  if (injectedStore) return injectedStore;
   if (store) return store;
-  const url = (process.env.UPSTASH_REDIS_REST_URL || '').trim();
-  const token = (process.env.UPSTASH_REDIS_REST_TOKEN || '').trim();
+  const url = (getServerRuntimeEnv('UPSTASH_REDIS_REST_URL') || '').trim();
+  const token = (getServerRuntimeEnv('UPSTASH_REDIS_REST_TOKEN') || '').trim();
   if (url && token) {
     store = new UpstashCoachGuardStore(url, token);
-  } else if (process.env.NODE_ENV === 'production') {
+  } else if (getServerRuntimeEnv('NODE_ENV') === 'production') {
     // SDV2-SEC-003: الفشل المغلق في الإنتاج — لا نعود للذاكرة بصمت.
     // حدّ الذاكرة لا يعمل عبر نسخ Vercel المتعددة، فالسماح به يعطل الحماية.
     throw new GuardUnavailableError(
@@ -206,4 +217,5 @@ export function getCoachGuardStore(): CoachGuardStore {
 // للاختبارات فقط: إعادة الاختيار من متغيرات البيئة
 export function __resetCoachGuardStore(): void {
   store = null;
+  injectedStore = null;
 }

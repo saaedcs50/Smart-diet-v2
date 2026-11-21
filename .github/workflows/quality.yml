@@ -49,10 +49,11 @@ jobs:
             --lockfile=package-lock.json
 
       - name: Fetch pull request base history for secret scanning
-        if: github.event_name == 'pull_request'
+        if: ${{ always() && github.event_name == 'pull_request' }}
         run: git fetch --no-tags origin "${{ github.event.pull_request.base.sha }}"
 
       - name: Gitleaks secret scan
+        if: ${{ always() }}
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -74,3 +75,39 @@ jobs:
             exit 1
           fi
           echo "Edge Function source present in repo"
+
+  cloudflare-worker-validation:
+    name: Cloudflare Worker bundle validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build Vite assets
+        run: npm run build
+
+      - name: Validate Cloudflare Worker bundle without deployment
+        run: npx --yes wrangler@4.164.0 deploy --dry-run --outdir .wrangler-dry-run --config wrangler.jsonc
+
+  production-baseline-validation:
+    name: Production baseline clean-room validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install isolated PostgreSQL WASM validator
+        run: npm install --no-save --package-lock=false @electric-sql/pglite@0.5.16
+
+      - name: Rebuild and verify the canonical Production schema snapshot
+        run: node scripts/validate-production-baseline.mjs
