@@ -48,7 +48,17 @@ A comparison of the SQL bodies stored by Supabase shows matching statement MD5 v
 
 The stored statement hashes differ between environments for `add_patient_custom_tags` and `revoke_excess_public_table_privileges`. Staging also contains its earlier reconciliation/security sequence and the Staging-only appointments migrations; Production contains its legacy-alignment bridge.
 
-**This is useful reconciliation evidence, but it is not yet a verified source-to-live mapping.** The stored SQL for every ledger row still needs to be compared to the exact Git migration file, with environment-specific differences documented. Do not rename historical files, fabricate migration-history entries, replay the inventory-only baseline, or run a clean-room baseline against either live project.
+**Exact source-to-live comparison performed 21 Nov:** after trimming line endings, 9 of 13 candidate core migration files on `main` matched the live stored SQL text exactly. Four did not:
+- `consolidate_clinic_subscription_update_policy`: the live statement does not contain the extra `DROP POLICY IF EXISTS subscriptions_update_authorized` present in the current file.
+- `restrict_disabled_patient_auxiliary_access`: the live statement also changes the legacy `fcm_tokens` policy; that SQL is absent from the current file.
+- `replace_legacy_push_tokens`: the live stored statement is larger and begins with different SQL than the current candidate file.
+- `add_patient_custom_tags`: Production (479 characters) and Staging (326 characters) both differ from the 680-character current file and from each other.
+
+Additional environment/branch differences were confirmed:
+- `revoke_excess_public_table_privileges`: live Production (1,806 characters) and Staging (2,260) both differ from the 2,814-character PR #75 candidate file and from each other.
+- `allow_chromium_web_push_endpoints`: Staging's stored statement (2,350 characters) differs from the 2,492-character PR #76 candidate file. This is a separate notification fix, not a Phase 1 deliverable.
+
+Therefore **the migration source-to-live mapping is still not closed**. These differences are recorded, not auto-corrected: a migration file may represent a later intended version or an environment-specific adjustment, and replacing it blindly could misrepresent execution history. Do not rename historical files, fabricate migration-history entries, replay the inventory-only baseline, or run a clean-room baseline against either live project.
 
 ## 3. Remaining closure gates
 
