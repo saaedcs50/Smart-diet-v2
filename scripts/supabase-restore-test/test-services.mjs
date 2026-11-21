@@ -207,7 +207,10 @@ try {
     );
     if (rows[0]?.v === secretValue) pass('vault_create_and_read', 'secret round-tripped via Vault');
     else fail('vault_create_and_read', `read back ${JSON.stringify(rows[0]?.v)}`);
-    await pgClient.query(`SELECT vault.delete_secret($1)`, [secretName]);
+    // No cleanup: this is a throwaway database — the workflow stops the stack
+    // with --no-backup right after the tests. (An earlier version called
+    // vault.delete_secret(name) here; no such overload exists — the function
+    // takes a secret id — and the stray call crashed the run.)
   }
   {
     const { rows } = await pgClient.query(
