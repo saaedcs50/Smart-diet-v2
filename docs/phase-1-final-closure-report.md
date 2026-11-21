@@ -1,6 +1,10 @@
 # Phase 1 — Final Closure Report (PROMPT 6)
 
 **Date:** 21 November 2026 (execution 06:54–08:15 Cairo)
+**Updated:** 21 November 2026 (evening, Cairo) — C2 closed by product-owner decision
+(Google OAuth stays disabled; Email/Password is the approved auth method). See §7
+decision 5 and the change log (§9). No settings, credentials, or code were changed by
+this update — decision and documentation only.
 **Repository:** `saaedcs50/Smart-diet-v2`
 **Preview (Cloudflare Workers + Static Assets):** https://smart-diet-v2.saaedbelal.workers.dev
 (Staging only; deployment `daf4a7f7-cd88-4135-8663-344c716206b2`, 2026-11-21T05:14:22Z, 34 assets)
@@ -10,7 +14,7 @@
 this PR; §10 is the closure checklist this report judges against)
 **Prior disposition:** `docs/phase-1-closure-followup-2026-11-21.md` — NOT CLOSED, 4 gates open
 
-## Disposition: NOT CLOSED — hosting independence demonstrated; three close-out items remain
+## Disposition: NOT CLOSED — hosting independence demonstrated; two close-out items remain (C1, C3)
 
 Hosting independence is **demonstrated, not merely claimed**: the Cloudflare preview is live
 on the same Staging Supabase project, cross-clinic RLS isolation is proven by a live
@@ -21,17 +25,22 @@ schema was changed; no patient data moved to Cloudflare.
 
 The Phase 1 audit nevertheless stays **NOT CLOSED**, following the follow-up document's own
 pattern (a gate that remains open is reported OPEN with its blocker — closure is not
-faked). Three close-out items remain, each bounded and owned:
+faked). Two close-out items remain (C1 and C3), each bounded and owned. A third item, C2
+(Google OAuth), was closed on the evening of 21 November 2026 by an explicit
+product-owner decision: Google OAuth stays disabled for now, and Email/Password is the
+approved authentication method. C2 is closed **by decision, not by test** — Google
+sign-in was never enabled, tested, or configured (see §7 decision 5).
 
 | # | Close-out item | Owner | What closes it |
 |---|---|---|---|
 | C1 | **Gate 4 — disposable-Supabase restore test untested.** The PGlite drill proves both migration chains converge in real PostgreSQL 17, but a restore into a disposable Supabase project (Auth/Vault/Realtime prerequisites) was never run. | Next agent session | Run the baseline + chain restore in a disposable Supabase project and record the result |
-| C2 | **§10 item 9, Google half — Google OAuth disabled by design.** Email auth works on the test origin (proven live); Google sign-in is deliberately disabled on both projects and stays OPEN until its dedicated client credentials and callback are installed and verified. | سعيد (decision + client credentials) | Either enable Google OAuth on staging per the PROMPT 3 procedure, or record a standing decision to keep it disabled — either way the item is then closed by decision, not by default |
+| C2 | **CLOSED BY DECISION 2026-11-21 (evening) — Google OAuth stays disabled.** Product-owner decision (سعيد, in chat): Google OAuth is not required now; Email/Password is the approved authentication method. Google sign-in was never enabled or tested — this item is closed as an approved product decision, not as a verified feature. No client credentials were installed and no OAuth settings were changed. | سعيد (decided) | Closed; see §7 decision 5. Reopen only if a future decision requires Google sign-in |
 | C3 | **§10 item 11, live proof — full T1 two-account procedure not run.** The UID-isolation mechanism is proven in code (25 tests) and the observed account-switch behaviour matches (PROMPT 2 login tests), but the specified T1 procedure — create a recognisable marker entry as Patient A, switch to Patient B, confirm absence, switch back, confirm presence — was never executed. | Parent / browser session | Run T1 exactly as specified in the PROMPT 5 doc §9 |
 
-None of the three indicates a defect in the hosting independence. When all three are
-evidenced, update this disposition to CLOSED. §5 lists the full open-items register
-(20 items, including the three close-out items); §3 gives the §10 verdicts (15 PASS, 2 PARTIAL, 0 FAIL).
+Neither of the two remaining items indicates a defect in the hosting independence. When
+both are evidenced, update this disposition to CLOSED. §5 lists the full open-items
+register (20 items: 19 open + C2 closed by decision); §3 gives the §10 verdicts
+(15 PASS, 1 PARTIAL, 1 CLOSED BY DECISION, 0 FAIL).
 
 ## 1. What was done — per-prompt summary
 
@@ -45,7 +54,7 @@ merge on green CI → publish → delete merged branch). Every PR went through t
 | PROMPT 0 — Inspection | Verified main `d091a551`, both Supabase projects live, Cloudflare account, 28 migration files; received the implementation plan | (verification only) | Baseline established; PR #75 left open (red CI — pre-existing picomatch warning), never merged |
 | PROMPT 1 — Cloudflare preview | `docs/cloudflare-preview-deployment.md` + Worker + Hono API + `dist-cf/` build + CI workflow | #79 — `6587b05eab7e6931db9e0f59eb85acecdaa969b0` | Preview LIVE on `workers.dev` (Staging only). **Key finding (proven): Express 4.22.3 cannot run in a wrangler-bundled Worker** (iconv-lite bundle crash); Worker API runs Hono 4.13.16 with the session logic shared once in `src/server/coachSessionService.ts` |
 | PROMPT 2 — Realtime + login tests | Browser verification on the preview (no repo change) | (browser tasks, parent-run) | Realtime isolation PASS on runs 2 and 3 (own 1/1, cross 0/0); run 1 failed all-zero (unexplained flake — §2 gate 1). Login tests all PASS; owner profile fixed (`clinic_id='platform'`) and owner login verified |
-| PROMPT 3 — Auth + Google OAuth | `docs/auth-oauth-verification-2026-11-21.md` | #81 — `8f0171224b71d30fae10ac277ceb4d39d9649151` | Auth map = 3 mechanisms (`/platform` Supabase Auth, `/coach` PIN, QA harness). V1–V7 all PASS. `/login` resolved — not a route, not a bug. Google OAuth DISABLED by design, recorded OPEN |
+| PROMPT 3 — Auth + Google OAuth | `docs/auth-oauth-verification-2026-11-21.md` | #81 — `8f0171224b71d30fae10ac277ceb4d39d9649151` | Auth map = 3 mechanisms (`/platform` Supabase Auth, `/coach` PIN, QA harness). V1–V7 all PASS. `/login` resolved — not a route, not a bug. Google OAuth DISABLED by design, recorded OPEN (status superseded on the evening of 21 Nov — C2 closed by decision; see §7 decision 5) |
 | PROMPT 4 — Migration reconciliation | `docs/migration-reconciliation-2026-11-21.md` | #80 — `7ca8cd786b07a446963ed2393ac717d12428b410` | Main's 28 files CANNOT rebuild either environment from empty (bootstrap gap documented); given the documented legacy seed, both chains converge exactly (prod 16/16, staging 28/28). PGlite drill proves convergence in real PG 17; Docker definitively closed in this VM |
 | PROMPT 5 — Local data + PWA | `docs/local-data-pwa-verification-2026-11-21.md` | #82 — `21b978a5ff9bbb4068bf325e2562b6ef6fbb1541` | PRIV-001 mechanism real and fail-closed (UID namespace before render, 25 tests); PWA/SW exclusions proven in code; 6 defects documented, none fixed (D1 medium-low offline-precache risk; D6 logout-locks-doesn't-wipe limitation) |
 
@@ -60,14 +69,17 @@ from the Upstash console. No secret value appears in any repo file, log, or chat
 | Gate | Verdict | Evidence |
 |---|---|---|
 | **1. Authenticated Realtime browser test** | **CLOSED** | Two-clinic isolation test on the preview, 3 runs: run 1 FAIL (all four counts 0, no sign-in error — unexplained first-run flake), runs 2 and 3 PASS with the exact expected pattern (own 1/1, cross 0/0). Cross-clinic delivery was 0 in **all three** runs — the safety direction never failed. The flake is a reliability observation (O11), not a gate failure: the gate asked for a demonstrated test, and it is demonstrated twice |
-| **2. Alternate-origin Auth test** | **PARTIALLY CLOSED** — email ✓, Google OPEN by design | Email sign-in, sign-out, and session-restore all proven live on the preview (§3, item 9; Appendix C). `https://smart-diet-v2.saaedbelal.workers.dev/**` added to the Staging redirect allow-list (localhost kept; Site URL still `http://localhost:3000`; Production untouched). Google OAuth: provider disabled on both projects, no Client ID/secret configured — stays OPEN per the plan's rule (close-out item C2) |
+| **2. Alternate-origin Auth test** | **CLOSED** — email ✓ (proven live); Google closed by decision, not by test | Email sign-in, sign-out, and session-restore all proven live on the preview (§3, item 9; Appendix C). `https://smart-diet-v2.saaedbelal.workers.dev/**` added to the Staging redirect allow-list (localhost kept; Site URL still `http://localhost:3000`; Production untouched). Google OAuth: provider disabled on both projects, no Client ID/secret configured — CLOSED BY DECISION on the evening of 21 Nov 2026: the product owner decided Google OAuth stays disabled for now and Email/Password is the approved auth method (§7 decision 5). The gate's Google half is closed by decision, not by test — Google sign-in was never enabled or tested |
 | **3. Exact migration source mapping** | **CLOSED as a mapping exercise — with a recorded low-priority gap (O13)** | Every ledger record maps to a Git file or a named branch file with a verdict (PROMPT 4 §2–§3); the two known hash differences are explained (§5.4, §5.5); both chains converge in the clean-room drill given the documented seed. Live-vs-live byte-exactness is now closed by the MD5 follow-up (12 shared migrations byte-identical, 2 differ — Appendix A). Residual gap: byte-exact *file-vs-live* text comparison for 13 files (11 Nov-9 + 2 alignment) was never performed — version/name + drill end-state only. Low priority: end state, not text, is what a rebuild needs |
 | **4. Clean Supabase restore drill** | **OPEN** (close-out item C1) | PGlite 0.5.16 drill (real PostgreSQL 17) proves both chains converge given the documented seed, and the Production baseline validator passes. A restore into a disposable Supabase project — with Auth/Vault prerequisites and Realtime publication — was never run. Docker is definitively unusable in this VM (`runc create failed: setns: operation not permitted`), so the disposable-project test must run elsewhere or via the Supabase CLI against a throwaway project. The baseline snapshot remains a schema-only export, not a recoverable backup of patient data |
 
 ## 3. Plan §10 — 17-item closure checklist
 
 Quoted from the implementation plan §10 («لا يعتبر العمل مكتملًا إلا عند تحقق جميع الشروط
-التالية»). Verdicts: **15 PASS, 2 PARTIAL, 0 FAIL.**
+التالية»). Verdicts: **15 PASS, 1 PARTIAL, 1 CLOSED BY DECISION, 0 FAIL.**
+"CLOSED BY DECISION" (item 9 only) means the item is closed by an approved
+product-owner decision, not because the plan's literal condition was met — see the
+item's evidence line and §7 decision 5.
 
 | # | §10 condition (abridged) | Verdict | Evidence (one line; detail in the cited doc) |
 |---|---|---|---|
@@ -79,7 +91,7 @@ Quoted from the implementation plan §10 («لا يعتبر العمل مكتم�
 | 6 | Supabase URL + public key unchanged when switching frontend hosting | **PASS** | Same Staging project on both origins; staging ref present / production ref absent (0 matches) in all 10 live bundles (PROMPT 3, V1) |
 | 7 | No `service_role` or secret inside the browser bundle | **PASS** | `service_role` / `client_secret` / `apps.googleusercontent.com`: 0 matches in all 10 live bundles and 0 values in tracked source (PROMPT 3, V2) |
 | 8 | RLS blocks cross-clinic access in live tests | **PASS** | Realtime isolation test: cross-clinic delivery 0 in all 3 runs; own delivery 1/1 on runs 2–3 (run-1 flake: O11). RLS role-matrix script re-run against Staging 21 Nov without exception (follow-up §1) |
-| 9 | Email **and** Google auth work on the test origin | **PARTIAL** — email ✓, Google OPEN | Email sign-in / sign-out / session-restore proven live on the preview (Appendix C). Google: disabled by design on both projects, no credentials configured — recorded OPEN per the plan's rule (close-out item C2) |
+| 9 | Email **and** Google auth work on the test origin | **CLOSED BY DECISION** — email ✓, Google disabled by decision (not working, not tested) | Email sign-in / sign-out / session-restore proven live on the preview (Appendix C). Google: disabled on both projects, no credentials configured — and it stays that way by explicit product-owner decision (سعيد, in chat, evening of 21 Nov 2026): Google OAuth is not required now; Email/Password is the approved auth method. The plan's literal condition ("email AND Google work") is therefore NOT met — Google does not work and was never enabled or tested — but the item is closed as an approved product decision, not as a verified feature (§7 decision 5). No credentials were installed and no OAuth settings were changed |
 | 10 | Storage and Realtime work within user/clinic permissions | **PASS** | Storage: zero buckets by design (progress photos are local in IndexedDB — follow-up §1). Realtime: publication is `public.profiles` only, UID-filtered channels; isolation proven live (item 8) |
 | 11 | Local data is isolated by UID and does not appear after account switch | **PARTIAL** — code ✓, full live proof open | Mechanism proven in code (scope from persisted UID before render, in-memory clear on switch, binding gates; 25 tests). Observed switch behaviour matches (PROMPT 2: Patient B saw no Patient A data; sign-out shows the guest state). But the specified T1 procedure — with a recognisable marker entry — was never run, and both test accounts had zero cloud data, so the live check could not have detected a leak (close-out item C3) |
 | 12 | PWA shows no cache belonging to a previous account | **PASS in code** (live T3/T4 open — O3) | Structural, not behavioural: the SW cache can never contain per-account content — the fetch handler skips `/rest/`, `/auth/`, `/functions/`, `/api/`, all non-GET, and all cross-origin (Supabase) requests; navigation responses are the public shell. Live `/sw.js` is byte-identical to the repo file. Offline-reload / DevTools confirmation (T3/T4) was not run — phone/DevTools-only |
@@ -137,9 +149,9 @@ he can do it (his credentials, his phone, his decision).
 | ID | Item | Sev. | Owner | Next step |
 |---|---|---|---|---|
 | C1 | Gate 4: disposable-Supabase restore test untested (Auth/Vault/Realtime prerequisites stubbed in the PGlite drill) | Medium | Next agent session | Run the baseline + chain restore in a disposable Supabase project; record the result. Docker is unusable in this VM — run elsewhere or via the Supabase CLI |
-| C2 | §10 item 9, Google half: Google OAuth disabled by design on both projects; no Client ID/secret configured | Medium | سعيد | Decide: enable on staging (install dedicated client creds in Supabase → add workers.dev to the redirect allow-list → add the Supabase callback in Google Cloud → rebuild with `VITE_GOOGLE_OAUTH_ENABLED=true` → test staff sign-in) or record a standing decision to keep it disabled. Never reuse the Firebase client |
+| C2 | **CLOSED BY DECISION 2026-11-21 (evening)** — §10 item 9, Google half: Google OAuth stays disabled by explicit product-owner decision (سعيد, in chat). Email/Password is the approved authentication method. Google was never enabled or tested; no credentials were installed and no OAuth settings were changed | — | سعيد (decided) | Closed. Reopen only if a future decision requires Google sign-in; enabling would then follow the PROMPT 3 procedure (dedicated client creds in Supabase staging → workers.dev in the redirect allow-list → Supabase callback in Google Cloud → rebuild with `VITE_GOOGLE_OAUTH_ENABLED=true` → test staff sign-in). Never reuse the Firebase client |
 | C3 | §10 item 11, live proof: full T1 two-account procedure (marker entry, both directions) never run | Medium | Parent / browser | Run T1 exactly as specified in the PROMPT 5 doc §9, on the preview, with the staging test accounts |
-| O1 | (same as C2 — listed once) | — | — | — |
+| O1 | (same as C2 — closed by decision, see C2) | — | — | — |
 | O2 | D1 (Medium-Low): offline boot needs ≥2 prior online visits — precache omits the JS/CSS bundles and the HTTP cache is not a fallback (`Cache-Control: public, max-age=0, must-revalidate` on every preview response). First-visit-offline and post-eviction boot fail. No data risk | Medium | Next dev task | Decide: accept the ≥2-visit requirement, or fix (build-time precache manifest and/or immutable `/assets/*` headers). Fix locations: `public/sw.js`, `wrangler.jsonc`, `vite.config.ts` |
 | O3 | T3/T4/T5 live proof: offline reload, DevTools SW/cache inspection, install prompt on real Android Chrome — not doable in cloud-browser tooling (no offline toggle/DevTools) | Low | سعيد (phone) | On his Android phone: load the preview twice, go offline, reload (T3); check the install prompt (T5). T4 needs DevTools via remote debugging — optional |
 | O4 | `/coach` correct-PIN unlock on the preview untested by us (wrong PIN 403 proven; correct PIN is his) | Low | سعيد | Confirm `/coach` unlocks with the real PIN on the preview |
@@ -203,13 +215,29 @@ Recorded here so a future reader does not inherit the errors:
    end-state-identical diffs (§5.1–§5.3 of the PROMPT 4 doc) are history, not defects.
    The one genuine defect (§5.5) is recorded as a documentation gap (O7), not repaired
    by rewriting history.
+5. **Google OAuth stays disabled — approved product decision (21 November 2026,
+   evening).** The product owner (سعيد) decided in chat that Google OAuth is not
+   required now: it stays DISABLED, and Email/Password is the approved authentication
+   method. Close-out item C2 is therefore **CLOSED BY DECISION — not by test**.
+   Nothing was enabled, tested, or configured: no client credentials were created or
+   installed, no OAuth settings were changed, and the provider remains disabled on
+   both Supabase projects with `VITE_GOOGLE_OAUTH_ENABLED=false` in the preview
+   build. The PROMPT 3 doc's §3 record (Google OPEN by design as of the morning of
+   21 Nov) is a correct point-in-time verification; this report supersedes its
+   *status*, not its evidence — the PROMPT 3 doc itself is left unchanged as the
+   morning record, with a one-line pointer to this decision. If a future decision
+   requires Google sign-in, enabling follows the PROMPT 3 procedure (dedicated
+   client, staging first, never the Firebase client). §10 item 9 is CLOSED BY
+   DECISION on the same basis: email ✓ (proven live), Google disabled by decision
+   (not working, not tested) — the plan's literal "email AND Google work" condition
+   is not met, and this report does not claim otherwise.
 
 ## 8. Evidence index
 
 | Claim | Source |
 |---|---|
 | Preview live, deployment, assets, Hono decision, Express impossibility proof | `docs/cloudflare-preview-deployment.md` (PROMPT 1) |
-| Auth map (3 mechanisms), V1–V7, `/login` resolution, Google OPEN | `docs/auth-oauth-verification-2026-11-21.md` (PROMPT 3) |
+| Auth map (3 mechanisms), V1–V7, `/login` resolution, Google OPEN by design as of the morning of 21 Nov — status superseded by the evening decision (§7.5) | `docs/auth-oauth-verification-2026-11-21.md` (PROMPT 3) |
 | Migration ledger maps, drift resolutions, PGlite drill, ordered chains | `docs/migration-reconciliation-2026-11-21.md` (PROMPT 4) |
 | PRIV-001 8 steps, PWA/SW audit, D1–D6, T1–T6 procedures | `docs/local-data-pwa-verification-2026-11-21.md` (PROMPT 5) |
 | The 4 gates, prior NOT CLOSED disposition, RLS role-matrix re-run | `docs/phase-1-closure-followup-2026-11-21.md` |
@@ -225,6 +253,13 @@ claims verified independently in this prompt are: the harness has no "owner sani
 (§6.1), `api/index.ts` is a thin adapter (§3 item 3), and the `/tmp/drill` harness no
 longer exists (O14). Every other claim is traced to its source doc or appendix above;
 nothing in this report is asserted without a cited source.
+
+## 9. Change log
+
+| Date (Cairo) | Change | Why | Evidence |
+|---|---|---|---|
+| 2026-11-21 (morning, 06:54–08:15) | Report created (PROMPT 6, PR #83) | Phase 1 closure assessment against the plan's §10 checklist | The four prompt deliverables + the parent's browser-task results (§8) |
+| 2026-11-21 (evening) | C2 CLOSED BY DECISION; disposition updated to two remaining close-out items (C1, C3); §10 item 9 → CLOSED BY DECISION; gate 2 → CLOSED (Google half by decision, not by test); §7 decision 5 added; PROMPT 3 doc given a one-line pointer to this decision | Product-owner decision (سعيد, in chat): Google OAuth stays disabled for now; Email/Password is the approved authentication method | Decision only — no settings, credentials, code, or OAuth configuration changed; the provider remains disabled on both Supabase projects and the preview build flag stays `false` |
 
 ## Appendix A — Live migration statement hashes (2026-11-21 ~08:05)
 
