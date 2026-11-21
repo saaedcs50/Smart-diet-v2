@@ -1,0 +1,1 @@
+{"$schema":"node_modules/wrangler/config-schema.json","assets":{"binding":"ASSETS","directory":"./dist-cf","not_found_handling":"single-page-application","run_worker_first":["/api/*","/health","/coach-session"]},"compatibility_date":"2026-11-21","compatibility_flags":["nodejs_compat"],"main":"./cloudflare-worker.mjs","name":"smart-diet-v2","observability":{"enabled":true}}
