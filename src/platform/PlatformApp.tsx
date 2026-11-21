@@ -19,7 +19,7 @@
 // ============================================================================
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { PlatformAuthProvider, usePlatformAuth } from './auth';
+import { PlatformAuthProvider, usePlatformAuth, isGoogleOAuthEnabled } from './auth';
 import { isSupabaseConfigured } from './supabase';
 import {
   assignPatientCoach,
@@ -580,9 +580,11 @@ function LoginForm() {
         >
           نسيت كلمة المرور؟
         </button>
-        <button className={ghostButtonClass} type="button" onClick={google} disabled={busy}>
-          دخول Google — للطاقم
-        </button>
+        {isGoogleOAuthEnabled() && (
+          <button className={ghostButtonClass} type="button" onClick={google} disabled={busy}>
+            دخول Google — للطاقم
+          </button>
+        )}
         <button
           className={ghostButtonClass}
           type="button"
@@ -773,9 +775,11 @@ function RegisterForm({ invitedEmail }: { invitedEmail?: string }) {
         <button className={buttonClass} type="submit" disabled={busy}>
           إنشاء الحساب
         </button>
-        <button className={ghostButtonClass} type="button" onClick={google} disabled={busy}>
-          إنشاء حساب طاقم عبر Google
-        </button>
+        {isGoogleOAuthEnabled() && (
+          <button className={ghostButtonClass} type="button" onClick={google} disabled={busy}>
+            إنشاء حساب طاقم عبر Google
+          </button>
+        )}
         <p className="text-xs text-slate-500">
           دعوات المرضى بالبريد وكلمة المرور فقط — زر Google للطاقم فقط،
           ودعوة مريض عبره ستُرفض.
