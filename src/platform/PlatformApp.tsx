@@ -70,6 +70,8 @@ import { PatientTagsEditor } from './PatientTagsEditor';
 import { AppointmentsSection } from './AppointmentsSection';
 import { PatientFollowUpQueue } from './PatientFollowUpQueue';
 import type { PatientFollowUpCandidate } from './patientFollowUpQueue';
+import { ClinicActivityFeed } from './ClinicActivityFeed';
+import { buildClinicActivityFeed } from './clinicActivityFeed';
 import { EmptyState } from '../components/EmptyState';
 import { InvitationManager } from './InvitationManager';
 import type { PatientTag } from './patientTags';
@@ -1636,6 +1638,19 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     coach.uid,
     coach.doc.displayName ?? coach.doc.email ?? 'طبيب',
   ]));
+  const activityFeedEvents = buildClinicActivityFeed(
+    patients.map(({ uid: patientUid, doc }) => ({
+      uid: patientUid,
+      name: doc.profile.clientName ?? 'مريض',
+      assignedDoctorUid: doc.invitedBy,
+      createdAt: doc.createdAt,
+      planUpdatedAt: doc.planUpdatedAt,
+      planUpdatedBy: doc.planUpdatedBy,
+    })),
+    activity,
+    doctorNameByUid,
+    12,
+  );
   const followUpCandidates: PatientFollowUpCandidate[] = patients.map((patient) => ({
     uid: patient.uid,
     name: patient.doc.profile.clientName ?? 'مريض',
@@ -1680,6 +1695,12 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         candidates={followUpCandidates}
         loading={loading}
         error={progressError}
+        onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
+      />
+      <ClinicActivityFeed
+        events={activityFeedEvents}
+        loading={loading}
+        error={activityError}
         onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
       />
       <RecentActivityCard
@@ -1906,6 +1927,20 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const coachCompletion7d = meanMetric(coachProgressRows.map((item) => item.completion7d));
   const coachMeanWeightChange = meanMetric(coachProgressRows.map((item) => item.weightChangeKg));
   const coachMetricsAvailable = !loading && !progressError;
+  const doctorNameByUid = new Map([[uid, doctorName]]);
+  const activityFeedEvents = buildClinicActivityFeed(
+    patients.map(({ uid: patientUid, doc }) => ({
+      uid: patientUid,
+      name: doc.profile.clientName ?? 'مريض',
+      assignedDoctorUid: doc.invitedBy,
+      createdAt: doc.createdAt,
+      planUpdatedAt: doc.planUpdatedAt,
+      planUpdatedBy: doc.planUpdatedBy,
+    })),
+    activity,
+    doctorNameByUid,
+    12,
+  );
   const followUpCandidates: PatientFollowUpCandidate[] = patients.map((patient) => ({
     uid: patient.uid,
     name: patient.doc.profile.clientName ?? 'مريض',
@@ -1946,6 +1981,12 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         candidates={followUpCandidates}
         loading={loading}
         error={progressError}
+        onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
+      />
+      <ClinicActivityFeed
+        events={activityFeedEvents}
+        loading={loading}
+        error={activityError}
         onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
       />
       <RecentActivityCard
