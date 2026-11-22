@@ -6,8 +6,10 @@ import {
   appointmentStatusLabel,
   appointmentVisitTypeLabel,
   buildAppointmentTimeRange,
+  getClinicMonthRange,
   getClinicWeekRange,
   localDateKey,
+  summarizeAppointmentStatuses,
   toDateTimeLocalValue,
   type AppointmentChannel,
   type AppointmentStatus,
@@ -77,6 +79,7 @@ export function AppointmentsSection({
   providers,
 }: AppointmentsSectionProps) {
   const weekRange = useMemo(() => getClinicWeekRange(), []);
+  const monthRange = useMemo(() => getClinicMonthRange(), []);
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
   const [view, setView] = useState<AppointmentView>('today');
   const [loading, setLoading] = useState(true);
@@ -102,11 +105,11 @@ export function AppointmentsSection({
     [patients],
   );
   const providerNames = useMemo(
-    () => new Map(activeProviders.map((provider) => [
+    () => new Map(providers.map((provider) => [
       provider.uid,
       provider.doc.displayName ?? provider.doc.email ?? 'طبيب',
     ])),
-    [activeProviders],
+    [providers],
   );
 
   useEffect(() => {
@@ -120,8 +123,8 @@ export function AppointmentsSection({
     setError(null);
     try {
       const data = await listAppointments(
-        weekRange.start.toISOString(),
-        weekRange.end.toISOString(),
+        monthRange.start.toISOString(),
+        monthRange.end.toISOString(),
       );
       setAppointments(data);
     } catch (caught) {
@@ -130,20 +133,33 @@ export function AppointmentsSection({
     } finally {
       setLoading(false);
     }
-  }, [weekRange]);
+  }, [monthRange]);
 
   useEffect(() => {
     void refresh();
   }, [refresh, reloadKey]);
 
   const todayKey = localDateKey(new Date());
-  const todayAppointments = appointments.filter((item) => localDateKey(new Date(item.starts_at)) === todayKey);
-  const unconfirmedCount = appointments.filter((item) => item.status === 'scheduled').length;
-  const visibleAppointments = appointments.filter((item) => {
+  const weekAppointments = appointments.filter((item) => {
+    const startsAt = new Date(item.starts_at).getTime();
+    return startsAt >= weekRange.start.getTime() && startsAt < weekRange.end.getTime();
+  });
+  const todayAppointments = weekAppointments.filter((item) => localDateKey(new Date(item.starts_at)) === todayKey);
+  const unconfirmedCount = weekAppointments.filter((item) => item.status === 'scheduled').length;
+  const visibleAppointments = weekAppointments.filter((item) => {
     if (view === 'today') return localDateKey(new Date(item.starts_at)) === todayKey;
     if (view === 'unconfirmed') return item.status === 'scheduled';
     return true;
   });
+  const monthSummary = summarizeAppointmentStatuses(appointments);
+  const providerSummaries = providers.map((provider) => ({
+    uid: provider.uid,
+    name: providerNames.get(provider.uid) ?? 'طبيب',
+    disabled: provider.doc.disabled,
+    summary: summarizeAppointmentStatuses(
+      appointments.filter((item) => item.provider_id === provider.uid),
+    ),
+  }));
 
   const resetForm = () => {
     setEditing(null);
@@ -251,7 +267,7 @@ export function AppointmentsSection({
         <div>
           <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">مواعيد العيادة</h2>
           <p className="mt-1 text-xs text-slate-500">
-            نطاق هذا الأسبوع (السبت إلى الجمعة). الحجوزات مرتبطة بمرضى وطبيب من عيادتك فقط.
+            قائمة هذا الأسبوع (السبت إلى الجمعة)، مع ملخص نتائج المواعيد للشهر الحالي. البيانات ضمن نطاق صلاحيات عيادتك.
           </p>
         </div>
         <button type="button" className={buttonClass} disabled={!canCreate} onClick={openCreate}>
@@ -266,13 +282,80 @@ export function AppointmentsSection({
         </div>
         <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
           <p className="text-[11px] text-slate-500">هذا الأسبوع</p>
-          <p className="mt-1 text-xl font-black tabular-nums">{appointments.length}</p>
+          <p className="mt-1 text-xl font-black tabular-nums">{weekAppointments.length}</p>
         </div>
         <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
           <p className="text-[11px] text-slate-500">بانتظار التأكيد</p>
           <p className="mt-1 text-xl font-black tabular-nums">{unconfirmedCount}</p>
         </div>
       </div>
+
+      <section className="mt-4 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">ملخص المواعيد — الشهر الحالي</h3>
+          {!loading && <span className="text-[11px] text-slate-500">{monthSummary.total} موعدًا</span>}
+        </div>
+        {loading ? (
+          <p className="mt-2 text-xs text-slate-500">جارٍ حساب مؤشرات الشهر…</p>
+        ) : error ? (
+          <p className="mt-2 text-xs text-slate-500">المؤشرات غير متاحة بسبب تعذّر تحميل المواعيد.</p>
+        ) : (
+          <>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              {[
+                ['مواعيد قادمة', monthSummary.upcoming],
+                ['مكتملة', monthSummary.completed],
+                ['ملغاة', monthSummary.cancelled],
+                ['لم يحضر', monthSummary.noShow],
+                ['معدل الحضور', monthSummary.attendanceRate == null ? '—' : monthSummary.attendanceRate + '%'],
+                ['معدل الإلغاء', monthSummary.cancellationRate == null ? '—' : monthSummary.cancellationRate + '%'],
+                ['معدل عدم الحضور', monthSummary.noShowRate == null ? '—' : monthSummary.noShowRate + '%'],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-800">
+                  <p className="text-[10px] text-slate-500">{label}</p>
+                  <p className="mt-1 text-lg font-black tabular-nums text-slate-900 dark:text-slate-100">{value}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-[10px] leading-5 text-slate-500">
+              معدل الحضور وعدم الحضور محسوب من المواعيد المنتهية فقط، مع استبعاد الملغاة. معدل الإلغاء من إجمالي مواعيد الشهر.
+            </p>
+            {role === 'admin' && providers.length > 0 && (
+              <div className="mt-4 overflow-x-auto">
+                <h4 className="mb-2 text-xs font-bold text-slate-700 dark:text-slate-200">المواعيد حسب الطبيب</h4>
+                <table className="min-w-[560px] w-full border-collapse text-right text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 dark:border-slate-700">
+                      <th className="px-2 py-2">الطبيب</th>
+                      <th className="px-2 py-2">إجمالي</th>
+                      <th className="px-2 py-2">مكتملة</th>
+                      <th className="px-2 py-2">ملغاة</th>
+                      <th className="px-2 py-2">لم يحضر</th>
+                      <th className="px-2 py-2">الحضور</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {providerSummaries.map((item) => (
+                      <tr key={item.uid} className="border-b border-slate-100 dark:border-slate-800">
+                        <td className="px-2 py-2 font-bold">
+                          {item.name}{item.disabled ? ' (موقوف)' : ''}
+                        </td>
+                        <td className="px-2 py-2 tabular-nums">{item.summary.total}</td>
+                        <td className="px-2 py-2 tabular-nums">{item.summary.completed}</td>
+                        <td className="px-2 py-2 tabular-nums">{item.summary.cancelled}</td>
+                        <td className="px-2 py-2 tabular-nums">{item.summary.noShow}</td>
+                        <td className="px-2 py-2 tabular-nums">
+                          {item.summary.attendanceRate == null ? '—' : item.summary.attendanceRate + '%'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </section>
 
       <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="فلترة المواعيد">
         {([
