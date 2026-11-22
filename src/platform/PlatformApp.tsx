@@ -68,6 +68,7 @@ import { countSkippedPatientMeals, summarizePatientDayLog } from './patientDashb
 import { PatientProgressCharts } from './PatientProgressCharts';
 import { PatientTagsEditor } from './PatientTagsEditor';
 import { AppointmentsSection } from './AppointmentsSection';
+import { PatientAppointmentsPanel } from './PatientAppointmentsPanel';
 import { PatientFollowUpQueue } from './PatientFollowUpQueue';
 import type { PatientFollowUpCandidate } from './patientFollowUpQueue';
 import { ClinicActivityFeed } from './ClinicActivityFeed';
@@ -1323,6 +1324,7 @@ function PatientDetail({
           />
         )}
       </Card>
+      {!isStaffView && <PatientAppointmentsPanel patientUid={patientUid} />}
       <PatientProgressCharts entries={entries} plan={plan} />
       <Card>
         <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
