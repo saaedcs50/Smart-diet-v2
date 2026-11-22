@@ -1826,7 +1826,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         clinicId={clinicId}
         uid={uid}
         role="admin"
-        patients={patients}
+        patients={activePatients}
         providers={coaches}
       />
       <StaffTasksSection
@@ -1855,7 +1855,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
       <RecentActivityCard
         title="آخر نشاط المرضى"
         activity={activity}
-        patientByUid={new Map(patients.map((patient) => [
+        patientByUid={new Map(activePatients.map((patient) => [
           patient.uid,
           { name: patient.doc.profile.clientName, plan: patient.doc.plan },
         ]))}
@@ -1980,12 +1980,16 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         {progressError && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">تعذّر تحميل مؤشرات النشاط: {progressError}</p>}
         {!loading && !error && visiblePatients.length === 0 && (
           <EmptyState
-            title={patientQuery.trim() || patientPlanFilter !== 'all' || patientActivityFilter !== 'all'
-              ? 'لا توجد نتائج مطابقة'
-              : 'لا يوجد مرضى في هذا العرض'}
-            description={patientQuery.trim() || patientPlanFilter !== 'all' || patientActivityFilter !== 'all'
-              ? 'غيّر كلمات البحث أو أعد ضبط مرشحات الخطة والنشاط.'
-              : 'سيظهر المرضى هنا بعد التسجيل بدعوة وربطهم بالعيادة.'}
+            title={showArchivedPatients
+              ? 'لا توجد ملفات مؤرشفة'
+              : patientQuery.trim() || patientPlanFilter !== 'all' || patientActivityFilter !== 'all'
+                ? 'لا توجد نتائج مطابقة'
+                : 'لا توجد ملفات نشطة'}
+            description={showArchivedPatients
+              ? 'لم تُؤرشف ملفات في هذه العيادة بعد.'
+              : patientQuery.trim() || patientPlanFilter !== 'all' || patientActivityFilter !== 'all'
+                ? 'غيّر كلمات البحث أو أعد ضبط مرشحات الخطة والنشاط.'
+                : 'ستظهر الملفات النشطة بعد التسجيل بدعوة وربطها بالعيادة.'}
             className="mt-3"
           />
         )}
@@ -2231,14 +2235,20 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل عملائي…</p>}
         {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
         {progressError && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">تعذّر تحميل مؤشرات النشاط: {progressError}</p>}
-        {!loading && !error && patients.length === 0 && (
+        {!loading && !error && patientsInArchiveView.length === 0 && (
           <EmptyState
-            title="لا يوجد عملاء بعد"
-            description="أنشئ دعوة لمريضك الأول من النموذج أدناه؛ وسيظهر هنا بعد التسجيل."
+            title={showArchivedPatients
+              ? 'لا توجد ملفات مؤرشفة'
+              : patients.length === 0 ? 'لا يوجد عملاء بعد' : 'لا توجد ملفات نشطة'}
+            description={showArchivedPatients
+              ? 'لم تُؤرشف ملفات بعد.'
+              : patients.length === 0
+                ? 'أنشئ دعوة لمريضك الأول من النموذج أدناه؛ وسيظهر هنا بعد التسجيل.'
+                : 'كل الملفات المسندة إليك مؤرشفة حاليًا. افتح الأرشيف لاستعادتها.'}
             className="mt-3"
           />
         )}
-        {!loading && !error && patients.length > 0 && visiblePatients.length === 0 && (
+        {!loading && !error && patientsInArchiveView.length > 0 && visiblePatients.length === 0 && (
           <EmptyState
             title="لا توجد نتائج مطابقة"
             description="غيّر كلمات البحث أو أعد ضبط مرشحات الخطة والنشاط."
