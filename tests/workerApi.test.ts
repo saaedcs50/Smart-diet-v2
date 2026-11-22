@@ -146,6 +146,32 @@ describe('cloudflare worker — hono api', () => {
     });
   });
 
+  it('returns a safe JSON 404 for unknown API paths', async () => {
+    const res = await call('/api/not-a-real-route');
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({
+      ok: false,
+      error: 'المسار غير موجود.',
+    });
+  });
+
+  it('rejects JSON bodies larger than 200 KiB', async () => {
+    const body = JSON.stringify({ pin: 'x'.repeat(210 * 1024) });
+    const res = await call('/api/coach-session', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'CF-Connecting-IP': '10.0.0.17',
+      },
+      body,
+    });
+    expect(res.status).toBe(413);
+    expect(await res.json()).toEqual({
+      ok: false,
+      error: 'حجم الطلب أكبر من المسموح.',
+    });
+  });
+
   it('routes work with and without the /api prefix', async () => {
     const res = await call('/coach-session', {
       method: 'POST',
