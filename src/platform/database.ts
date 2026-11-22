@@ -87,7 +87,7 @@ export interface ClinicDoc {
 export interface PatientDoc {
   clinicId: string;
   profile: { clientName: string };
-  whatsappPhone?: string;
+  whatsappPhone?: string | null;
   whatsappConsentAt?: string | null;
   whatsappConsentBy?: string | null;
   plan?: PlanConfig;
