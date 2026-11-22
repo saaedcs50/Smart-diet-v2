@@ -52,9 +52,11 @@ apiRouter.delete('/coach-session', handleDeleteSession);
 apiRouter.delete('/api/coach-session', handleDeleteSession);
 
 // Keep unknown API routes on a predictable JSON contract across runtimes.
-apiRouter.all('/api/*', (_req: Request, res: Response) => {
+const handleApiNotFound = (_req: Request, res: Response) => {
   res.status(404).json({ ok: false, error: 'المسار غير موجود.' });
-});
+};
+apiRouter.all('/api', handleApiNotFound);
+apiRouter.all('/api/*', handleApiNotFound);
 
 // Never return parser details or stack traces to API clients.
 apiRouter.use(
