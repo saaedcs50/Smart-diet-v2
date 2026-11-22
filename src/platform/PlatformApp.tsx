@@ -72,6 +72,8 @@ import { AppointmentsSection } from './AppointmentsSection';
 import { StaffTasksSection } from './StaffTasksSection';
 import { PatientAppointmentsPanel } from './PatientAppointmentsPanel';
 import { PatientQuickHubDock } from './PatientQuickHub';
+import { PatientArchiveButton } from './PatientArchiveButton';
+import { filterPatientsByArchiveView } from './patientArchiveUtils';
 import { addPatientHub, removePatientHub } from './patientHubUtils';
 import { PatientIntakeSection } from './PatientIntakeSection';
 import { PatientReflectionsSection } from './PatientReflectionsSection';
@@ -1650,6 +1652,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   const [quickHubUids, setQuickHubUids] = useState<string[]>([]);
   const openQuickHub = (patientUid: string) => setQuickHubUids((current) => addPatientHub(current, patientUid));
   const closeQuickHub = (patientUid: string) => setQuickHubUids((current) => removePatientHub(current, patientUid));
+  const [showArchivedPatients, setShowArchivedPatients] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -1668,7 +1671,8 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         setPatients(entries);
         setError(null);
         try {
-          const recent = await listRecentDayLogDetails(entries.map((entry) => entry.uid), 8);
+          const activeEntries = entries.filter((entry) => !entry.doc.archivedAt);
+          const recent = await listRecentDayLogDetails(activeEntries.map((entry) => entry.uid), 8);
           if (!cancelled) setActivity(recent);
         } catch (caught: unknown) {
           if (!cancelled) setActivityError(errorText(caught));
@@ -1691,17 +1695,19 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     };
   }, [clinicId, reloadKey]);
 
+  const activePatients = filterPatientsByArchiveView(patients, 'active');
+  const patientsInArchiveView = filterPatientsByArchiveView(patients, showArchivedPatients ? 'archived' : 'active');
   const summary = summarizeDoctors(
     coaches.map((coach) => ({
       uid: coach.uid,
       displayName: coach.doc.displayName,
       email: coach.doc.email,
     })),
-    patients.map((patient) => ({ uid: patient.uid, invitedBy: patient.doc.invitedBy })),
+    activePatients.map((patient) => ({ uid: patient.uid, invitedBy: patient.doc.invitedBy })),
   );
   const coachUids = new Set(coaches.map((coach) => coach.uid));
   const visiblePatients = filterAndSortPatients(
-    patients.filter((patient) => {
+    patientsInArchiveView.filter((patient) => {
       if (filter === 'all') return true;
       if (filter === 'unassigned') {
         return !patient.doc.invitedBy || !coachUids.has(patient.doc.invitedBy);
@@ -1729,23 +1735,23 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     }
   };
 
-  const patientsWithPlan = patients.filter((patient) => Boolean(patient.doc.plan)).length;
+  const patientsWithPlan = activePatients.filter((patient) => Boolean(patient.doc.plan)).length;
   const activeDoctors = coaches.filter((coach) => !coach.doc.disabled).length;
-  const progressRows = patients.map((patient) => progressByUid[patient.uid]).filter(Boolean);
+  const progressRows = activePatients.map((patient) => progressByUid[patient.uid]).filter(Boolean);
   const activePatients30 = progressRows.filter((item) => item.hasLogWithin30Days).length;
   const followUpPatients = progressRows.filter((item) => item.needsFollowUp).length;
-  const newPatientFiles7 = patients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 7)).length;
-  const newPatientFiles30 = patients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 30)).length;
+  const newPatientFiles7 = activePatients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 7)).length;
+  const newPatientFiles30 = activePatients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 30)).length;
   const loggedToday = progressRows.filter((item) => item.daysSinceLastLog === 0).length;
   const loggedThisWeek = progressRows.filter((item) => item.daysSinceLastLog != null && item.daysSinceLastLog <= 6).length;
   const clinicCompletion7d = meanMetric(progressRows.map((item) => item.completion7d));
   const clinicWeightProgress = meanMetric(progressRows.map((item) => item.weightTargetProgressPercent));
   const clinicLatestProgressAvailable = !loading && !progressError;
-  const loggedTodayRate = patients.length ? Math.round((loggedToday / patients.length) * 100) : null;
-  const loggedWeekRate = patients.length ? Math.round((loggedThisWeek / patients.length) * 100) : null;
+  const loggedTodayRate = activePatients.length ? Math.round((loggedToday / activePatients.length) * 100) : null;
+  const loggedWeekRate = activePatients.length ? Math.round((loggedThisWeek / activePatients.length) * 100) : null;
 
   const doctorMetrics = summary.perDoctor.map((doctor) => {
-    const assignedPatients = patients.filter((patient) => patient.doc.invitedBy === doctor.uid);
+    const assignedPatients = activePatients.filter((patient) => patient.doc.invitedBy === doctor.uid);
     const assignedProgress = assignedPatients
       .map((patient) => progressByUid[patient.uid])
       .filter(Boolean);
@@ -1769,7 +1775,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     coach.doc.displayName ?? coach.doc.email ?? 'طبيب',
   ]));
   const activityFeedEvents = buildClinicActivityFeed(
-    patients.map(({ uid: patientUid, doc }) => ({
+    activePatients.map(({ uid: patientUid, doc }) => ({
       uid: patientUid,
       name: doc.profile.clientName ?? 'مريض',
       assignedDoctorUid: doc.invitedBy,
@@ -1781,7 +1787,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     doctorNameByUid,
     12,
   );
-  const followUpCandidates: PatientFollowUpCandidate[] = patients.map((patient) => ({
+  const followUpCandidates: PatientFollowUpCandidate[] = activePatients.map((patient) => ({
     uid: patient.uid,
     name: patient.doc.profile.clientName ?? 'مريض',
     progress: progressByUid[patient.uid] ?? null,
@@ -1796,13 +1802,13 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     <div className="flex flex-col gap-4">
       <SubscriptionCard clinicId={clinicId} />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-        <DashboardMetric label="إجمالي المرضى" value={loading ? '—' : patients.length} note="مرضى العيادة ضمن RLS" />
+        <DashboardMetric label="الملفات النشطة" value={loading ? '—' : activePatients.length} note="المرضى غير المؤرشفين" />
         <DashboardMetric label="الأطباء النشطون" value={loading ? '—' : activeDoctors} note="حسابات طبيب غير معطّلة" />
         <DashboardMetric label="المرضى النشطون" value={clinicLatestProgressAvailable ? activePatients30 : '—'} note="لديهم سجل خلال آخر 30 يومًا" />
         <DashboardMetric label="ملفات جديدة (7 / 30 يومًا)" value={clinicLatestProgressAvailable ? `${newPatientFiles7} / ${newPatientFiles30}` : '—'} note="حسب إنشاء سجل المريض؛ ليس تاريخ قبول الدعوة" />
         <DashboardMetric label="خطط سحابية" value={loading ? '—' : patientsWithPlan} note="مرضى لديهم خطة محفوظة" />
-        <DashboardMetric label="سجّلوا اليوم" value={clinicLatestProgressAvailable ? `${loggedTodayRate ?? 0}%` : '—'} note={clinicLatestProgressAvailable ? `${loggedToday} من ${patients.length} مريضًا` : 'تعذّر تحميل المؤشرات'} />
-        <DashboardMetric label="سجّلوا آخر 7 أيام" value={clinicLatestProgressAvailable ? `${loggedWeekRate ?? 0}%` : '—'} note={clinicLatestProgressAvailable ? `${loggedThisWeek} من ${patients.length} مريضًا` : 'تعذّر تحميل المؤشرات'} />
+        <DashboardMetric label="سجّلوا اليوم" value={clinicLatestProgressAvailable ? `${loggedTodayRate ?? 0}%` : '—'} note={clinicLatestProgressAvailable ? `${loggedToday} من ${activePatients.length} مريضًا نشطًا` : 'تعذّر تحميل المؤشرات'} />
+        <DashboardMetric label="سجّلوا آخر 7 أيام" value={clinicLatestProgressAvailable ? `${loggedWeekRate ?? 0}%` : '—'} note={clinicLatestProgressAvailable ? `${loggedThisWeek} من ${activePatients.length} مريضًا نشطًا` : 'تعذّر تحميل المؤشرات'} />
         <DashboardMetric label="متوسط إكمال 7 أيام" value={clinicLatestProgressAvailable ? formatPercent(clinicCompletion7d) : '—'} note="وجبات + ماء + بنود قائمة؛ الأيام القابلة للمقارنة فقط" />
         <DashboardMetric label="متوسط التقدم نحو الهدف" value={clinicLatestProgressAvailable ? formatPercent(clinicWeightProgress) : '—'} note="من وزن البداية نحو الوزن المستهدف؛ القيم المتاحة فقط" />
         <DashboardMetric label="يحتاجون متابعة" value={clinicLatestProgressAvailable ? followUpPatients : '—'} note="لا سجل منذ 3 أيام أو أكثر، أو بلا سجل خلال 30 يومًا" />
@@ -1934,12 +1940,26 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
 
       <Card>
         <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
-          مرضى العيادة — {filterLabel(filter, coaches)}
+          {showArchivedPatients ? 'أرشيف المرضى' : `مرضى العيادة — ${filterLabel(filter, coaches)}`}
         </h2>
         <p className="mt-1 text-xs text-slate-500">
           مرضى عيادتك فقط — من قاعدة المنصة مباشرة، لا بيانات وهمية. عيّن
           الطبيب من القائمة المنسدلة لكل مريض.
         </p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[11px] text-slate-500">
+            {showArchivedPatients
+              ? `${patientsInArchiveView.length} ملفًا مؤرشفًا — يمكن استعادتها دون حذف البيانات.`
+              : `${activePatients.length} ملفًا نشطًا — الملفات المؤرشفة مخفية من القوائم التشغيلية.`}
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowArchivedPatients((value) => !value)}
+            className="rounded-xl border border-slate-300 px-3 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            {showArchivedPatients ? 'العودة إلى المرضى النشطين' : `عرض الأرشيف (${patients.length - activePatients.length})`}
+          </button>
+        </div>
         <PatientListControls
           query={patientQuery}
           onQueryChange={setPatientQuery}
@@ -1951,7 +1971,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
           onActivityFilterChange={setPatientActivityFilter}
           tagFilter={patientTagFilter}
           onTagFilterChange={setPatientTagFilter}
-          tagOptions={collectPatientTagOptions(patients)}
+          tagOptions={collectPatientTagOptions(patientsInArchiveView)}
           resultCount={visiblePatients.length}
         />
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل المرضى…</p>}
@@ -1978,6 +1998,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
                   onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
                 >
                   <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
+                  {doc.archivedAt && <span className="mt-1 block text-[10px] font-bold text-amber-700 dark:text-amber-300">ملف مؤرشف</span>}
                   <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
                 </button>
                 <button
@@ -1988,6 +2009,15 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
                 >
                   معاينة
                 </button>
+                <PatientArchiveButton
+                  patientUid={patientUid}
+                  clinicId={clinicId}
+                  patientName={doc.profile.clientName}
+                  archivedAt={doc.archivedAt}
+                  onSaved={(savedUid, status) => setPatients((current) => current.map((item) =>
+                    item.uid === savedUid ? { ...item, doc: { ...item.doc, ...status } } : item
+                  ))}
+                />
                 <select
                   className={`${inputClass} w-auto max-w-[9rem]`}
                   aria-label={`طبيب ${doc.profile.clientName}`}
@@ -2037,6 +2067,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const [quickHubUids, setQuickHubUids] = useState<string[]>([]);
   const openQuickHub = (patientUid: string) => setQuickHubUids((current) => addPatientHub(current, patientUid));
   const closeQuickHub = (patientUid: string) => setQuickHubUids((current) => removePatientHub(current, patientUid));
+  const [showArchivedPatients, setShowArchivedPatients] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -2050,7 +2081,8 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         if (cancelled) return;
         setPatients(entries);
         try {
-          const recent = await listRecentDayLogDetails(entries.map((entry) => entry.uid), 8);
+          const activeEntries = entries.filter((entry) => !entry.doc.archivedAt);
+          const recent = await listRecentDayLogDetails(activeEntries.map((entry) => entry.uid), 8);
           if (!cancelled) setActivity(recent);
         } catch (caught: unknown) {
           if (!cancelled) setActivityError(errorText(caught));
@@ -2073,10 +2105,12 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
     };
   }, [clinicId, uid]);
 
-  const patientsWithPlan = patients.filter((patient) => Boolean(patient.doc.plan)).length;
-  const coachProgressRows = patients.map((patient) => progressByUid[patient.uid]).filter(Boolean);
+  const activePatients = filterPatientsByArchiveView(patients, 'active');
+  const patientsInArchiveView = filterPatientsByArchiveView(patients, showArchivedPatients ? 'archived' : 'active');
+  const patientsWithPlan = activePatients.filter((patient) => Boolean(patient.doc.plan)).length;
+  const coachProgressRows = activePatients.map((patient) => progressByUid[patient.uid]).filter(Boolean);
   const coachActive30 = coachProgressRows.filter((item) => item.hasLogWithin30Days).length;
-  const coachNew30 = patients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 30)).length;
+  const coachNew30 = activePatients.filter((patient) => isWithinLastCalendarDays(patient.doc.createdAt, 30)).length;
   const coachLoggedToday = coachProgressRows.filter((item) => item.daysSinceLastLog === 0).length;
   const coachFollowUp = coachProgressRows.filter((item) => item.needsFollowUp).length;
   const coachCompletion7d = meanMetric(coachProgressRows.map((item) => item.completion7d));
@@ -2084,7 +2118,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const coachMetricsAvailable = !loading && !progressError;
   const doctorNameByUid = new Map([[uid, doctorName]]);
   const activityFeedEvents = buildClinicActivityFeed(
-    patients.map(({ uid: patientUid, doc }) => ({
+    activePatients.map(({ uid: patientUid, doc }) => ({
       uid: patientUid,
       name: doc.profile.clientName ?? 'مريض',
       assignedDoctorUid: doc.invitedBy,
@@ -2096,7 +2130,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
     doctorNameByUid,
     12,
   );
-  const followUpCandidates: PatientFollowUpCandidate[] = patients.map((patient) => ({
+  const followUpCandidates: PatientFollowUpCandidate[] = activePatients.map((patient) => ({
     uid: patient.uid,
     name: patient.doc.profile.clientName ?? 'مريض',
     progress: progressByUid[patient.uid] ?? null,
@@ -2105,7 +2139,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
     whatsappConsentAt: patient.doc.whatsappConsentAt ?? null,
   }));
   const visiblePatients = filterAndSortPatients(
-    patients,
+    patientsInArchiveView,
     patientQuery,
     patientPlanFilter,
     patientActivityFilter,
@@ -2117,7 +2151,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <DashboardMetric label="مرضاي" value={loading ? '—' : patients.length} note="المرضى المسندون إليّ فقط" />
+        <DashboardMetric label="مرضاي النشطون" value={loading ? '—' : activePatients.length} note="الملفات غير المؤرشفة المسندة إليّ" />
         <DashboardMetric label="نشطون آخر 30 يومًا" value={coachMetricsAvailable ? coachActive30 : '—'} note="لديهم سجل خلال آخر 30 يومًا" />
         <DashboardMetric label="ملفات جديدة هذا الشهر" value={loading ? '—' : coachNew30} note="حسب إنشاء سجل المريض، لا تاريخ قبول الدعوة" />
         <DashboardMetric label="سجّلوا اليوم" value={coachMetricsAvailable ? coachLoggedToday : '—'} note="مرضى لديهم سجل بتاريخ اليوم" />
@@ -2125,13 +2159,13 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         <DashboardMetric label="بلا سجل منذ 3+ أيام" value={coachMetricsAvailable ? coachFollowUp : '—'} note="يشمل من لا سجل لهم خلال 30 يومًا" />
         <DashboardMetric label="متوسط تغيّر الوزن" value={coachMetricsAvailable && coachMeanWeightChange != null ? `${coachMeanWeightChange > 0 ? '+' : ''}${coachMeanWeightChange} كجم` : '—'} note="فرق وصفي عن وزن بداية الخطة؛ القيم المتاحة فقط" />
         <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة سحابيًا" />
-        <DashboardMetric label="يحتاجون إعداد خطة" value={loading ? '—' : patients.length - patientsWithPlan} note="لا توجد لهم خطة سحابية بعد" />
+        <DashboardMetric label="يحتاجون إعداد خطة" value={loading ? '—' : activePatients.length - patientsWithPlan} note="لا توجد لهم خطة سحابية بعد" />
       </div>
       <AppointmentsSection
         clinicId={clinicId}
         uid={uid}
         role="coach"
-        patients={patients}
+        patients={activePatients}
         providers={[]}
       />
       <StaffTasksSection clinicId={clinicId} userId={uid} role="coach" />
@@ -2160,12 +2194,26 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
       />
       <Card>
         <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
-          عملائي ({patients.length})
+          {showArchivedPatients ? 'أرشيف عملائي' : `عملائي النشطون (${activePatients.length})`}
         </h2>
         <p className="mt-1 text-xs text-slate-500">
           المرضى الذين دعوتهم أنت فقط — من قاعدة المنصة مباشرة، لا بيانات
           وهمية. اضغط على مريض لعرض خطته وسجلات تقدمه.
         </p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[11px] text-slate-500">
+            {showArchivedPatients
+              ? `${patientsInArchiveView.length} ملفًا مؤرشفًا — يمكنك استعادتها دون حذف بياناتها.`
+              : `${activePatients.length} ملفًا نشطًا.`}
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowArchivedPatients((value) => !value)}
+            className="rounded-xl border border-slate-300 px-3 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            {showArchivedPatients ? 'العودة إلى عملائي النشطين' : `عرض الأرشيف (${patients.length - activePatients.length})`}
+          </button>
+        </div>
         <PatientListControls
           query={patientQuery}
           onQueryChange={setPatientQuery}
@@ -2177,7 +2225,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
           onActivityFilterChange={setPatientActivityFilter}
           tagFilter={patientTagFilter}
           onTagFilterChange={setPatientTagFilter}
-          tagOptions={collectPatientTagOptions(patients)}
+          tagOptions={collectPatientTagOptions(patientsInArchiveView)}
           resultCount={visiblePatients.length}
         />
         {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل عملائي…</p>}
@@ -2207,6 +2255,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
                   onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
                 >
                   <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
+                  {doc.archivedAt && <span className="mt-1 block text-[10px] font-bold text-amber-700 dark:text-amber-300">ملف مؤرشف</span>}
                   <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
                 </button>
                 <button
@@ -2218,6 +2267,15 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
                   معاينة
                 </button>
               </div>
+              <PatientArchiveButton
+                patientUid={patientUid}
+                clinicId={clinicId}
+                patientName={doc.profile.clientName}
+                archivedAt={doc.archivedAt}
+                onSaved={(savedUid, status) => setPatients((current) => current.map((item) =>
+                  item.uid === savedUid ? { ...item, doc: { ...item.doc, ...status } } : item
+                ))}
+              />
               <PatientTagsEditor
                 patientUid={patientUid}
                 tags={doc.tags}
