@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildAppointmentTimeRange,
+  filterAppointmentsForDashboard,
   getClinicAppointmentsQueryRange,
   getClinicMonthRange,
   getClinicWeekRange,
@@ -99,5 +100,60 @@ describe('clinic appointment reporting helpers', () => {
       cancellationRate: null,
       noShowRate: null,
     });
+  });
+});
+
+
+describe('filterAppointmentsForDashboard', () => {
+  const weekDate = new Date(2026, 10, 22, 12);
+  const week = getClinicWeekRange(weekDate);
+  const month = getClinicMonthRange(weekDate);
+  const today = localDateKey(weekDate);
+  const rows = [
+    { id: 'today-a', starts_at: new Date(2026, 10, 22, 10).toISOString(), status: 'scheduled' as const, provider_id: 'doctor-a' },
+    { id: 'today-b', starts_at: new Date(2026, 10, 22, 11).toISOString(), status: 'confirmed' as const, provider_id: 'doctor-b' },
+    { id: 'week-a', starts_at: new Date(2026, 10, 25, 10).toISOString(), status: 'completed' as const, provider_id: 'doctor-a' },
+    { id: 'next-month', starts_at: new Date(2026, 11, 2, 10).toISOString(), status: 'scheduled' as const, provider_id: 'doctor-a' },
+    { id: 'previous-week', starts_at: new Date(2026, 10, 20, 10).toISOString(), status: 'scheduled' as const, provider_id: 'doctor-a' },
+  ];
+
+  it('filters the week by provider without including adjacent-week rows', () => {
+    const filtered = filterAppointmentsForDashboard(rows, {
+      view: 'week',
+      todayKey: today,
+      weekStart: week.start,
+      weekEnd: week.end,
+      monthStart: month.start,
+      monthEnd: month.end,
+      providerId: 'doctor-a',
+    });
+    expect(filtered.map((item) => item.id)).toEqual(['today-a', 'week-a']);
+  });
+
+  it('supports month view and excludes the exclusive month end', () => {
+    const filtered = filterAppointmentsForDashboard(rows, {
+      view: 'month',
+      todayKey: today,
+      weekStart: week.start,
+      weekEnd: week.end,
+      monthStart: month.start,
+      monthEnd: month.end,
+      providerId: 'all',
+    });
+    expect(filtered.map((item) => item.id)).toEqual(['today-a', 'today-b', 'week-a']);
+  });
+
+  it('keeps today and unconfirmed views scoped to this week', () => {
+    const common = {
+      todayKey: today,
+      weekStart: week.start,
+      weekEnd: week.end,
+      monthStart: month.start,
+      monthEnd: month.end,
+    };
+    expect(filterAppointmentsForDashboard(rows, { ...common, view: 'today' }).map((item) => item.id))
+      .toEqual(['today-a', 'today-b']);
+    expect(filterAppointmentsForDashboard(rows, { ...common, view: 'unconfirmed' }).map((item) => item.id))
+      .toEqual(['today-a']);
   });
 });
