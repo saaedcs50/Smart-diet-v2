@@ -146,6 +146,18 @@ describe('cloudflare worker — hono api', () => {
     });
   });
 
+  it('treats non-JSON request bodies as an absent PIN like Express', async () => {
+    const res = await call('/api/coach-session', {
+      method: 'POST',
+      headers: {
+        'content-type': 'text/plain',
+        'CF-Connecting-IP': '10.0.0.18',
+      },
+      body: '{"pin":"97531"}',
+    });
+    expect(res.status).toBe(403);
+  });
+
   it('returns a safe JSON 404 for unknown API paths', async () => {
     const res = await call('/api/not-a-real-route');
     expect(res.status).toBe(404);
