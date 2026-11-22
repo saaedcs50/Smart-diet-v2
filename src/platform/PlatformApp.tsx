@@ -1422,6 +1422,7 @@ function PatientDetail({
                     logDate={date}
                     comments={journalComments.filter((comment) => comment.log_date === date)}
                     isStaffView={isStaffView}
+                    onCreated={(comment) => setJournalComments((current) => [...current, comment])}
                   />
                 </li>
               );
