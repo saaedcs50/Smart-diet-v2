@@ -68,6 +68,7 @@ import { countSkippedPatientMeals, summarizePatientDayLog } from './patientDashb
 import { PatientProgressCharts } from './PatientProgressCharts';
 import { PatientTagsEditor } from './PatientTagsEditor';
 import { AppointmentsSection } from './AppointmentsSection';
+import { StaffTasksSection } from './StaffTasksSection';
 import { PatientAppointmentsPanel } from './PatientAppointmentsPanel';
 import { PatientFollowUpQueue } from './PatientFollowUpQueue';
 import type { PatientFollowUpCandidate } from './patientFollowUpQueue';
@@ -1703,6 +1704,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         patients={patients}
         providers={coaches}
       />
+      <StaffTasksSection clinicId={clinicId} userId={uid} />
       <PatientFollowUpQueue
         candidates={followUpCandidates}
         loading={loading}
@@ -1989,6 +1991,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         patients={patients}
         providers={[]}
       />
+      <StaffTasksSection clinicId={clinicId} userId={uid} />
       <PatientFollowUpQueue
         candidates={followUpCandidates}
         loading={loading}
