@@ -132,6 +132,12 @@ export default {
       const origin = request.headers.get('Origin');
       const headers = corsHeadersForOrigin(origin, allowedOrigins);
 
+      const requestOrigin = new URL(request.url).origin;
+      const isSameOrigin = origin !== null && origin === requestOrigin;
+      if (origin && !headers && !isSameOrigin && !['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+        return Response.json({ ok: false, error: 'مصدر الطلب غير مسموح.' }, { status: 403 });
+      }
+
       if (request.method === 'OPTIONS') {
         if (!headers) return new Response(null, { status: 403, headers: { Vary: 'Origin' } });
         return new Response(null, { status: 204, headers });
