@@ -37,6 +37,11 @@ export function createApiApp(options: ApiAppOptions = {}): Express {
     if (origin) res.vary('Origin');
 
     if (headers) res.set(headers);
+    const requestOrigin = `${req.protocol}://${req.get('host')}`;
+    const isSameOrigin = origin !== null && origin === requestOrigin;
+    if (origin && !headers && !isSameOrigin && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+      return res.status(403).json({ ok: false, error: 'مصدر الطلب غير مسموح.' });
+    }
     if (req.method === 'OPTIONS') {
       if (!headers) return res.status(403).end();
       return res.status(204).end();
