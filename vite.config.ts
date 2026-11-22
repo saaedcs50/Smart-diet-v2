@@ -12,6 +12,8 @@ export default defineConfig(() => {
       },
     },
     build: {
+      // The manifest feeds the build-time Service Worker precache generator.
+      manifest: true,
       rollupOptions: {
         input: {
           index: path.resolve(__dirname, 'index.html'),
