@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 
 function addEntryAssets(manifest, key, seen, output) {
   if (!key || seen.has(key)) return;
