@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildFollowUpWhatsAppUrl,
   normalizeEgyptianWhatsAppPhone,
-} from '../src/platform/patientWhatsAppFollowUp';
+} from '../../src/platform/patientWhatsAppFollowUp';
 
 describe('Egyptian WhatsApp follow-up', () => {
   it.each([
