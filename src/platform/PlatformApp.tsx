@@ -71,6 +71,8 @@ import { PatientTagsEditor } from './PatientTagsEditor';
 import { AppointmentsSection } from './AppointmentsSection';
 import { StaffTasksSection } from './StaffTasksSection';
 import { PatientAppointmentsPanel } from './PatientAppointmentsPanel';
+import { PatientQuickHubDock } from './PatientQuickHub';
+import { addPatientHub, removePatientHub } from './patientHubUtils';
 import { PatientIntakeSection } from './PatientIntakeSection';
 import { PatientReflectionsSection } from './PatientReflectionsSection';
 import { PatientFollowUpQueue } from './PatientFollowUpQueue';
@@ -1645,6 +1647,9 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
   const [patientTagFilter, setPatientTagFilter] = useState<PatientTagFilter>('all');
   const [progressByUid, setProgressByUid] = useState<Record<string, PatientProgressSummary>>({});
   const [progressError, setProgressError] = useState<string | null>(null);
+  const [quickHubUids, setQuickHubUids] = useState<string[]>([]);
+  const openQuickHub = (patientUid: string) => setQuickHubUids((current) => addPatientHub(current, patientUid));
+  const closeQuickHub = (patientUid: string) => setQuickHubUids((current) => removePatientHub(current, patientUid));
 
   useEffect(() => {
     let cancelled = false;
@@ -1975,6 +1980,14 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
                   <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
                   <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
                 </button>
+                <button
+                  type="button"
+                  onClick={() => openQuickHub(patientUid)}
+                  className="shrink-0 rounded-xl border border-sky-200 px-2.5 py-2 text-[10px] font-black text-sky-800 hover:bg-sky-50 dark:border-sky-800 dark:text-sky-200 dark:hover:bg-sky-950/40"
+                  aria-label={`معاينة سريعة لملف ${doc.profile.clientName}`}
+                >
+                  معاينة
+                </button>
                 <select
                   className={`${inputClass} w-auto max-w-[9rem]`}
                   aria-label={`طبيب ${doc.profile.clientName}`}
@@ -2003,6 +2016,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
       </Card>
       <InviteForm clinicId={clinicId} createdBy={uid} isAdmin />
       <InvitationManager clinicId={clinicId} uid={uid} isAdmin />
+      <PatientQuickHubDock patients={patients} openPatientUids={quickHubUids} onClose={closeQuickHub} />
     </div>
   );
 }
@@ -2020,6 +2034,9 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const [patientTagFilter, setPatientTagFilter] = useState<PatientTagFilter>('all');
   const [progressByUid, setProgressByUid] = useState<Record<string, PatientProgressSummary>>({});
   const [progressError, setProgressError] = useState<string | null>(null);
+  const [quickHubUids, setQuickHubUids] = useState<string[]>([]);
+  const openQuickHub = (patientUid: string) => setQuickHubUids((current) => addPatientHub(current, patientUid));
+  const closeQuickHub = (patientUid: string) => setQuickHubUids((current) => removePatientHub(current, patientUid));
 
   useEffect(() => {
     let cancelled = false;
@@ -2183,13 +2200,24 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         <ul className="mt-3 flex flex-col gap-2">
           {visiblePatients.map(({ uid: patientUid, doc }) => (
             <li key={patientUid} className="rounded-xl border border-slate-200 p-2 dark:border-slate-700">
-              <button
-                className="w-full rounded-xl px-2 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800"
-                onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
-              >
-                <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
-                <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="min-w-0 flex-1 rounded-xl px-2 py-2 text-right text-sm font-bold text-slate-800 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800"
+                  onClick={() => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
+                >
+                  <span className="block">{doc.profile.clientName} — {doc.plan ? 'له خطة سحابية' : 'بلا خطة سحابية بعد'}</span>
+                  <PatientProgressLine summary={progressByUid[patientUid]} plan={doc.plan} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openQuickHub(patientUid)}
+                  className="shrink-0 rounded-xl border border-sky-200 px-2.5 py-2 text-[10px] font-black text-sky-800 hover:bg-sky-50 dark:border-sky-800 dark:text-sky-200 dark:hover:bg-sky-950/40"
+                  aria-label={`معاينة سريعة لملف ${doc.profile.clientName}`}
+                >
+                  معاينة
+                </button>
+              </div>
               <PatientTagsEditor
                 patientUid={patientUid}
                 tags={doc.tags}
@@ -2208,6 +2236,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
       />
       <InviteForm clinicId={clinicId} createdBy={uid} isAdmin={false} />
       <InvitationManager clinicId={clinicId} uid={uid} isAdmin={false} />
+      <PatientQuickHubDock patients={patients} openPatientUids={quickHubUids} onClose={closeQuickHub} />
     </div>
   );
 }
