@@ -3,7 +3,7 @@
 // shared with the Cloudflare Worker (Hono) adapter — this file only maps
 // Express req/res onto the service, so the response contracts stay identical
 // across runtimes.
-import express, { Router, Request, Response } from 'express';
+import express, { Router, Request, Response, NextFunction } from 'express';
 import {
   createCoachSession,
   deleteCoachSession,
@@ -18,10 +18,10 @@ export { createSignedCoachToken, verifySignedCoachToken, validateSecurityConfig 
 
 export const apiRouter = Router();
 
-// Ensure body parser is applied to all api routes
+// Keep the request-size boundary identical for every Express runtime.
 apiRouter.use(express.json({ limit: '200kb' }));
 
-// 1. Health Check
+// 1. Health Check — intentionally independent from secrets and dependencies.
 const handleHealth = (_req: Request, res: Response) => {
   res.json({ status: 'ok' });
 };
@@ -41,7 +41,7 @@ const handleDeleteSession = async (req: Request, res: Response) => {
   res.status(result.status).json(result.body);
 };
 
-// Register routes both with and without /api prefix to support all proxy/rewrite configurations
+// Register routes both with and without /api prefix to support all proxy/rewrite configurations.
 apiRouter.get('/health', handleHealth);
 apiRouter.get('/api/health', handleHealth);
 
@@ -50,3 +50,32 @@ apiRouter.post('/api/coach-session', handleCreateSession);
 
 apiRouter.delete('/coach-session', handleDeleteSession);
 apiRouter.delete('/api/coach-session', handleDeleteSession);
+
+// Keep unknown API routes on a predictable JSON contract across runtimes.
+const handleApiNotFound = (_req: Request, res: Response) => {
+  res.status(404).json({ ok: false, error: 'المسار غير موجود.' });
+};
+apiRouter.all('/api', handleApiNotFound);
+apiRouter.all('/api/*', handleApiNotFound);
+
+// Never return parser details or stack traces to API clients.
+apiRouter.use(
+  (error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    const candidate = error as { status?: number; statusCode?: number };
+    const rawStatus = candidate?.status ?? candidate?.statusCode;
+    const status = rawStatus === 400 || rawStatus === 413 ? rawStatus : 500;
+    if (status === 500) {
+      // Emit a diagnostic event without request bodies, headers, or exception details.
+      console.error('api error: unexpected request processing failure');
+    }
+
+    const message =
+      status === 400
+        ? 'طلب غير صالح.'
+        : status === 413
+          ? 'حجم الطلب أكبر من المسموح.'
+          : 'خطأ داخلي في الخادم. حاول مرة أخرى.';
+
+    res.status(status).json({ ok: false, error: message });
+  }
+);

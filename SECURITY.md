@@ -19,7 +19,8 @@
 ## أسرار التشغيل
 
 - `COACH_PIN` و`SESSION_SECRET`: متغيرات بيئة في الخادم فقط.
-- `UPSTASH_REDIS_REST_URL` و`UPSTASH_REDIS_REST_TOKEN`: اختياريان لحدّ محاولات PIN الدائم.
+- `TRUST_PROXY_HOPS`: إعداد غير سري لخادم Node المستقل؛ الافتراضي 0، ولا يُرفع إلا إلى عدد قفزات البروكسي الموثوقة فعليًا. Vercel يضبط قفزة واحدة داخل Adapter.
+- `UPSTASH_REDIS_REST_URL` و`UPSTASH_REDIS_REST_TOKEN`: مطلوبان لتشغيل جلسة PIN في Production؛ عند غيابهما أو تعذّر الوصول إليهما يرد المسار 503 ولا يعود إلى مخزن الذاكرة. مخزن الذاكرة للتطوير والاختبارات فقط.
 - `VITE_SUPABASE_URL` و`VITE_SUPABASE_ANON_KEY`: إعدادات اتصال عامة للمتصفح؛ لا تعتبرها أسرارًا، وتعتمد الحماية على RLS.
 - `SUPABASE_SERVICE_ROLE_KEY`: سر خادمي لا يضاف إلى أي متغير يبدأ بـ `VITE_`.
 - `GEMINI_API_KEY`: غير موصول بأي استدعاء في `src`، ولا يُضبط لهذا التطبيق.

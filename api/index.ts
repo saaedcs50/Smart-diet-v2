@@ -1,15 +1,12 @@
 import 'dotenv/config';
-import express from 'express';
-import { apiRouter, validateSecurityConfig } from '../src/server/api.js';
+import { createApiApp } from '../src/server/createApiApp.js';
+import { validateSecurityConfig } from '../src/server/api.js';
 
-const app = express();
-// خلف بروكسي واحد (Vercel): req.ip الحقيقي — القيمة رقم لا true أبدًا
-app.set('trust proxy', 1);
+// Vercel is one trusted proxy hop. The route handlers and middleware are
+// created by the same factory used by the standalone Node entry point.
+const app = createApiApp({ trustProxyHops: 1 });
 
-// يفشل بسرعة (في الـ logs) لو SESSION_SECRET أو COACH_PIN مش متحددين في بيئة الإنتاج
+// Fail fast during cold start if production security settings are incomplete.
 validateSecurityConfig();
-
-app.use(express.json({ limit: '200kb' }));
-app.use(apiRouter);
 
 export default app;
