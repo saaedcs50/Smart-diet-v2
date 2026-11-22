@@ -113,7 +113,7 @@ describe('filterAppointmentsForDashboard', () => {
     { id: 'today-a', starts_at: new Date(2026, 10, 22, 10).toISOString(), status: 'scheduled' as const, provider_id: 'doctor-a' },
     { id: 'today-b', starts_at: new Date(2026, 10, 22, 11).toISOString(), status: 'confirmed' as const, provider_id: 'doctor-b' },
     { id: 'week-a', starts_at: new Date(2026, 10, 25, 10).toISOString(), status: 'completed' as const, provider_id: 'doctor-a' },
-    { id: 'next-month', starts_at: new Date(2026, 11, 2, 10).toISOString(), status: 'scheduled' as const, provider_id: 'doctor-a' },
+    { id: 'next-month', starts_at: new Date(2026, 11, 1, 10).toISOString(), status: 'scheduled' as const, provider_id: 'doctor-a' },
     { id: 'previous-week', starts_at: new Date(2026, 10, 20, 10).toISOString(), status: 'scheduled' as const, provider_id: 'doctor-a' },
   ];
 
@@ -140,7 +140,7 @@ describe('filterAppointmentsForDashboard', () => {
       monthEnd: month.end,
       providerId: 'all',
     });
-    expect(filtered.map((item) => item.id)).toEqual(['today-a', 'today-b', 'week-a']);
+    expect(filtered.map((item) => item.id)).toEqual(['today-a', 'today-b', 'week-a', 'previous-week']);
   });
 
   it('keeps today and unconfirmed views scoped to this week', () => {
