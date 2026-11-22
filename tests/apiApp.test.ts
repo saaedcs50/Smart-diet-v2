@@ -181,6 +181,17 @@ describe('shared Express API application factory', () => {
       });
       expect(denied.status).toBe(403);
       expect(denied.headers.get('access-control-allow-origin')).toBeNull();
+
+      const crossSiteWrite = await fetch(baseUrl + '/api/coach-session', {
+        method: 'POST',
+        headers: {
+          origin: 'https://attacker.example.test',
+          'content-type': 'application/json',
+          connection: 'close',
+        },
+        body: JSON.stringify({ pin: '97531' }),
+      });
+      expect(crossSiteWrite.status).toBe(403);
     });
   });
 
