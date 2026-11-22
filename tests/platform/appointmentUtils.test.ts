@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildAppointmentTimeRange,
+  getClinicAppointmentsQueryRange,
   getClinicMonthRange,
   getClinicWeekRange,
   summarizeAppointmentStatuses,
@@ -52,6 +53,16 @@ describe('clinic appointment reporting helpers', () => {
     const december = getClinicMonthRange(new Date(2026, 11, 31, 12));
     expect(localDateKey(december.start)).toBe('2026-12-01');
     expect(localDateKey(december.end)).toBe('2027-01-01');
+  });
+
+  it('includes the full current week when it crosses a month boundary', () => {
+    const range = getClinicAppointmentsQueryRange(new Date(2026, 9, 31, 12)); // Saturday
+    expect(localDateKey(range.start)).toBe('2026-10-01');
+    expect(localDateKey(range.end)).toBe('2026-11-07');
+
+    const firstOfMonth = getClinicAppointmentsQueryRange(new Date(2026, 10, 1, 12));
+    expect(localDateKey(firstOfMonth.start)).toBe('2026-10-31');
+    expect(localDateKey(firstOfMonth.end)).toBe('2026-12-01');
   });
 
   it('summarizes appointment outcomes without counting cancellations as missed attendance', () => {
