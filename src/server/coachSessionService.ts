@@ -126,7 +126,8 @@ function guardFailureBody(err: unknown): ServiceResult {
   if (err instanceof GuardUnavailableError) {
     return { status: 503, body: { ok: false, error: err.message } };
   }
-  console.error('coach-session error', err);
+  // Never log an exception object here: third-party errors may contain request metadata.
+  console.error('coach-session error: unexpected internal failure');
   return { status: 500, body: { ok: false, error: 'خطأ داخلي في الخادم. حاول مرة أخرى.' } };
 }
 
