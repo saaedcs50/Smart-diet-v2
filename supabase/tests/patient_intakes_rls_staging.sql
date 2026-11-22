@@ -8,6 +8,17 @@
 -- platform owner: 0b8b9208-bd7f-4d26-9613-e35dd277d066
 
 BEGIN;
+
+-- Add the test-only unassigned patient row if the synthetic auth profile has no patient row yet.
+INSERT INTO public.patients (id, clinic_id, profile, invited_by)
+VALUES (
+  '84d4bec1-f1b9-4234-af9c-b61c924215c6',
+  'clinic-a',
+  '{"clientName":"Unassigned synthetic patient"}'::jsonb,
+  NULL
+)
+ON CONFLICT (id) DO NOTHING;
+
 SET LOCAL ROLE authenticated;
 
 -- A patient can submit and read only their own intake.
