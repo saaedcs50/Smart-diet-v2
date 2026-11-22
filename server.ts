@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config(); // Host-provided environment variables always take precedence.
 
+import express from 'express';
 import path from 'path';
 import { createApiApp } from './src/server/createApiApp';
 import { validateSecurityConfig } from './src/server/api';
@@ -50,7 +51,7 @@ async function start() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(expressStatic(distPath));
+    app.use(express.static(distPath));
     app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
@@ -58,6 +59,11 @@ async function start() {
 
   httpServer = app.listen(PORT, HOST, () => {
     console.log(`${BRAND.appName} Server listening on ${HOST}:${PORT}`);
+  });
+
+  httpServer.on('error', (error: Error) => {
+    console.error(`Server listener failed: ${error.message}`);
+    process.exitCode = 1;
   });
 
   const shutdown = async (signal: NodeJS.Signals) => {
@@ -93,20 +99,6 @@ async function start() {
     void shutdown('SIGINT');
   });
 }
-
-function expressStatic(directory: string) {
-  // Keep the static middleware loaded only for the Node-hosted SPA runtime.
-  // It is intentionally not part of the Vercel API adapter.
-  return requireExpressStatic(directory);
-}
-
-function requireExpressStatic(directory: string) {
-  // Importing express itself is already required by createApiApp; this helper
-  // keeps the runtime entry simple while preserving the existing static path.
-  return express.static(directory);
-}
-
-import express from 'express';
 
 start().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : 'Unknown startup error.';
