@@ -54,6 +54,11 @@ function clientIp(c) {
 }
 
 async function readJsonBody(c) {
+  const contentType = (c.req.header("content-type") ?? "").toLowerCase();
+  if (!contentType.startsWith("application/json")) {
+    return { body: {}, error: null };
+  }
+
   const contentLength = Number(c.req.header("content-length") ?? "0");
   if (Number.isFinite(contentLength) && contentLength > MAX_JSON_BODY_BYTES) {
     return { body: null, error: c.json(OVERSIZED_BODY, 413) };
@@ -66,7 +71,11 @@ async function readJsonBody(c) {
   if (!raw) return { body: {}, error: null };
 
   try {
-    return { body: JSON.parse(raw), error: null };
+    const body = JSON.parse(raw);
+    if (body === null || typeof body !== "object") {
+      return { body: null, error: c.json(INVALID_JSON_BODY, 400) };
+    }
+    return { body, error: null };
   } catch {
     return { body: null, error: c.json(INVALID_JSON_BODY, 400) };
   }
