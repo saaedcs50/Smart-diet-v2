@@ -64,6 +64,11 @@ apiRouter.use(
     const candidate = error as { status?: number; statusCode?: number };
     const rawStatus = candidate?.status ?? candidate?.statusCode;
     const status = rawStatus === 400 || rawStatus === 413 ? rawStatus : 500;
+    if (status === 500) {
+      // Emit a diagnostic event without request bodies, headers, or exception details.
+      console.error('api error: unexpected request processing failure');
+    }
+
     const message =
       status === 400
         ? 'طلب غير صالح.'
