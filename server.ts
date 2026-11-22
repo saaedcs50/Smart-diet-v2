@@ -1,5 +1,16 @@
 import dotenv from 'dotenv';
-dotenv.config(); // Host-provided environment variables always take precedence.
+import { resolveNodeRuntimeMode } from './src/server/runtimeMode';
+
+// Capture host configuration before dotenv so an accidental local .env
+// cannot switch an externally hosted server into development mode.
+const hostNodeEnv = process.env.NODE_ENV?.trim();
+dotenv.config();
+process.env.NODE_ENV = resolveNodeRuntimeMode({
+  NODE_ENV:
+    hostNodeEnv ||
+    (process.env.npm_lifecycle_event === 'dev' ? process.env.NODE_ENV : undefined),
+  npm_lifecycle_event: process.env.npm_lifecycle_event,
+});
 
 import express from 'express';
 import path from 'path';
