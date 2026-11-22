@@ -69,6 +69,61 @@ export async function listAppointments(
   return (data ?? []) as unknown as AppointmentRecord[];
 }
 
+
+export interface PatientAppointmentHistory {
+  upcoming: AppointmentRecord[];
+  past: AppointmentRecord[];
+}
+
+/**
+ * Returns a small, read-only appointment history for the signed-in patient.
+ * RLS remains the authority: patient accounts can only select their own rows.
+ */
+export async function listPatientAppointmentHistory(
+  patientUid: string,
+  referenceDate = new Date(),
+): Promise<PatientAppointmentHistory> {
+  if (!patientUid.trim()) throw new Error('معرّف المريض غير صالح.');
+
+  const now = referenceDate.toISOString();
+  const pastStart = new Date(referenceDate);
+  pastStart.setFullYear(pastStart.getFullYear() - 1);
+  const futureEnd = new Date(referenceDate);
+  futureEnd.setFullYear(futureEnd.getFullYear() + 1);
+
+  const supabase = getSupabase();
+  const [upcomingResult, pastResult] = await Promise.all([
+    supabase
+      .from('appointments')
+      .select(APPOINTMENT_COLUMNS)
+      .eq('patient_id', patientUid)
+      .gte('starts_at', now)
+      .lt('starts_at', futureEnd.toISOString())
+      .order('starts_at', { ascending: true })
+      .limit(10),
+    supabase
+      .from('appointments')
+      .select(APPOINTMENT_COLUMNS)
+      .eq('patient_id', patientUid)
+      .gte('starts_at', pastStart.toISOString())
+      .lt('starts_at', now)
+      .order('starts_at', { ascending: false })
+      .limit(10),
+  ]);
+
+  if (upcomingResult.error) {
+    throw new Error(`تعذّر تحميل مواعيدك القادمة: ${upcomingResult.error.message}`);
+  }
+  if (pastResult.error) {
+    throw new Error(`تعذّر تحميل سجل مواعيدك: ${pastResult.error.message}`);
+  }
+
+  return {
+    upcoming: (upcomingResult.data ?? []) as unknown as AppointmentRecord[],
+    past: (pastResult.data ?? []) as unknown as AppointmentRecord[],
+  };
+}
+
 export async function createAppointment(
   input: CreateAppointmentInput,
 ): Promise<AppointmentRecord> {
