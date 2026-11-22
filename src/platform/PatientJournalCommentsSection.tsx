@@ -17,12 +17,14 @@ export function PatientJournalCommentsSection({
   logDate,
   comments,
   isStaffView,
+  onCreated,
 }: {
   patientUid: string;
   clinicId: string;
   logDate: string;
   comments: PatientJournalComment[];
   isStaffView: boolean;
+  onCreated: (comment: PatientJournalComment) => void;
 }) {
   const [items, setItems] = useState(comments);
   const [expanded, setExpanded] = useState(false);
@@ -50,6 +52,7 @@ export function PatientJournalCommentsSection({
         content: draft,
       });
       setItems((current) => [...current, record].sort((a, b) => a.created_at.localeCompare(b.created_at)));
+      onCreated(record);
       setDraft('');
       setExpanded(false);
       setSaved('تمت إضافة الملاحظة إلى سجل هذا اليوم.');
