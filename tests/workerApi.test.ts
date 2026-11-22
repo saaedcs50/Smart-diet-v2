@@ -64,6 +64,23 @@ describe('cloudflare worker — hono api', () => {
     }
   });
 
+  it('allows API preflight only from the configured frontend origin', async () => {
+    const allowed = await call('/api/coach-session', {
+      method: 'OPTIONS',
+      headers: { Origin: 'https://frontend.example.test' },
+    });
+    expect(allowed.status).toBe(204);
+    expect(allowed.headers.get('access-control-allow-origin')).toBe('https://frontend.example.test');
+    expect(allowed.headers.get('access-control-allow-headers')).toBe('content-type, x-coach-session');
+
+    const denied = await call('/api/coach-session', {
+      method: 'OPTIONS',
+      headers: { Origin: 'https://attacker.example.test' },
+    });
+    expect(denied.status).toBe(403);
+    expect(denied.headers.get('access-control-allow-origin')).toBeNull();
+  });
+
   it('non-api paths are served from Static Assets', async () => {
     const res = await call('/platform');
     expect(res.status).toBe(200);
