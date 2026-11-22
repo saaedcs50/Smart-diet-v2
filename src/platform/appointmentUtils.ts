@@ -63,6 +63,54 @@ export interface AppointmentStatusSummary {
   noShowRate: number | null;
 }
 
+export type AppointmentDashboardView = 'today' | 'week' | 'month' | 'unconfirmed';
+
+export interface AppointmentDashboardFilterOptions {
+  view: AppointmentDashboardView;
+  todayKey: string;
+  weekStart: Date;
+  weekEnd: Date;
+  monthStart: Date;
+  monthEnd: Date;
+  providerId?: string | null;
+}
+
+/** Filters already role-scoped appointment rows by date view and optional doctor. */
+export function filterAppointmentsForDashboard<T extends {
+  starts_at: string;
+  status: AppointmentStatus;
+  provider_id: string;
+}>(
+  appointments: readonly T[],
+  options: AppointmentDashboardFilterOptions,
+): T[] {
+  const rangeStart = options.view === 'month'
+    ? options.monthStart.getTime()
+    : options.weekStart.getTime();
+  const rangeEnd = options.view === 'month'
+    ? options.monthEnd.getTime()
+    : options.weekEnd.getTime();
+
+  return appointments.filter((appointment) => {
+    const startsAt = new Date(appointment.starts_at);
+    const timestamp = startsAt.getTime();
+    if (!Number.isFinite(timestamp) || timestamp < rangeStart || timestamp >= rangeEnd) {
+      return false;
+    }
+    if (options.view === 'today' && localDateKey(startsAt) !== options.todayKey) {
+      return false;
+    }
+    if (options.view === 'unconfirmed' && appointment.status !== 'scheduled') {
+      return false;
+    }
+    if (options.providerId && options.providerId !== 'all' &&
+        appointment.provider_id !== options.providerId) {
+      return false;
+    }
+    return true;
+  });
+}
+
 /**
  * Rates are descriptive booking outcomes:
  * - attendance = completed / (completed + no-show), excluding cancellations
