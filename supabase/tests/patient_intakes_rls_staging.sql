@@ -42,14 +42,15 @@ BEGIN
   WHERE id='aaaaaaaa-1111-4111-8111-111111111111';
   IF n <> 1 THEN RAISE EXCEPTION 'patient: own intake insert/read failed'; END IF;
 
-  BEGIN
-    UPDATE public.patient_intakes
-    SET status='reviewed', reviewed_at=now(), reviewed_by=auth.uid()
-    WHERE id='aaaaaaaa-1111-4111-8111-111111111111';
-    RAISE EXCEPTION 'patient unexpectedly updated their intake';
-  EXCEPTION WHEN insufficient_privilege THEN
-    NULL;
-  END;
+  UPDATE public.patient_intakes
+  SET status='reviewed', reviewed_at=now(), reviewed_by=auth.uid()
+  WHERE id='aaaaaaaa-1111-4111-8111-111111111111';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 0 THEN RAISE EXCEPTION 'patient updated their own intake'; END IF;
+
+  SELECT count(*) INTO n FROM public.patient_intakes
+  WHERE id='aaaaaaaa-1111-4111-8111-111111111111' AND status='submitted';
+  IF n <> 1 THEN RAISE EXCEPTION 'patient changed intake review state'; END IF;
 END;
 $test$;
 
