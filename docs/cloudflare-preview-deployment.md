@@ -102,13 +102,7 @@ in production builds). `VITE_VAPID_PUBLIC_KEY` is not set for the preview
 | `UPSTASH_REDIS_REST_URL` | Shared Upstash Redis REST endpoint |
 | `UPSTASH_REDIS_REST_TOKEN` | Shared Upstash Redis REST token |
 
-**Status (2026-11-21): none of the four secrets are set on the preview
-yet.** They live in the Vercel project env and could not be retrieved
-from this VM (Vercel MCP `filter_project_envs` returns 403 — the team
-scope `smart-diet1` needs `authorize_team_access`, a user approval step).
-Until they are set, the preview is fail-closed: the frontend and health
-checks work, but `POST /api/coach-session` returns 503
-`{"ok":false,"error":"خدمة الجلسات غير مهيأة. تواصل مع الدعم."}`.
+**Status update (2026-11-21 evening): all four runtime secrets were set on the preview by the project owner.** A live wrong-PIN request returned 403 (rather than the fail-closed 503), confirming configuration and shared Upstash reachability. A correct-PIN request was deliberately not made; the real PIN is not used in automated probes. Secret values remain outside Git and CI logs.
 
 ### Setting the secrets (one-time, after retrieving them from Vercel)
 
@@ -148,6 +142,8 @@ builds with the `VITE_*` values from repo Variables, runs a
 `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` repo secrets.
 It never sets runtime secrets — those are managed out-of-band (above).
 
+When frontend and API use different origins, set Worker runtime variable API_ALLOWED_ORIGINS to the exact frontend origin (comma-separated when multiple are approved). Keep VITE_API_BASE_URL empty when using this Worker's same-origin frontend/API route. The policy never enables wildcard origins or credentialed CORS.
+
 ## Verification (2026-11-21, all via curl — no browser)
 
 Local (`wrangler dev` + mock Upstash + dummy `.dev.vars`, deleted after):
@@ -176,7 +172,7 @@ Live preview (https://smart-diet-v2.saaedbelal.workers.dev):
 | `GET /manifest.json` | 200 |
 | `GET /realtime-qa.html` | 307 → `/realtime-qa` → 200 |
 | `GET /api/health` | 200 `{"status":"ok"}` |
-| `POST /api/coach-session` | 503 (expected — secrets not set yet) |
+| `POST /api/coach-session` wrong PIN | 403 (runtime secrets + shared Upstash verified; real correct PIN not probed) |
 | `GET /server.cjs` | 200 `index.html` (not the bundle) |
 | Staging ref in live bundle / prod ref | staging present, prod absent (0 matches) |
 
