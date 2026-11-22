@@ -66,6 +66,7 @@ import { DoctorExportButtons } from './DoctorExportButtons';
 import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
 import { countSkippedPatientMeals, summarizePatientDayLog } from './patientDashboardMetrics';
 import { PatientProgressCharts } from './PatientProgressCharts';
+import { isNewDailyLog } from './recentDayLog';
 import { PatientTagsEditor } from './PatientTagsEditor';
 import { AppointmentsSection } from './AppointmentsSection';
 import { StaffTasksSection } from './StaffTasksSection';
@@ -206,6 +207,14 @@ function RecentActivityCard({
                   <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
                     {patientByUid.get(item.patientUid)?.name ?? 'مريض'}
                   </span>
+                  {isNewDailyLog(item.createdAt) && (
+                    <span
+                      aria-label="سجل يومي جديد"
+                      className="mt-1 inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-black text-sky-800 dark:bg-sky-950/50 dark:text-sky-200"
+                    >
+                      جديد
+                    </span>
+                  )}
                   <span className="mt-0.5 block text-xs text-slate-500">سجل يوم {item.date}</span>
                   {(() => {
                     const patient = patientByUid.get(item.patientUid);
