@@ -118,6 +118,39 @@ describe('shared Express API application factory', () => {
     });
   });
 
+  it('returns a JSON 404 for the bare /api prefix', async () => {
+    const { createApiApp } = await import('../src/server/createApiApp');
+    const app = createApiApp();
+
+    await withHttpServer(app, async (baseUrl) => {
+      const response = await fetch(baseUrl + '/api', {
+        headers: { connection: 'close' },
+      });
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({
+        ok: false,
+        error: 'المسار غير موجود.',
+      });
+    });
+  });
+
+  it('does not parse a non-JSON body as a PIN submission', async () => {
+    const { createApiApp } = await import('../src/server/createApiApp');
+    const app = createApiApp();
+
+    await withHttpServer(app, async (baseUrl) => {
+      const response = await fetch(baseUrl + '/api/coach-session', {
+        method: 'POST',
+        headers: {
+          'content-type': 'text/plain',
+          connection: 'close',
+        },
+        body: '{"pin":"97531"}',
+      });
+      expect(response.status).toBe(403);
+    });
+  });
+
   it('returns a JSON 404 for unknown API paths', async () => {
     const { createApiApp } = await import('../src/server/createApiApp');
     const app = createApiApp();
