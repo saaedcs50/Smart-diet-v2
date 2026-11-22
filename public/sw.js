@@ -6,6 +6,12 @@ const BRAND_SHORT_NAME = "عيادة التغذية";
 const BRAND_LOGO_PATH = "/icon.svg";
 // BRAND_INJECT_END
 
+// Critical JS/CSS/fonts are generated from the Vite entry import graph at build time.
+const PRECACHE_ASSETS = [
+  // GENERATED_PRECACHE_START
+  // GENERATED_PRECACHE_END
+];
+
 self.addEventListener('install', (event) => {
   // SDV2-PWA-001: Precache app shell for offline support
   event.waitUntil(
@@ -15,8 +21,10 @@ self.addEventListener('install', (event) => {
         '/index.html',
         '/manifest.json',
         '/icon.svg',
-      ]).catch(() => {
-        // Ignore cache failures during install (e.g., offline first install)
+        ...PRECACHE_ASSETS,
+      ]).catch((error) => {
+        // Keep installation available when storage is constrained.
+        console.warn('PWA precache could not store every critical asset.', error);
       });
     }).then(() => self.skipWaiting())
   );
