@@ -79,6 +79,7 @@ END;
 $test$;
 
 -- Reject a timestamp/actor mismatch even for a role with update access.
+DO $test$
 BEGIN
   UPDATE public.patients
   SET archived_at=now(), archived_by=NULL
@@ -87,6 +88,7 @@ BEGIN
 EXCEPTION WHEN check_violation THEN
   NULL;
 END;
+$test$;
 
 ROLLBACK;
 SELECT 'patient_archive_rls_staging: PASS' AS result;
