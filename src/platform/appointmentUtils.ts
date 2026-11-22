@@ -42,6 +42,16 @@ export function getClinicMonthRange(date = new Date()): { start: Date; end: Date
   };
 }
 
+/** Covers both the current calendar month and any week days crossing its edges. */
+export function getClinicAppointmentsQueryRange(date = new Date()): { start: Date; end: Date } {
+  const week = getClinicWeekRange(date);
+  const month = getClinicMonthRange(date);
+  return {
+    start: week.start < month.start ? week.start : month.start,
+    end: week.end > month.end ? week.end : month.end,
+  };
+}
+
 export interface AppointmentStatusSummary {
   total: number;
   upcoming: number;
