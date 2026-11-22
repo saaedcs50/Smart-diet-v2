@@ -31,7 +31,7 @@ forms are retained for existing proxy/rewrite compatibility.
 | POST | /api/coach-session | Same as above | Same as above | Same contract |
 | DELETE | /coach-session | HMAC token in x-coach-session header or JSON body | SESSION_SECRET, Upstash revocation store | 200 {ok: true} |
 | DELETE | /api/coach-session | Same as above | Same as above | Same contract |
-| Any other /api/* | JSON 404 | No authentication | None | 404 with a safe Arabic error |
+| ANY | /api and unmatched /api/* | No authentication | None | 404 with a safe Arabic error |
 
 The current coach-session API is the legacy clinic PIN mechanism. It does not
 consume a Supabase User JWT, cookie, patient record, or clinic database row.
@@ -50,8 +50,10 @@ UPSTASH_REDIS_REST_TOKEN is missing or the Upstash service is unavailable.
 The shared Upstash store is used by Vercel and Cloudflare so failed-attempt
 and revocation state is not split between runtimes.
 
-No PIN, signing secret, Upstash token, Authorization value, or patient data
-is written to application logs or returned in health/error responses.
+PINs, signing secrets, Upstash tokens, Authorization values, and patient data
+are not added to custom application logs or returned in health/error responses.
+Unexpected coach-session errors are logged as a generic event, not as raw
+exception objects that may contain third-party request metadata.
 
 ## Proxy trust and client IP
 
@@ -131,7 +133,9 @@ CI runs TypeScript, ESLint, the full Vitest suite, and the production build.
 The API integration tests exercise the shared Express factory, health route,
 PIN session creation, proxy trust configuration, safe parser errors, request
 size limits, and unknown API route handling. Worker tests verify the matching
-HTTP error contracts.
+HTTP error contracts. A mocked shared Redis store is retained across independent
+service-module loads to verify that the per-IP attempt counter is shared; this is
+a deterministic adapter test, not a live Upstash availability test.
 
 This is application/runtime verification. It does not claim that a separate
 managed Node host has been provisioned or that production traffic was moved.
