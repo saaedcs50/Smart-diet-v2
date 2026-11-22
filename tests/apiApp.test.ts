@@ -26,6 +26,7 @@ describe('shared Express API application factory', () => {
     vi.stubEnv('NODE_ENV', 'test');
     vi.stubEnv('UPSTASH_REDIS_REST_URL', '');
     vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', '');
+    vi.stubEnv('API_ALLOWED_ORIGINS', 'https://frontend.example.test');
   });
 
   afterEach(() => {
@@ -148,6 +149,38 @@ describe('shared Express API application factory', () => {
         body: '{"pin":"97531"}',
       });
       expect(response.status).toBe(403);
+    });
+  });
+
+  it('allows preflight only for an explicitly configured frontend origin', async () => {
+    const { createApiApp } = await import('../src/server/createApiApp');
+    const app = createApiApp();
+
+    await withHttpServer(app, async (baseUrl) => {
+      const allowed = await fetch(baseUrl + '/api/coach-session', {
+        method: 'OPTIONS',
+        headers: {
+          origin: 'https://frontend.example.test',
+          'access-control-request-method': 'POST',
+          'access-control-request-headers': 'content-type',
+          connection: 'close',
+        },
+      });
+      expect(allowed.status).toBe(204);
+      expect(allowed.headers.get('access-control-allow-origin')).toBe('https://frontend.example.test');
+      expect(allowed.headers.get('access-control-allow-methods')).toBe('GET, POST, DELETE, OPTIONS');
+      expect(allowed.headers.get('access-control-allow-headers')).toBe('content-type, x-coach-session');
+
+      const denied = await fetch(baseUrl + '/api/coach-session', {
+        method: 'OPTIONS',
+        headers: {
+          origin: 'https://attacker.example.test',
+          'access-control-request-method': 'POST',
+          connection: 'close',
+        },
+      });
+      expect(denied.status).toBe(403);
+      expect(denied.headers.get('access-control-allow-origin')).toBeNull();
     });
   });
 
