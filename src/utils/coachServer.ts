@@ -98,7 +98,7 @@ export async function deleteCoachServerSession(): Promise<void> {
   clearCoachServerToken();
   if (!token) return;
   try {
-    await fetchWithTimeout('/api/coach-session', {
+    await fetchWithTimeout(apiUrl('/api/coach-session'), {
       method: 'DELETE',
       headers: { 'x-coach-session': token },
     });
