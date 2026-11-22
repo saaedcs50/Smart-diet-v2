@@ -15,6 +15,7 @@ const TEST_ENV = {
   NODE_ENV: 'test',
   SESSION_SECRET: TEST_SECRET,
   COACH_PIN: TEST_PIN,
+  API_ALLOWED_ORIGINS: 'https://frontend.example.test',
   ASSETS,
 };
 
@@ -62,6 +63,33 @@ describe('cloudflare worker — hono api', () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({ status: 'ok' });
     }
+  });
+
+  it('allows API preflight only from the configured frontend origin', async () => {
+    const allowed = await call('/api/coach-session', {
+      method: 'OPTIONS',
+      headers: { Origin: 'https://frontend.example.test' },
+    });
+    expect(allowed.status).toBe(204);
+    expect(allowed.headers.get('access-control-allow-origin')).toBe('https://frontend.example.test');
+    expect(allowed.headers.get('access-control-allow-headers')).toBe('content-type, x-coach-session');
+
+    const denied = await call('/api/coach-session', {
+      method: 'OPTIONS',
+      headers: { Origin: 'https://attacker.example.test' },
+    });
+    expect(denied.status).toBe(403);
+    expect(denied.headers.get('access-control-allow-origin')).toBeNull();
+
+    const crossSiteWrite = await call('/api/coach-session', {
+      method: 'POST',
+      headers: {
+        Origin: 'https://attacker.example.test',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ pin: TEST_PIN }),
+    });
+    expect(crossSiteWrite.status).toBe(403);
   });
 
   it('non-api paths are served from Static Assets', async () => {

@@ -77,11 +77,7 @@ not set cookies, use credentialed CORS, or consume a Supabase Authorization
 Bearer token. Therefore no wildcard CORS policy is enabled. Browser calls
 from the same origin do not need CORS.
 
-When a future frontend deployment uses a separate API origin, add an explicit
-origin allow-list and preflight policy as part of the frontend/API-origin
-integration. Do not enable Access-Control-Allow-Origin: * with credentials
-and do not treat CORS as authentication. The API currently reads
-x-coach-session only for session revocation and JSON pin/token request bodies.
+When a frontend deployment uses a separate API origin, set public build variable VITE_API_BASE_URL to the API origin (HTTPS, origin only; no path) and set runtime binding API_ALLOWED_ORIGINS to a comma-separated exact allow-list of frontend origins. Localhost HTTP is permitted only for local development. Both adapters answer preflight with GET, POST, DELETE, and OPTIONS and allow only content-type and x-coach-session. Wildcard origins and credentialed CORS are disabled. Unapproved cross-origin writes are rejected before the PIN service is called. CORS is not authentication. The API reads x-coach-session only for session revocation and JSON PIN/token request bodies. An empty VITE_API_BASE_URL preserves the current same-origin behaviour.
 
 ## Request limits and error handling
 
@@ -108,6 +104,8 @@ x-coach-session only for session revocation and JSON pin/token request bodies.
 | SESSION_SECRET | Server secret | HMAC signing key | Required in production |
 | UPSTASH_REDIS_REST_URL | Server secret/config | Shared Rate Limit + revocation store | Required in production |
 | UPSTASH_REDIS_REST_TOKEN | Server secret | Shared Upstash credential | Required in production |
+| VITE_API_BASE_URL | Frontend build | API origin | Optional; HTTPS origin only; empty means same-origin |
+| API_ALLOWED_ORIGINS | Node / Worker runtime | Exact CORS frontend origin allow-list | Optional; comma-separated HTTPS origins; no wildcard |
 | VITE_SUPABASE_URL | Frontend build | Supabase project URL | Public frontend setting; not read by this API |
 | VITE_SUPABASE_ANON_KEY | Frontend build | Supabase anon key | Public frontend key; RLS remains authoritative |
 | Supabase Vault VAPID values | Supabase Edge Function only | Push signing | Never copy to Node, Vercel frontend variables, or Cloudflare |
@@ -129,6 +127,12 @@ over a local .env file. When NODE_ENV is not explicitly configured, only the
 `npm run dev` lifecycle defaults to development; direct launches and `npm start`
 default to production so missing secrets fail closed rather than enabling the
 development PIN fallback.
+
+## Host-independent frontend and PWA (Phase 3 additions)
+
+src/utils/apiClient.ts resolves the API path against VITE_API_BASE_URL while retaining same-origin defaults. The coach PIN session caller now uses this resolver. API_ALLOWED_ORIGINS is enforced by both Express and Hono with exact-origin matching, a narrow preflight contract, and rejection of unapproved cross-origin writes.
+
+Vite emits .vite/manifest.json; scripts/generate-sw-precache.mjs walks the static import graph of the main HTML entry and injects JavaScript, CSS, and font assets into the built Service Worker. This makes the first post-install offline reload independent of a second online visit. Dynamic imports remain in the existing runtime cache. Both dist and dist-cf builds run the same generator.
 
 ## Phase 2 verification scope
 

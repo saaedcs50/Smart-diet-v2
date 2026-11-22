@@ -16,6 +16,7 @@ import {
   validateSecurityConfig,
 } from "./src/server/coachSessionService.ts";
 import { setServerRuntimeEnv } from "./src/server/runtimeEnv.ts";
+import { corsHeadersForOrigin, parseAllowedOrigins } from "./src/server/corsPolicy.ts";
 
 const app = new Hono();
 const MAX_JSON_BODY_BYTES = 200 * 1024;
@@ -29,6 +30,7 @@ function injectEnv(env) {
     SESSION_SECRET: env.SESSION_SECRET,
     UPSTASH_REDIS_REST_URL: env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: env.UPSTASH_REDIS_REST_TOKEN,
+    API_ALLOWED_ORIGINS: env.API_ALLOWED_ORIGINS,
   });
 }
 
@@ -125,7 +127,32 @@ export default {
       url.pathname === "/api/coach-session" ||
       url.pathname.startsWith("/api/");
 
-    if (isApi) return app.fetch(request, env, ctx);
+    if (isApi) {
+      const allowedOrigins = parseAllowedOrigins(env.API_ALLOWED_ORIGINS);
+      const origin = request.headers.get('Origin');
+      const headers = corsHeadersForOrigin(origin, allowedOrigins);
+
+      const requestOrigin = new URL(request.url).origin;
+      const isSameOrigin = origin !== null && origin === requestOrigin;
+      if (origin && !headers && !isSameOrigin && !['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+        return Response.json({ ok: false, error: 'مصدر الطلب غير مسموح.' }, { status: 403 });
+      }
+
+      if (request.method === 'OPTIONS') {
+        if (!headers) return new Response(null, { status: 403, headers: { Vary: 'Origin' } });
+        return new Response(null, { status: 204, headers });
+      }
+
+      const response = await app.fetch(request, env, ctx);
+      if (!headers) return response;
+      const responseHeaders = new Headers(response.headers);
+      for (const [name, value] of Object.entries(headers)) responseHeaders.set(name, value);
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: responseHeaders,
+      });
+    }
     return env.ASSETS.fetch(request);
   },
 };
