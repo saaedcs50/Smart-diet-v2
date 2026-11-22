@@ -5,6 +5,7 @@ import {
   parseInvitation,
   validateInvitationForUser,
   canReopenInvitationForStaff,
+  summarizeInvitations,
   type Invitation,
 } from '../../src/platform/invitations';
 
@@ -92,5 +93,36 @@ describe('validateInvitationForUser', () => {
         clinicId: 'clinic-b',
       }),
     ).toBe(false);
+  });
+});
+
+
+describe('summarizeInvitations', () => {
+  it('counts pending and consumed invitations and selects the newest pending one', () => {
+    const result = summarizeInvitations([
+      { ...base, email: 'older@example.com', createdAt: '2026-11-10T09:00:00Z' },
+      { ...base, email: 'used@example.com', status: 'consumed', createdAt: '2026-11-21T09:00:00Z' },
+      { ...base, email: 'newer@example.com', createdAt: '2026-11-22T09:00:00Z' },
+    ]);
+    expect(result.pendingCount).toBe(2);
+    expect(result.consumedCount).toBe(1);
+    expect(result.latestPending?.email).toBe('newer@example.com');
+  });
+
+  it('keeps missing and invalid creation timestamps out of latest-date ordering', () => {
+    const result = summarizeInvitations([
+      { ...base, email: 'no-date@example.com' },
+      { ...base, email: 'invalid-date@example.com', createdAt: 'not-a-date' },
+      { ...base, email: 'dated@example.com', createdAt: '2026-11-20T09:00:00Z' },
+    ]);
+    expect(result.latestPending?.email).toBe('dated@example.com');
+  });
+
+  it('returns zero counts for an empty invitation set', () => {
+    expect(summarizeInvitations([])).toEqual({
+      pendingCount: 0,
+      consumedCount: 0,
+      latestPending: null,
+    });
   });
 });
