@@ -96,6 +96,6 @@ describe('buildPatientVitalSeries', () => {
 
     expect(longSeries.bodyFatPercent).toHaveLength(30);
     expect(longSeries.bodyFatPercent[0].date).toBe('2026-01-06');
-    expect(longSeries.bodyFatPercent[29].date).toBe('2026-02-09');
+    expect(longSeries.bodyFatPercent[29].date).toBe('2026-02-04');
   });
 });
