@@ -33,6 +33,18 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Cloudflare static assets build (CI placeholders only)
+        env:
+          VITE_SUPABASE_URL: https://ci-placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-public-placeholder-not-a-real-key
+          VITE_PLATFORM_ENABLED: "true"
+          VITE_REALTIME_QA_ENABLED: "true"
+          VITE_GOOGLE_OAUTH_ENABLED: "false"
+        run: npm run build:cloudflare
+
+      - name: Validate Cloudflare Worker bundle
+        run: npx --yes wrangler@4.166.0 deploy --dry-run --outdir .wrangler-dry-run --config wrangler.jsonc
+
 
   security:
     name: Dependency & secret scanning
