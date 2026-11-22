@@ -42,6 +42,55 @@ BEGIN
   WHERE id='aaaaaaaa-1111-4111-8111-111111111111';
   IF n <> 1 THEN RAISE EXCEPTION 'patient: own intake insert/read failed'; END IF;
 
+  SELECT count(*) INTO n FROM public.patient_intakes
+  WHERE id='aaaaaaaa-1111-4111-8111-111111111111'
+    AND submitted_by=auth.uid()
+    AND status='submitted'
+    AND reviewed_at IS NULL
+    AND reviewed_by IS NULL;
+  IF n <> 1 THEN RAISE EXCEPTION 'patient: server-owned submission fields were not applied'; END IF;
+
+  BEGIN
+    INSERT INTO public.patient_intakes (clinic_id, patient_id, answers, consent_version, status)
+    VALUES (
+      'clinic-a',
+      'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8',
+      '{"clientName":"Forged status","conditions":[],"allergies":[]}'::jsonb,
+      'patient-intake-v1-2026-11-22',
+      'reviewed'
+    );
+    RAISE EXCEPTION 'patient inserted a forged review status';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+
+  BEGIN
+    INSERT INTO public.patient_intakes (clinic_id, patient_id, submitted_by, answers, consent_version)
+    VALUES (
+      'clinic-a',
+      'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8',
+      '71d0a9c0-d539-487e-8d32-8af4dd7d5120',
+      '{"clientName":"Forged creator","conditions":[],"allergies":[]}'::jsonb,
+      'patient-intake-v1-2026-11-22'
+    );
+    RAISE EXCEPTION 'patient supplied another creator';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+
+  BEGIN
+    INSERT INTO public.patient_intakes (clinic_id, patient_id, answers, consent_version)
+    VALUES (
+      'clinic-a',
+      'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8',
+      '{"clientName":"Forged consent version","conditions":[],"allergies":[]}'::jsonb,
+      'forged-version'
+    );
+    RAISE EXCEPTION 'patient inserted an unrecognized consent version';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+
   UPDATE public.patient_intakes
   SET status='reviewed', reviewed_at=now(), reviewed_by=auth.uid()
   WHERE id='aaaaaaaa-1111-4111-8111-111111111111';
