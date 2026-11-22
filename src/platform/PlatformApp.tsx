@@ -1704,7 +1704,17 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         patients={patients}
         providers={coaches}
       />
-      <StaffTasksSection clinicId={clinicId} userId={uid} />
+      <StaffTasksSection
+        clinicId={clinicId}
+        userId={uid}
+        role="admin"
+        staff={coaches
+          .filter((coach) => !coach.doc.disabled)
+          .map((coach) => ({
+            uid: coach.uid,
+            label: coach.doc.displayName?.trim() || coach.doc.email || 'طبيب',
+          }))}
+      />
       <PatientFollowUpQueue
         candidates={followUpCandidates}
         loading={loading}
@@ -1991,7 +2001,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         patients={patients}
         providers={[]}
       />
-      <StaffTasksSection clinicId={clinicId} userId={uid} />
+      <StaffTasksSection clinicId={clinicId} userId={uid} role="coach" />
       <PatientFollowUpQueue
         candidates={followUpCandidates}
         loading={loading}
