@@ -5,6 +5,7 @@ import {
   canReopenInvitationForStaff,
   listClinicInvitations,
   reopenInvitation,
+  summarizeInvitations,
   type Invitation,
 } from './invitations';
 
@@ -82,6 +83,8 @@ export const InvitationManager: React.FC<InvitationManagerProps> = ({
     }
   };
 
+  const invitationSummary = summarizeInvitations(invitations);
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center justify-between gap-3">
@@ -108,6 +111,27 @@ export const InvitationManager: React.FC<InvitationManagerProps> = ({
       {message && <p role="status" className="mt-3 text-xs font-bold text-emerald-700 dark:text-emerald-300">{message}</p>}
       {error && <p role="alert" className="mt-3 text-xs font-bold text-red-600">{error}</p>}
       {loading && <p className="mt-3 text-sm text-slate-500">جاري تحميل الدعوات…</p>}
+      {!loading && !error && (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="rounded-xl bg-amber-50 p-3 dark:bg-amber-950/30">
+            <p className="text-[11px] text-amber-800 dark:text-amber-200">بانتظار التسجيل</p>
+            <p className="mt-1 text-xl font-black tabular-nums text-amber-900 dark:text-amber-100">
+              {invitationSummary.pendingCount}
+            </p>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
+            <p className="text-[11px] text-slate-600 dark:text-slate-300">تم استخدامها</p>
+            <p className="mt-1 text-xl font-black tabular-nums text-slate-900 dark:text-slate-100">
+              {invitationSummary.consumedCount}
+            </p>
+          </div>
+        </div>
+      )}
+      {!loading && !error && invitationSummary.latestPending && (
+        <p className="mt-2 break-all text-[11px] text-slate-500">
+          أحدث دعوة معلّقة: {invitationSummary.latestPending.email}
+        </p>
+      )}
       {!loading && !error && invitations.length === 0 && (
         <div className="mt-3">
           <EmptyState

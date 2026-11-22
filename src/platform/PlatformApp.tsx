@@ -67,12 +67,22 @@ import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
 import { countSkippedPatientMeals, summarizePatientDayLog } from './patientDashboardMetrics';
 import { PatientProgressCharts } from './PatientProgressCharts';
 import { PatientTagsEditor } from './PatientTagsEditor';
+import { AppointmentsSection } from './AppointmentsSection';
+import { PatientFollowUpQueue } from './PatientFollowUpQueue';
+import type { PatientFollowUpCandidate } from './patientFollowUpQueue';
+import { ClinicActivityFeed } from './ClinicActivityFeed';
+import { buildClinicActivityFeed } from './clinicActivityFeed';
 import { EmptyState } from '../components/EmptyState';
 import { InvitationManager } from './InvitationManager';
 import type { PatientTag } from './patientTags';
 import { ClinicSummaryExportButtons } from './ClinicSummaryExportButtons';
 import { isWithinLastCalendarDays, type PatientProgressSummary } from './patientProgressSummary';
 import { normalizeBodySearchQuery } from '../utils/bodySearch';
+import {
+  matchesPatientActivityFilter,
+  remainingWeightToTargetKg,
+  type PatientActivityFilter,
+} from './patientListFilters';
 
 type Route =
   | { view: 'login' }
@@ -230,9 +240,8 @@ const buttonClass =
 const ghostButtonClass =
   'rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 dark:border-slate-700 dark:text-slate-200';
 
-type PatientListSort = 'name' | 'plan' | 'lastLog' | 'completion' | 'weightChange';
+type PatientListSort = 'name' | 'plan' | 'lastLog' | 'completion' | 'weightChange' | 'weightRemaining';
 type PatientPlanFilter = 'all' | 'withPlan' | 'withoutPlan';
-type PatientActivityFilter = 'all' | 'active30' | 'followUp' | 'noLog30';
 type PatientTagFilter = 'all' | string;
 
 function filterAndSortPatients(
@@ -257,10 +266,7 @@ function filterAndSortPatients(
       const progress = progressByUid[uid];
       const matchesTag = tagFilter === 'all' ||
         (doc.tags ?? []).some((tag) => normalizeBodySearchQuery(tag.label) === tagFilter);
-      const matchesActivity = activityFilter === 'all' ||
-        (activityFilter === 'active30' && progress?.hasLogWithin30Days === true) ||
-        (activityFilter === 'followUp' && progress?.needsFollowUp === true) ||
-        (activityFilter === 'noLog30' && progress?.hasLogWithin30Days === false);
+      const matchesActivity = matchesPatientActivityFilter(progress, activityFilter);
       return matchesQuery && matchesPlan && matchesTag && matchesActivity;
     })
     .sort((a, b) => {
@@ -288,6 +294,12 @@ function filterAndSortPatients(
           const difference = Math.abs(valueB) - Math.abs(valueA);
           if (difference !== 0) return difference;
         }
+      } else if (sort === 'weightRemaining') {
+        const valueA = remainingWeightToTargetKg(progressA?.currentWeightKg, a.doc.plan?.targetWeight);
+        const valueB = remainingWeightToTargetKg(progressB?.currentWeightKg, b.doc.plan?.targetWeight);
+        if (valueA == null && valueB != null) return 1;
+        if (valueB == null && valueA != null) return -1;
+        if (valueA != null && valueB != null && valueA !== valueB) return valueA - valueB;
       }
       return (a.doc.profile.clientName ?? '').localeCompare(
         b.doc.profile.clientName ?? '',
@@ -421,6 +433,7 @@ function PatientListControls({
             <option value="lastLog">آخر تسجيل (الأحدث)</option>
             <option value="completion">إكمال 7 أيام (الأعلى)</option>
             <option value="weightChange">مقدار تغير الوزن</option>
+            <option value="weightRemaining">المتبقي للهدف (الأقل أولًا)</option>
           </select>
         </label>
         <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
@@ -443,6 +456,8 @@ function PatientListControls({
             className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
           >
             <option value="all">كل حالات النشاط</option>
+            <option value="loggedToday">سجّل اليوم</option>
+            <option value="logged7d">سجّل خلال آخر 7 أيام</option>
             <option value="active30">سجّل خلال 30 يومًا</option>
             <option value="followUp">يحتاج متابعة (3+ أيام)</option>
             <option value="noLog30">لا سجل خلال 30 يومًا</option>
@@ -1629,6 +1644,32 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     };
   });
 
+  const doctorNameByUid = new Map(coaches.map((coach) => [
+    coach.uid,
+    coach.doc.displayName ?? coach.doc.email ?? 'طبيب',
+  ]));
+  const activityFeedEvents = buildClinicActivityFeed(
+    patients.map(({ uid: patientUid, doc }) => ({
+      uid: patientUid,
+      name: doc.profile.clientName ?? 'مريض',
+      assignedDoctorUid: doc.invitedBy,
+      createdAt: doc.createdAt,
+      planUpdatedAt: doc.planUpdatedAt,
+      planUpdatedBy: doc.planUpdatedBy,
+    })),
+    activity,
+    doctorNameByUid,
+    12,
+  );
+  const followUpCandidates: PatientFollowUpCandidate[] = patients.map((patient) => ({
+    uid: patient.uid,
+    name: patient.doc.profile.clientName ?? 'مريض',
+    progress: progressByUid[patient.uid] ?? null,
+    doctorName: patient.doc.invitedBy
+      ? doctorNameByUid.get(patient.doc.invitedBy) ?? 'طبيب غير متاح'
+      : 'بلا طبيب معيّن',
+  }));
+
   return (
     <div className="flex flex-col gap-4">
       <SubscriptionCard clinicId={clinicId} />
@@ -1652,6 +1693,25 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         progressByUid={progressByUid}
         loading={loading}
         progressAvailable={!loading && !progressError}
+      />
+      <AppointmentsSection
+        clinicId={clinicId}
+        uid={uid}
+        role="admin"
+        patients={patients}
+        providers={coaches}
+      />
+      <PatientFollowUpQueue
+        candidates={followUpCandidates}
+        loading={loading}
+        error={progressError}
+        onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
+      />
+      <ClinicActivityFeed
+        events={activityFeedEvents}
+        loading={loading}
+        error={activityError}
+        onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
       />
       <RecentActivityCard
         title="آخر نشاط المرضى"
@@ -1877,6 +1937,26 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
   const coachCompletion7d = meanMetric(coachProgressRows.map((item) => item.completion7d));
   const coachMeanWeightChange = meanMetric(coachProgressRows.map((item) => item.weightChangeKg));
   const coachMetricsAvailable = !loading && !progressError;
+  const doctorNameByUid = new Map([[uid, doctorName]]);
+  const activityFeedEvents = buildClinicActivityFeed(
+    patients.map(({ uid: patientUid, doc }) => ({
+      uid: patientUid,
+      name: doc.profile.clientName ?? 'مريض',
+      assignedDoctorUid: doc.invitedBy,
+      createdAt: doc.createdAt,
+      planUpdatedAt: doc.planUpdatedAt,
+      planUpdatedBy: doc.planUpdatedBy,
+    })),
+    activity,
+    doctorNameByUid,
+    12,
+  );
+  const followUpCandidates: PatientFollowUpCandidate[] = patients.map((patient) => ({
+    uid: patient.uid,
+    name: patient.doc.profile.clientName ?? 'مريض',
+    progress: progressByUid[patient.uid] ?? null,
+    doctorName,
+  }));
   const visiblePatients = filterAndSortPatients(
     patients,
     patientQuery,
@@ -1900,6 +1980,25 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة سحابيًا" />
         <DashboardMetric label="يحتاجون إعداد خطة" value={loading ? '—' : patients.length - patientsWithPlan} note="لا توجد لهم خطة سحابية بعد" />
       </div>
+      <AppointmentsSection
+        clinicId={clinicId}
+        uid={uid}
+        role="coach"
+        patients={patients}
+        providers={[]}
+      />
+      <PatientFollowUpQueue
+        candidates={followUpCandidates}
+        loading={loading}
+        error={progressError}
+        onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
+      />
+      <ClinicActivityFeed
+        events={activityFeedEvents}
+        loading={loading}
+        error={activityError}
+        onOpenPatient={(patientUid) => navigate(`/platform/patients/${encodeURIComponent(patientUid)}`)}
+      />
       <RecentActivityCard
         title="آخر نشاط مرضاي"
         activity={activity}

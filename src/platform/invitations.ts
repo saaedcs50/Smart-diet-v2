@@ -34,6 +34,31 @@ export interface Invitation {
   createdAt?: string;
 }
 
+export interface InvitationSummary {
+  pendingCount: number;
+  consumedCount: number;
+  latestPending: Invitation | null;
+}
+
+/** Summarizes the current state only; createdAt is not an acceptance timestamp. */
+export function summarizeInvitations(invitations: readonly Invitation[]): InvitationSummary {
+  const pending = invitations.filter((invitation) => invitation.status === 'pending');
+  const consumedCount = invitations.filter((invitation) => invitation.status === 'consumed').length;
+  const latestPending = [...pending].sort((left, right) => {
+    const leftTime = left.createdAt ? new Date(left.createdAt).getTime() : Number.NEGATIVE_INFINITY;
+    const rightTime = right.createdAt ? new Date(right.createdAt).getTime() : Number.NEGATIVE_INFINITY;
+    const safeLeft = Number.isFinite(leftTime) ? leftTime : Number.NEGATIVE_INFINITY;
+    const safeRight = Number.isFinite(rightTime) ? rightTime : Number.NEGATIVE_INFINITY;
+    return safeRight - safeLeft;
+  })[0] ?? null;
+
+  return {
+    pendingCount: pending.length,
+    consumedCount,
+    latestPending,
+  };
+}
+
 const PLATFORM_ROLES: ReadonlySet<string> = new Set([
   'patient',
   'coach',

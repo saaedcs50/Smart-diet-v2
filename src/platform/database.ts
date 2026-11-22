@@ -90,6 +90,8 @@ export interface PatientDoc {
   plan?: PlanConfig;
   invitedBy?: string;
   createdAt?: string;
+  planUpdatedAt?: string;
+  planUpdatedBy?: string;
   tags?: PatientTag[];
   updatedAt?: string;
   updatedBy?: string;
@@ -245,7 +247,13 @@ function rowToPatientDoc(row: Record<string, unknown>): PatientDoc {
     clinicId: row.clinic_id as string,
     profile: (row.profile as { clientName: string }) ?? { clientName: '' },
   };
-  if (row.plan != null) doc.plan = row.plan as PlanConfig;
+  if (row.plan != null) {
+    doc.plan = row.plan as PlanConfig;
+    if (isPlainObject(row.plan)) {
+      if (typeof row.plan.updatedAt === 'string') doc.planUpdatedAt = row.plan.updatedAt;
+      if (typeof row.plan.updatedBy === 'string') doc.planUpdatedBy = row.plan.updatedBy;
+    }
+  }
   if (row.invited_by != null) doc.invitedBy = row.invited_by as string;
   if (typeof row.created_at === 'string') doc.createdAt = row.created_at;
   doc.tags = normalizePatientTags(row.tags);
