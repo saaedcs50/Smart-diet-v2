@@ -5,6 +5,8 @@ export interface PatientFollowUpCandidate {
   name: string;
   progress: PatientProgressSummary | null;
   doctorName?: string | null;
+  whatsappPhone?: string | null;
+  whatsappConsentAt?: string | null;
 }
 
 /** Prioritizes patients with no recent record, then the oldest last record. */

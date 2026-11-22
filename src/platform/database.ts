@@ -87,6 +87,9 @@ export interface ClinicDoc {
 export interface PatientDoc {
   clinicId: string;
   profile: { clientName: string };
+  whatsappPhone?: string | null;
+  whatsappConsentAt?: string | null;
+  whatsappConsentBy?: string | null;
   plan?: PlanConfig;
   invitedBy?: string;
   createdAt?: string;
@@ -255,6 +258,9 @@ function rowToPatientDoc(row: Record<string, unknown>): PatientDoc {
     }
   }
   if (row.invited_by != null) doc.invitedBy = row.invited_by as string;
+  if (typeof row.whatsapp_phone === 'string') doc.whatsappPhone = row.whatsapp_phone;
+  if (typeof row.whatsapp_consent_at === 'string') doc.whatsappConsentAt = row.whatsapp_consent_at;
+  if (typeof row.whatsapp_consent_by === 'string') doc.whatsappConsentBy = row.whatsapp_consent_by;
   if (typeof row.created_at === 'string') doc.createdAt = row.created_at;
   doc.tags = normalizePatientTags(row.tags);
   return doc;
