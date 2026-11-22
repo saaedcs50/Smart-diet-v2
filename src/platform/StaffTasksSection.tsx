@@ -11,6 +11,7 @@ import {
   updateStaffTaskStatus,
   type StaffTask,
   type StaffTaskPriority,
+  type StaffTaskRole,
 } from './staffTasks';
 
 type TaskFilter = 'all' | 'open' | 'in_progress' | 'completed';
@@ -39,11 +40,28 @@ const statusLabels: Record<StaffTaskStatus, string> = {
   completed: 'مكتملة',
 };
 
-export function StaffTasksSection({ clinicId, userId }: { clinicId: string; userId: string }) {
+export interface StaffTaskStaffOption {
+  uid: string;
+  label: string;
+}
+
+export function StaffTasksSection({
+  clinicId,
+  userId,
+  role,
+  staff = [],
+}: {
+  clinicId: string;
+  userId: string;
+  role: StaffTaskRole;
+  staff?: StaffTaskStaffOption[];
+}) {
   const [tasks, setTasks] = useState<StaffTask[]>([]);
   const [title, setTitle] = useState('');
   const [dueOn, setDueOn] = useState('');
   const [priority, setPriority] = useState<StaffTaskPriority>('normal');
+  const [assignedTo, setAssignedTo] = useState(userId);
+  const staffLabels = useMemo(() => new Map(staff.map((person) => [person.uid, person.label])), [staff]);
   const [filter, setFilter] = useState<TaskFilter>('all');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -53,7 +71,7 @@ export function StaffTasksSection({ clinicId, userId }: { clinicId: string; user
   const load = async () => {
     setLoading(true);
     try {
-      const rows = await listStaffTasks(clinicId, userId);
+      const rows = await listStaffTasks(clinicId, userId, role);
       setTasks(rows);
       setError(null);
     } catch (caught) {
@@ -65,7 +83,7 @@ export function StaffTasksSection({ clinicId, userId }: { clinicId: string; user
 
   useEffect(() => {
     let active = true;
-    void listStaffTasks(clinicId, userId)
+    void listStaffTasks(clinicId, userId, role)
       .then((rows) => {
         if (!active) return;
         setTasks(rows);
@@ -81,7 +99,7 @@ export function StaffTasksSection({ clinicId, userId }: { clinicId: string; user
     return () => {
       active = false;
     };
-  }, [clinicId, userId]);
+  }, [clinicId, userId, role]);
 
   const counts = useMemo(() => countStaffTasksByStatus(tasks), [tasks]);
   const visibleTasks = useMemo(
@@ -99,6 +117,7 @@ export function StaffTasksSection({ clinicId, userId }: { clinicId: string; user
       await createStaffTask({
         clinicId,
         userId,
+        assignedTo: role === 'admin' ? assignedTo : userId,
         title,
         dueOn: dueOn || null,
         priority,
@@ -106,6 +125,7 @@ export function StaffTasksSection({ clinicId, userId }: { clinicId: string; user
       setTitle('');
       setDueOn('');
       setPriority('normal');
+      setAssignedTo(userId);
       await load();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'تعذّر حفظ المهمة.');
@@ -139,8 +159,12 @@ export function StaffTasksSection({ clinicId, userId }: { clinicId: string; user
     <section dir="rtl" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">مهامي</h2>
-          <p className="mt-1 text-xs text-slate-500">قائمة شخصية لمهام العمل؛ لا يراها باقي أعضاء العيادة.</p>
+          <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">{role === 'admin' ? 'مهام العيادة' : 'مهامي'}</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            {role === 'admin'
+              ? 'ترى مهامك ومهام الأطباء، ويمكنك إسناد مهمة إلى عضو نشط في فريقك.'
+              : 'تعرض هذه القائمة المهام المسندة إليك فقط.'}
+          </p>
         </div>
         <div className="flex gap-2 text-[11px] font-bold">
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700 dark:bg-slate-800 dark:text-slate-200">{counts.open} مفتوحة</span>
@@ -167,6 +191,22 @@ export function StaffTasksSection({ clinicId, userId }: { clinicId: string; user
           onChange={(event) => setDueOn(event.target.value)}
           className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
         />
+        {role === 'admin' && (
+          <>
+            <label className="sr-only" htmlFor="staff-task-assignee">إسناد المهمة إلى</label>
+            <select
+              id="staff-task-assignee"
+              value={assignedTo}
+              onChange={(event) => setAssignedTo(event.target.value)}
+              className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+            >
+              <option value={userId}>إسناد إليّ</option>
+              {staff.filter((person) => person.uid !== userId).map((person) => (
+                <option key={person.uid} value={person.uid}>{person.label}</option>
+              ))}
+            </select>
+          </>
+        )}
         <label className="sr-only" htmlFor="staff-task-priority">أولوية المهمة</label>
         <select
           id="staff-task-priority"
@@ -228,6 +268,11 @@ export function StaffTasksSection({ clinicId, userId }: { clinicId: string; user
                   </p>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                     <span>الأولوية: {priorityLabels[task.priority]}</span>
+                    {role === 'admin' && (
+                      <span>
+                        المسند إليه: {task.user_id === userId ? 'أنت' : staffLabels.get(task.user_id) ?? 'عضو الفريق'}
+                      </span>
+                    )}
                     {task.due_on && (
                       <span className={overdue ? 'font-bold text-rose-600 dark:text-rose-300' : ''}>
                         {overdue ? 'متأخرة · ' : 'الاستحقاق · '}{formatTaskDate(task.due_on)}

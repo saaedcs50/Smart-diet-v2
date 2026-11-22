@@ -3,11 +3,13 @@ import { normalizeStaffTaskTitle } from './staffTaskUtils';
 
 export type StaffTaskPriority = 'low' | 'normal' | 'high';
 export type StaffTaskStatus = 'open' | 'in_progress' | 'completed';
+export type StaffTaskRole = 'admin' | 'coach';
 
 export interface StaffTask {
   id: string;
   clinic_id: string;
   user_id: string;
+  created_by: string;
   title: string;
   due_on: string | null;
   priority: StaffTaskPriority;
@@ -20,6 +22,7 @@ const TASK_COLUMNS = [
   'id',
   'clinic_id',
   'user_id',
+  'created_by',
   'title',
   'due_on',
   'priority',
@@ -28,13 +31,22 @@ const TASK_COLUMNS = [
   'updated_at',
 ].join(',');
 
-export async function listStaffTasks(clinicId: string, userId: string): Promise<StaffTask[]> {
+export async function listStaffTasks(
+  clinicId: string,
+  userId: string,
+  role: StaffTaskRole,
+): Promise<StaffTask[]> {
   if (!clinicId.trim() || !userId.trim()) throw new Error('بيانات العيادة أو المستخدم غير صالحة.');
-  const { data, error } = await getSupabase()
+  let query = getSupabase()
     .from('clinic_tasks')
     .select(TASK_COLUMNS)
-    .eq('clinic_id', clinicId)
-    .eq('user_id', userId)
+    .eq('clinic_id', clinicId);
+
+  // RLS is the security boundary. This filter only avoids requesting rows
+  // the coach is never allowed to see; admins receive the clinic-wide board.
+  if (role === 'coach') query = query.eq('user_id', userId);
+
+  const { data, error } = await query
     .order('due_on', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false });
 
@@ -45,6 +57,7 @@ export async function listStaffTasks(clinicId: string, userId: string): Promise<
 export async function createStaffTask(input: {
   clinicId: string;
   userId: string;
+  assignedTo: string;
   title: string;
   dueOn: string | null;
   priority: StaffTaskPriority;
@@ -54,7 +67,8 @@ export async function createStaffTask(input: {
     .from('clinic_tasks')
     .insert({
       clinic_id: input.clinicId,
-      user_id: input.userId,
+      user_id: input.assignedTo,
+      created_by: input.userId,
       title,
       due_on: input.dueOn || null,
       priority: input.priority,
