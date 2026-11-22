@@ -68,7 +68,7 @@ BEGIN
       repeat('x', 1201)
     );
     RAISE EXCEPTION 'oversized comment unexpectedly accepted';
-  EXCEPTION WHEN check_violation THEN
+  EXCEPTION WHEN string_data_right_truncation OR check_violation THEN
     NULL;
   END;
 END;
