@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildAppointmentTimeRange,
+  getClinicMonthRange,
   getClinicWeekRange,
+  summarizeAppointmentStatuses,
   localDateKey,
   parseDateTimeLocal,
   toDateTimeLocalValue,
@@ -37,5 +39,54 @@ describe('clinic appointment date helpers', () => {
     expect(buildAppointmentTimeRange('2026-11-14T09:00', 10)).toBeNull();
     expect(buildAppointmentTimeRange('2026-11-14T09:00', 181)).toBeNull();
     expect(buildAppointmentTimeRange('2026-02-30T09:00', 30)).toBeNull();
+  });
+});
+
+
+describe('clinic appointment reporting helpers', () => {
+  it('returns local calendar-month boundaries with an exclusive end', () => {
+    const november = getClinicMonthRange(new Date(2026, 10, 18, 12));
+    expect(localDateKey(november.start)).toBe('2026-11-01');
+    expect(localDateKey(november.end)).toBe('2026-12-01');
+
+    const december = getClinicMonthRange(new Date(2026, 11, 31, 12));
+    expect(localDateKey(december.start)).toBe('2026-12-01');
+    expect(localDateKey(december.end)).toBe('2027-01-01');
+  });
+
+  it('summarizes appointment outcomes without counting cancellations as missed attendance', () => {
+    const summary = summarizeAppointmentStatuses([
+      { status: 'scheduled' },
+      { status: 'confirmed' },
+      { status: 'completed' },
+      { status: 'completed' },
+      { status: 'completed' },
+      { status: 'cancelled' },
+      { status: 'cancelled' },
+      { status: 'no_show' },
+    ]);
+    expect(summary).toEqual({
+      total: 8,
+      upcoming: 2,
+      completed: 3,
+      cancelled: 2,
+      noShow: 1,
+      attendanceRate: 75,
+      cancellationRate: 25,
+      noShowRate: 25,
+    });
+  });
+
+  it('does not invent percentages when the denominator is empty', () => {
+    expect(summarizeAppointmentStatuses([])).toEqual({
+      total: 0,
+      upcoming: 0,
+      completed: 0,
+      cancelled: 0,
+      noShow: 0,
+      attendanceRate: null,
+      cancellationRate: null,
+      noShowRate: null,
+    });
   });
 });
