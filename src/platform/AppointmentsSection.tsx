@@ -24,6 +24,8 @@ import {
   updateAppointment,
   type AppointmentRecord,
 } from './appointments';
+import { buildAppointmentsCsv } from './appointmentExports';
+import { downloadExportBlob } from './doctorExports';
 
 type StaffRole = 'admin' | 'coach';
 type AppointmentView = AppointmentDashboardView;
@@ -99,6 +101,8 @@ export function AppointmentsSection({
   const [visitType, setVisitType] = useState<AppointmentVisitType>('follow_up');
   const [channel, setChannel] = useState<AppointmentChannel>('in_person');
   const [reloadKey, setReloadKey] = useState(0);
+  const [exportNotice, setExportNotice] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const activeProviders = useMemo(
     () => providers.filter((provider) => !provider.doc.disabled),
@@ -271,6 +275,34 @@ export function AppointmentsSection({
     }
   };
 
+  const exportVisibleAppointments = () => {
+    setExportNotice(null);
+    setExportError(null);
+    if (visibleAppointments.length === 0) {
+      setExportError('لا توجد مواعيد في العرض الحالي للتصدير.');
+      return;
+    }
+    try {
+      const rows = visibleAppointments.map((item) => ({
+        startsAt: item.starts_at,
+        endsAt: item.ends_at,
+        patientName: patientNames.get(item.patient_id) ?? 'مريض',
+        providerName: providerNames.get(item.provider_id) ?? (role === 'coach' ? 'أنا' : 'طبيب العيادة'),
+        visitType: item.visit_type,
+        channel: item.channel,
+        status: item.status,
+      }));
+      const csv = buildAppointmentsCsv(rows);
+      downloadExportBlob(
+        new Blob([csv], { type: 'text/csv;charset=utf-8' }),
+        `appointments-${todayKey}.csv`,
+      );
+      setExportNotice(`تم تجهيز ملف CSV لعدد ${visibleAppointments.length} موعدًا وفق الفلاتر الحالية.`);
+    } catch (caught) {
+      setExportError(caught instanceof Error ? caught.message : 'تعذّر تجهيز ملف المواعيد.');
+    }
+  };
+
   const canCreate = patients.length > 0 &&
     (role === 'coach' || activeProviders.length > 0);
 
@@ -409,6 +441,21 @@ export function AppointmentsSection({
           </label>
         )}
       </div>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[11px] text-slate-500">
+          التصدير يشمل المواعيد الظاهرة بعد تطبيق الفلاتر الحالية، ولا يتضمن ملاحظات سريرية.
+        </p>
+        <button
+          type="button"
+          className={mutedButtonClass}
+          disabled={loading || visibleAppointments.length === 0}
+          onClick={exportVisibleAppointments}
+        >
+          تنزيل CSV ({visibleAppointments.length})
+        </button>
+      </div>
+      {exportNotice && <p role="status" className="mt-2 text-xs font-bold text-emerald-700 dark:text-emerald-400">{exportNotice}</p>}
+      {exportError && <p role="alert" className="mt-2 text-xs font-bold text-red-600">{exportError}</p>}
 
       {showForm && (
         <form onSubmit={(event) => void save(event)} className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/50 p-3 dark:border-indigo-900 dark:bg-indigo-950/20">
