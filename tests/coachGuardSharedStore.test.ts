@@ -75,6 +75,29 @@ describe('Upstash guard state across independent service instances', () => {
     });
     expect(locked.status).toBe(429);
     expect(redis.has('sd:coach:rl:203.0.113.42')).toBe(true);
+
+    // A different IP remains independent while the first key is locked.
+    const otherIp = await secondInstance.createCoachSession({
+      ip: '203.0.113.43',
+      pin: '97531',
+    });
+    expect(otherIp.status).toBe(200);
+
+    // Once the lockout timestamp expires, the original IP can authenticate.
+    const currentEntry = JSON.parse(redis.get('sd:coach:rl:203.0.113.42') as string) as {
+      count: number;
+      lockedUntil: number;
+      lockouts: number;
+    };
+    redis.set(
+      'sd:coach:rl:203.0.113.42',
+      JSON.stringify({ ...currentEntry, lockedUntil: Date.now() - 1 }),
+    );
+    const afterExpiry = await secondInstance.createCoachSession({
+      ip: '203.0.113.42',
+      pin: '97531',
+    });
+    expect(afterExpiry.status).toBe(200);
     expect(sharedRedisFetch).toHaveBeenCalled();
   });
 });
