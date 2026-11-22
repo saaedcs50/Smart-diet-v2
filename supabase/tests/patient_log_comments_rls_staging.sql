@@ -7,6 +7,16 @@
 -- platform owner: 0b8b9208-bd7f-4d26-9613-e35dd277d066
 
 BEGIN;
+
+-- Seed one synthetic daily journal row inside the same transaction.
+INSERT INTO public.day_logs (patient_id, log_date, log)
+VALUES (
+  'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8',
+  '2026-11-22',
+  '{"water":0,"waterLogs":0,"meals":{},"checks":{},"supps":{},"notes":"","weight":null,"meas":{},"symptoms":{},"symNotes":"","mood":null,"exercise":0,"isFreeze":false}'::jsonb
+)
+ON CONFLICT (patient_id, log_date) DO NOTHING;
+
 SET LOCAL ROLE authenticated;
 
 -- Assigned coach can add a plain-text note to a patient journal date.
@@ -29,6 +39,20 @@ BEGIN
   SELECT count(*) INTO n FROM public.patient_log_comments
   WHERE id=comment_id AND created_by=auth.uid();
   IF n <> 1 THEN RAISE EXCEPTION 'coach: comment insert/read failed'; END IF;
+
+  BEGIN
+    INSERT INTO public.patient_log_comments (
+      clinic_id, patient_id, log_date, content
+    ) VALUES (
+      'clinic-a',
+      'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8',
+      '2026-11-21',
+      'Comment cannot reference a missing journal date'
+    );
+    RAISE EXCEPTION 'comment without a daily journal entry was accepted';
+  EXCEPTION WHEN foreign_key_violation THEN
+    NULL;
+  END;
 
   BEGIN
     INSERT INTO public.patient_log_comments (
