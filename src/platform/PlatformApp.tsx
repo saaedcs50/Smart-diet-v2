@@ -73,6 +73,8 @@ import { PatientAppointmentsPanel } from './PatientAppointmentsPanel';
 import { PatientIntakeSection } from './PatientIntakeSection';
 import { PatientFollowUpQueue } from './PatientFollowUpQueue';
 import { PatientWhatsAppContactEditor } from './PatientWhatsAppContactEditor';
+import { PatientJournalCommentsSection } from './PatientJournalCommentsSection';
+import { listPatientJournalComments, type PatientJournalComment } from './patientJournalComments';
 import type { PatientFollowUpCandidate } from './patientFollowUpQueue';
 import { ClinicActivityFeed } from './ClinicActivityFeed';
 import { buildClinicActivityFeed } from './clinicActivityFeed';
@@ -1227,6 +1229,8 @@ function PatientDetail({
   const [doc, setDoc] = useState<PatientDoc | null>(null);
   const [plan, setPlan] = useState<PlanConfig | null>(null);
   const [entries, setEntries] = useState<Array<{ date: string; log: DayLog }>>([]);
+  const [journalComments, setJournalComments] = useState<PatientJournalComment[]>([]);
+  const [journalCommentsError, setJournalCommentsError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [shownUid, setShownUid] = useState(patientUid);
@@ -1240,6 +1244,8 @@ function PatientDetail({
     setDoc(null);
     setPlan(null);
     setEntries([]);
+    setJournalComments([]);
+    setJournalCommentsError(null);
     setVisibleEntryCount(30);
     setError(null);
     setLoading(true);
@@ -1247,6 +1253,19 @@ function PatientDetail({
 
   const load = () => {
     let cancelled = false;
+    void listPatientJournalComments(patientUid)
+      .then((comments) => {
+        if (!cancelled) {
+          setJournalComments(comments);
+          setJournalCommentsError(null);
+        }
+      })
+      .catch((caught: unknown) => {
+        if (!cancelled) {
+          setJournalCommentsError(errorText(caught));
+          setJournalComments([]);
+        }
+      });
     Promise.all([
       getPatient(patientUid),
       getPatientPlan(patientUid),
@@ -1347,6 +1366,11 @@ function PatientDetail({
         <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
           سجلات الأيام ({entries.length})
         </h3>
+        {journalCommentsError && (
+          <p role="alert" className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+            تعذّر تحميل ملاحظات العيادة: {journalCommentsError}
+          </p>
+        )}
         {entries.length === 0 ? (
           <EmptyState
             title="لا توجد سجلات يومية سحابية"
@@ -1392,6 +1416,14 @@ function PatientDetail({
                       </ul>
                     </div>
                   )}
+                  <PatientJournalCommentsSection
+                    patientUid={patientUid}
+                    clinicId={doc.clinicId}
+                    logDate={date}
+                    comments={journalComments.filter((comment) => comment.log_date === date)}
+                    isStaffView={isStaffView}
+                    onCreated={(comment) => setJournalComments((current) => [...current, comment])}
+                  />
                 </li>
               );
             })}
