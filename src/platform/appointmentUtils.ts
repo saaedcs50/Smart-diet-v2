@@ -34,6 +34,57 @@ export function getClinicWeekRange(date = new Date()): { start: Date; end: Date 
   return { start, end };
 }
 
+/** Calendar-month range in the clinic's local timezone; end is exclusive. */
+export function getClinicMonthRange(date = new Date()): { start: Date; end: Date } {
+  return {
+    start: new Date(date.getFullYear(), date.getMonth(), 1),
+    end: new Date(date.getFullYear(), date.getMonth() + 1, 1),
+  };
+}
+
+export interface AppointmentStatusSummary {
+  total: number;
+  upcoming: number;
+  completed: number;
+  cancelled: number;
+  noShow: number;
+  attendanceRate: number | null;
+  cancellationRate: number | null;
+  noShowRate: number | null;
+}
+
+/**
+ * Rates are descriptive booking outcomes:
+ * - attendance = completed / (completed + no-show), excluding cancellations
+ * - cancellation = cancelled / all appointments in the selected period
+ * - no-show = no-show / (completed + no-show), excluding cancellations
+ */
+export function summarizeAppointmentStatuses(
+  appointments: readonly { status: AppointmentStatus }[],
+): AppointmentStatusSummary {
+  const scheduled = appointments.filter((item) => item.status === 'scheduled').length;
+  const confirmed = appointments.filter((item) => item.status === 'confirmed').length;
+  const completed = appointments.filter((item) => item.status === 'completed').length;
+  const cancelled = appointments.filter((item) => item.status === 'cancelled').length;
+  const noShow = appointments.filter((item) => item.status === 'no_show').length;
+  const attendanceDenominator = completed + noShow;
+  const total = appointments.length;
+
+  const percentage = (numerator: number, denominator: number): number | null =>
+    denominator > 0 ? Math.round((numerator / denominator) * 1000) / 10 : null;
+
+  return {
+    total,
+    upcoming: scheduled + confirmed,
+    completed,
+    cancelled,
+    noShow,
+    attendanceRate: percentage(completed, attendanceDenominator),
+    cancellationRate: percentage(cancelled, total),
+    noShowRate: percentage(noShow, attendanceDenominator),
+  };
+}
+
 export function toDateTimeLocalValue(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
