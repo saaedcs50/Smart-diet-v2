@@ -1,4 +1,5 @@
 import { StorageKeys } from './storageKeys';
+import { apiUrl } from './apiClient';
 
 /**
  * جلسة الأخصائي عبر الخادم (POST /api/coach-session).
@@ -27,7 +28,7 @@ async function fetchWithTimeout(input: string, init: RequestInit): Promise<Respo
 export async function createCoachServerSession(pin: string): Promise<CoachServerSessionResult> {
   let res: Response;
   try {
-    res = await fetchWithTimeout('/api/coach-session', {
+    res = await fetchWithTimeout(apiUrl('/api/coach-session'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pin }),
