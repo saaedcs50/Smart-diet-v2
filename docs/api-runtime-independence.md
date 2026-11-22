@@ -125,7 +125,10 @@ x-coach-session only for session revocation and JSON pin/token request bodies.
 The server now reads PORT and HOST from the environment, validates proxy
 trust configuration, and handles SIGTERM/SIGINT by closing HTTP and Vite
 resources gracefully. Host-provided environment variables take precedence
-over a local .env file.
+over a local .env file. When NODE_ENV is not explicitly configured, only the
+`npm run dev` lifecycle defaults to development; direct launches and `npm start`
+default to production so missing secrets fail closed rather than enabling the
+development PIN fallback.
 
 ## Phase 2 verification scope
 
