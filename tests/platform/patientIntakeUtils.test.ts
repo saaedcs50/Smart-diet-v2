@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { IntakeAnswers } from '../src/utils/intake';
+import type { IntakeAnswers } from '../../src/utils/intake';
 import {
   splitPatientIntakeList,
   validatePatientIntakeAnswers,
-} from '../src/platform/patientIntakeUtils';
+} from '../../src/platform/patientIntakeUtils';
 
 const valid: IntakeAnswers = {
   clientName: 'مريض تجريبي',
