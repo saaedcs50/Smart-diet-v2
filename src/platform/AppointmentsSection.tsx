@@ -6,6 +6,7 @@ import {
   appointmentStatusLabel,
   appointmentVisitTypeLabel,
   buildAppointmentTimeRange,
+  getClinicAppointmentsQueryRange,
   getClinicMonthRange,
   getClinicWeekRange,
   localDateKey,
@@ -122,9 +123,10 @@ export function AppointmentsSection({
     setLoading(true);
     setError(null);
     try {
+      const queryRange = getClinicAppointmentsQueryRange();
       const data = await listAppointments(
-        monthRange.start.toISOString(),
-        monthRange.end.toISOString(),
+        queryRange.start.toISOString(),
+        queryRange.end.toISOString(),
       );
       setAppointments(data);
     } catch (caught) {
@@ -151,13 +153,17 @@ export function AppointmentsSection({
     if (view === 'unconfirmed') return item.status === 'scheduled';
     return true;
   });
-  const monthSummary = summarizeAppointmentStatuses(appointments);
+  const monthAppointments = appointments.filter((item) => {
+    const startsAt = new Date(item.starts_at).getTime();
+    return startsAt >= monthRange.start.getTime() && startsAt < monthRange.end.getTime();
+  });
+  const monthSummary = summarizeAppointmentStatuses(monthAppointments);
   const providerSummaries = providers.map((provider) => ({
     uid: provider.uid,
     name: providerNames.get(provider.uid) ?? 'طبيب',
     disabled: provider.doc.disabled,
     summary: summarizeAppointmentStatuses(
-      appointments.filter((item) => item.provider_id === provider.uid),
+      monthAppointments.filter((item) => item.provider_id === provider.uid),
     ),
   }));
 
