@@ -1,5 +1,6 @@
 import { getSupabase } from './supabase';
 import type { IntakeAnswers } from '../utils/intake';
+import { validatePatientIntakeAnswers } from './patientIntakeUtils';
 
 export const PATIENT_INTAKE_CONSENT_VERSION = 'patient-intake-v1-2026-11-22';
 
@@ -49,6 +50,12 @@ export async function submitPatientIntake(input: {
   patientUid: string;
   answers: IntakeAnswers;
 }): Promise<PatientIntakeRecord> {
+  if (!input.clinicId.trim() || !input.patientUid.trim()) {
+    throw new Error('بيانات العيادة أو المريض غير صالحة.');
+  }
+  const validationError = validatePatientIntakeAnswers(input.answers);
+  if (validationError) throw new Error(validationError);
+
   const { data, error } = await getSupabase()
     .from('patient_intakes')
     .insert({
