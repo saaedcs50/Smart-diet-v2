@@ -1,4 +1,5 @@
 import { EmptyState } from '../components/EmptyState';
+import { buildFollowUpWhatsAppUrl } from './patientWhatsAppFollowUp';
 import type { PatientFollowUpCandidate } from './patientFollowUpQueue';
 import { buildPatientFollowUpQueue } from './patientFollowUpQueue';
 
@@ -50,12 +51,17 @@ export function PatientFollowUpQueue({
             {visible.map((patient) => {
               const days = patient.progress?.daysSinceLastLog ?? null;
               const lastLog = patient.progress?.lastLogDate;
+              const whatsappUrl = buildFollowUpWhatsAppUrl({
+                phone: patient.whatsappPhone,
+                consentAt: patient.whatsappConsentAt,
+                patientName: patient.name,
+              });
               return (
-                <li key={patient.uid}>
+                <li key={patient.uid} className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => onOpenPatient(patient.uid)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-3 text-right hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                    className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-3 text-right hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
                   >
                     <span className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -77,6 +83,17 @@ export function PatientFollowUpQueue({
                       </span>
                     )}
                   </button>
+                  {whatsappUrl && (
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`إعداد رسالة واتساب للمتابعة مع ${patient.name}`}
+                      className="inline-flex shrink-0 items-center justify-center self-stretch rounded-xl bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-800"
+                    >
+                      جهّز واتساب
+                    </a>
+                  )}
                 </li>
               );
             })}
