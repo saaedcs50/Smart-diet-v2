@@ -67,6 +67,7 @@ import { migrateLegacyPhotosToCurrentUser } from '../utils/indexedDB';
 import { countSkippedPatientMeals, summarizePatientDayLog } from './patientDashboardMetrics';
 import { PatientProgressCharts } from './PatientProgressCharts';
 import { PatientTagsEditor } from './PatientTagsEditor';
+import { AppointmentsSection } from './AppointmentsSection';
 import { EmptyState } from '../components/EmptyState';
 import { InvitationManager } from './InvitationManager';
 import type { PatientTag } from './patientTags';
@@ -1653,6 +1654,13 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
         loading={loading}
         progressAvailable={!loading && !progressError}
       />
+      <AppointmentsSection
+        clinicId={clinicId}
+        uid={uid}
+        role="admin"
+        patients={patients}
+        providers={coaches}
+      />
       <RecentActivityCard
         title="آخر نشاط المرضى"
         activity={activity}
@@ -1900,6 +1908,13 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
         <DashboardMetric label="لديهم خطة" value={loading ? '—' : patientsWithPlan} note="خطة محفوظة سحابيًا" />
         <DashboardMetric label="يحتاجون إعداد خطة" value={loading ? '—' : patients.length - patientsWithPlan} note="لا توجد لهم خطة سحابية بعد" />
       </div>
+      <AppointmentsSection
+        clinicId={clinicId}
+        uid={uid}
+        role="coach"
+        patients={patients}
+        providers={[]}
+      />
       <RecentActivityCard
         title="آخر نشاط مرضاي"
         activity={activity}
