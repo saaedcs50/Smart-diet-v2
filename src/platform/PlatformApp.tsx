@@ -72,6 +72,7 @@ import { StaffTasksSection } from './StaffTasksSection';
 import { PatientAppointmentsPanel } from './PatientAppointmentsPanel';
 import { PatientIntakeSection } from './PatientIntakeSection';
 import { PatientFollowUpQueue } from './PatientFollowUpQueue';
+import { PatientWhatsAppContactEditor } from './PatientWhatsAppContactEditor';
 import type { PatientFollowUpCandidate } from './patientFollowUpQueue';
 import { ClinicActivityFeed } from './ClinicActivityFeed';
 import { buildClinicActivityFeed } from './clinicActivityFeed';
@@ -1333,6 +1334,14 @@ function PatientDetail({
         clientName={doc.profile.clientName}
         isStaffView={isStaffView}
       />
+      {isStaffView && (
+        <PatientWhatsAppContactEditor
+          patientUid={patientUid}
+          phone={doc.whatsappPhone}
+          consentAt={doc.whatsappConsentAt}
+          onSaved={(contact) => setDoc((current) => current ? { ...current, ...contact } : current)}
+        />
+      )}
       <PatientProgressCharts entries={entries} plan={plan} />
       <Card>
         <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
@@ -1678,6 +1687,8 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
     doctorName: patient.doc.invitedBy
       ? doctorNameByUid.get(patient.doc.invitedBy) ?? 'طبيب غير متاح'
       : 'بلا طبيب معيّن',
+    whatsappPhone: patient.doc.whatsappPhone ?? null,
+    whatsappConsentAt: patient.doc.whatsappConsentAt ?? null,
   }));
 
   return (
@@ -1977,6 +1988,8 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
     name: patient.doc.profile.clientName ?? 'مريض',
     progress: progressByUid[patient.uid] ?? null,
     doctorName,
+    whatsappPhone: patient.doc.whatsappPhone ?? null,
+    whatsappConsentAt: patient.doc.whatsappConsentAt ?? null,
   }));
   const visiblePatients = filterAndSortPatients(
     patients,
