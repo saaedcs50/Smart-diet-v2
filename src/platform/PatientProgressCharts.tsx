@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { DayLog, PlanConfig } from '../types';
 import { summarizePatientDayLog } from './patientDashboardMetrics';
+import { buildPatientVitalSeries } from './patientVitalSeries';
 
 type DayEntry = { date: string; log: DayLog };
 type ChartPoint = { date: string; value: number };
@@ -176,6 +177,13 @@ export function PatientProgressCharts({
   });
   const mealAverage = average(completion.flatMap((item) => item.meals == null ? [] : [Math.min(100, item.meals)]));
   const taskAverage = average(completion.flatMap((item) => item.tasks == null ? [] : [Math.min(100, item.tasks)]));
+  const vitalSeries = useMemo(() => buildPatientVitalSeries(ordered), [ordered]);
+  const vitalCharts = [
+    { key: 'bodyFatPercent', title: 'نسبة الدهون في الجسم', points: vitalSeries.bodyFatPercent, unit: '%' },
+    { key: 'bloodGlucoseMgDl', title: 'سكر الدم', points: vitalSeries.bloodGlucoseMgDl, unit: 'mg/dL' },
+    { key: 'systolicBloodPressureMmHg', title: 'ضغط الدم الانقباضي', points: vitalSeries.systolicBloodPressureMmHg, unit: 'mmHg' },
+    { key: 'diastolicBloodPressureMmHg', title: 'ضغط الدم الانبساطي', points: vitalSeries.diastolicBloodPressureMmHg, unit: 'mmHg' },
+  ].filter((chart) => chart.points.length > 0);
 
   if (ordered.length === 0) return null;
 
@@ -217,6 +225,27 @@ export function PatientProgressCharts({
           targetLabel="هدف الماء"
         />
       </div>
+
+      {vitalCharts.length > 0 && (
+        <section className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+          <div>
+            <h3 className="text-sm font-black">القياسات الصحية المسجلة عبر الزمن</h3>
+            <p className="mt-1 text-[11px] leading-5 text-slate-500">
+              تعرض الرسوم القيم التي سُجلت في الأيام فقط، دون تشخيص أو تصنيف أو حدود مرجعية.
+            </p>
+          </div>
+          <div className="mt-3 grid gap-3 lg:grid-cols-2">
+            {vitalCharts.map((chart) => (
+              <ProgressLineChart
+                key={chart.key}
+                title={chart.title}
+                points={chart.points}
+                unit={chart.unit}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
         <div className="flex flex-wrap items-center justify-between gap-2">
