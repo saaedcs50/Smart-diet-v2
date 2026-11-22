@@ -1,5 +1,7 @@
 import express, { type Express } from 'express';
 import { apiRouter } from './api.js';
+import { getServerRuntimeEnv } from './runtimeEnv.js';
+import { corsHeadersForOrigin, parseAllowedOrigins } from './corsPolicy.js';
 
 export interface ApiAppOptions {
   /**
@@ -25,6 +27,23 @@ export function createApiApp(options: ApiAppOptions = {}): Express {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', trustProxyHops);
+
+  // Cross-origin API use is opt-in and exact-origin only. Same-origin
+  // deployments need no CORS configuration; credentialed CORS is disabled.
+  const allowedOrigins = parseAllowedOrigins(getServerRuntimeEnv('API_ALLOWED_ORIGINS'));
+  app.use((req, res, next) => {
+    const origin = req.get('origin') ?? null;
+    const headers = corsHeadersForOrigin(origin, allowedOrigins);
+    if (origin) res.vary('Origin');
+
+    if (headers) res.set(headers);
+    if (req.method === 'OPTIONS') {
+      if (!headers) return res.status(403).end();
+      return res.status(204).end();
+    }
+    next();
+  });
+
   app.use(apiRouter);
 
   return app;
