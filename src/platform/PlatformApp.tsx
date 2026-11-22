@@ -78,6 +78,11 @@ import type { PatientTag } from './patientTags';
 import { ClinicSummaryExportButtons } from './ClinicSummaryExportButtons';
 import { isWithinLastCalendarDays, type PatientProgressSummary } from './patientProgressSummary';
 import { normalizeBodySearchQuery } from '../utils/bodySearch';
+import {
+  matchesPatientActivityFilter,
+  remainingWeightToTargetKg,
+  type PatientActivityFilter,
+} from './patientListFilters';
 
 type Route =
   | { view: 'login' }
@@ -235,9 +240,8 @@ const buttonClass =
 const ghostButtonClass =
   'rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 dark:border-slate-700 dark:text-slate-200';
 
-type PatientListSort = 'name' | 'plan' | 'lastLog' | 'completion' | 'weightChange';
+type PatientListSort = 'name' | 'plan' | 'lastLog' | 'completion' | 'weightChange' | 'weightRemaining';
 type PatientPlanFilter = 'all' | 'withPlan' | 'withoutPlan';
-type PatientActivityFilter = 'all' | 'active30' | 'followUp' | 'noLog30';
 type PatientTagFilter = 'all' | string;
 
 function filterAndSortPatients(
@@ -262,10 +266,7 @@ function filterAndSortPatients(
       const progress = progressByUid[uid];
       const matchesTag = tagFilter === 'all' ||
         (doc.tags ?? []).some((tag) => normalizeBodySearchQuery(tag.label) === tagFilter);
-      const matchesActivity = activityFilter === 'all' ||
-        (activityFilter === 'active30' && progress?.hasLogWithin30Days === true) ||
-        (activityFilter === 'followUp' && progress?.needsFollowUp === true) ||
-        (activityFilter === 'noLog30' && progress?.hasLogWithin30Days === false);
+      const matchesActivity = matchesPatientActivityFilter(progress, activityFilter);
       return matchesQuery && matchesPlan && matchesTag && matchesActivity;
     })
     .sort((a, b) => {
@@ -293,6 +294,12 @@ function filterAndSortPatients(
           const difference = Math.abs(valueB) - Math.abs(valueA);
           if (difference !== 0) return difference;
         }
+      } else if (sort === 'weightRemaining') {
+        const valueA = remainingWeightToTargetKg(progressA?.currentWeightKg, a.doc.plan?.targetWeight);
+        const valueB = remainingWeightToTargetKg(progressB?.currentWeightKg, b.doc.plan?.targetWeight);
+        if (valueA == null && valueB != null) return 1;
+        if (valueB == null && valueA != null) return -1;
+        if (valueA != null && valueB != null && valueA !== valueB) return valueA - valueB;
       }
       return (a.doc.profile.clientName ?? '').localeCompare(
         b.doc.profile.clientName ?? '',
@@ -426,6 +433,7 @@ function PatientListControls({
             <option value="lastLog">آخر تسجيل (الأحدث)</option>
             <option value="completion">إكمال 7 أيام (الأعلى)</option>
             <option value="weightChange">مقدار تغير الوزن</option>
+            <option value="weightRemaining">المتبقي للهدف (الأقل أولًا)</option>
           </select>
         </label>
         <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
@@ -448,6 +456,8 @@ function PatientListControls({
             className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
           >
             <option value="all">كل حالات النشاط</option>
+            <option value="loggedToday">سجّل اليوم</option>
+            <option value="logged7d">سجّل خلال آخر 7 أيام</option>
             <option value="active30">سجّل خلال 30 يومًا</option>
             <option value="followUp">يحتاج متابعة (3+ أيام)</option>
             <option value="noLog30">لا سجل خلال 30 يومًا</option>
