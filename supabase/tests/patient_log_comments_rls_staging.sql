@@ -46,7 +46,7 @@ BEGIN
     ) VALUES (
       'clinic-a',
       'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8',
-      '2026-11-21',
+      '2099-12-31',
       'Comment cannot reference a missing journal date'
     );
     RAISE EXCEPTION 'comment without a daily journal entry was accepted';
