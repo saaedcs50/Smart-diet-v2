@@ -12,16 +12,15 @@ SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','809f256f-0a4c-4b1e-af92-a26dd21d7623',true);
 SELECT set_config('request.jwt.claims','{"sub":"809f256f-0a4c-4b1e-af92-a26dd21d7623","role":"authenticated"}',true);
 
-UPDATE public.patients
-SET whatsapp_phone='201012345678',
-    whatsapp_consent_at=now(),
-    whatsapp_consent_by=auth.uid()
-WHERE id='f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8'
-  AND clinic_id='clinic-a';
-
 DO $test$
 DECLARE n integer;
 BEGIN
+  UPDATE public.patients
+  SET whatsapp_phone='201012345678',
+      whatsapp_consent_at=now(),
+      whatsapp_consent_by=auth.uid()
+  WHERE id='f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8'
+    AND clinic_id='clinic-a';
   GET DIAGNOSTICS n = ROW_COUNT;
   IF n <> 1 THEN RAISE EXCEPTION 'assigned coach could not update patient contact'; END IF;
   IF NOT EXISTS (
@@ -39,18 +38,6 @@ BEGIN
   WHERE id='d4391923-54a7-4c5a-94b5-3782ff7d1e79';
   GET DIAGNOSTICS n = ROW_COUNT;
   IF n <> 0 THEN RAISE EXCEPTION 'coach modified patient from another clinic'; END IF;
-
-  BEGIN
-    UPDATE public.patients
-    SET whatsapp_phone='201012345678',
-        whatsapp_consent_at=now(),
-        whatsapp_consent_by=auth.uid()
-    WHERE id='f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8';
-    -- No row count check here; the policy should filter the row for a patient role,
-    -- verified independently below after switching the claim identity.
-  EXCEPTION WHEN insufficient_privilege THEN
-    NULL;
-  END;
 
   BEGIN
     UPDATE public.patients
