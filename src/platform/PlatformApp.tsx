@@ -72,6 +72,7 @@ import { AppointmentsSection } from './AppointmentsSection';
 import { StaffTasksSection } from './StaffTasksSection';
 import { PatientAppointmentsPanel } from './PatientAppointmentsPanel';
 import { PatientIntakeSection } from './PatientIntakeSection';
+import { PatientReflectionsSection } from './PatientReflectionsSection';
 import { PatientFollowUpQueue } from './PatientFollowUpQueue';
 import { PatientWhatsAppContactEditor } from './PatientWhatsAppContactEditor';
 import { PatientJournalCommentsSection } from './PatientJournalCommentsSection';
@@ -1409,6 +1410,11 @@ function PatientDetail({
         patientUid={patientUid}
         clinicId={doc.clinicId}
         clientName={doc.profile.clientName}
+        isStaffView={isStaffView}
+      />
+      <PatientReflectionsSection
+        patientUid={patientUid}
+        clinicId={doc.clinicId}
         isStaffView={isStaffView}
       />
       {isStaffView && (
