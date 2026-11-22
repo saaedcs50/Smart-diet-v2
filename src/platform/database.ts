@@ -90,6 +90,8 @@ export interface PatientDoc {
   whatsappPhone?: string | null;
   whatsappConsentAt?: string | null;
   whatsappConsentBy?: string | null;
+  archivedAt?: string | null;
+  archivedBy?: string | null;
   plan?: PlanConfig;
   invitedBy?: string;
   createdAt?: string;
@@ -261,6 +263,8 @@ function rowToPatientDoc(row: Record<string, unknown>): PatientDoc {
   if (typeof row.whatsapp_phone === 'string') doc.whatsappPhone = row.whatsapp_phone;
   if (typeof row.whatsapp_consent_at === 'string') doc.whatsappConsentAt = row.whatsapp_consent_at;
   if (typeof row.whatsapp_consent_by === 'string') doc.whatsappConsentBy = row.whatsapp_consent_by;
+  if (typeof row.archived_at === 'string') doc.archivedAt = row.archived_at;
+  if (typeof row.archived_by === 'string') doc.archivedBy = row.archived_by;
   if (typeof row.created_at === 'string') doc.createdAt = row.created_at;
   doc.tags = normalizePatientTags(row.tags);
   return doc;
@@ -698,6 +702,7 @@ export async function listDoctorPatientsForExport(
       .select()
       .eq('clinic_id', clinicId)
       .eq('invited_by', coachUid)
+      .is('archived_at', null)
       .order('id', { ascending: true })
       .range(offset, offset + pageSize - 1);
 
