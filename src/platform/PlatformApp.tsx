@@ -1300,6 +1300,17 @@ function PatientDetail({
 
   const latestEntry = entries[0] ?? null;
   const latestWeightEntry = entries.find(({ log }) => log.weight != null) ?? null;
+  const latestWaistEntry = entries.find(({ log }) =>
+    typeof log.meas?.waist === 'number' && Number.isFinite(log.meas.waist) && log.meas.waist > 0,
+  ) ?? null;
+  const macroTargets = plan ? [
+    { label: 'السعرات اليومية', value: plan.targetCalories, unit: 'سعرة' },
+    { label: 'البروتين اليومي', value: plan.targetProtein, unit: 'جم' },
+    { label: 'الكربوهيدرات اليومية', value: plan.targetCarbs, unit: 'جم' },
+    { label: 'الدهون اليومية', value: plan.targetFats, unit: 'جم' },
+  ].filter((item): item is { label: string; value: number; unit: string } =>
+    typeof item.value === 'number' && Number.isFinite(item.value) && item.value >= 0,
+  ) : [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -1333,10 +1344,48 @@ function PatientDetail({
           {isStaffView ? 'عرض طاقم العيادة (قراءة فقط)' : 'ملفي السحابي'}
         </p>
         {plan ? (
-          <div className="mt-3 text-sm text-slate-700 dark:text-slate-200">
-            <p>الوزن الابتدائي: {plan.startWeight} — المستهدف: {plan.targetWeight}</p>
-            <p>هدف الماء اليومي: {plan.dailyWaterGoalMl} مل</p>
-            <p>عدد الوجبات: {plan.meals.length} — عدد بنود المتابعة: {plan.checklist.length}</p>
+          <div className="mt-3 space-y-3 text-sm text-slate-700 dark:text-slate-200">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="rounded-lg bg-slate-50 p-2.5 dark:bg-slate-800/70">
+                <p className="text-[11px] text-slate-500">الوزن الابتدائي والمستهدف</p>
+                <p className="mt-1 font-bold">
+                  {plan.startWeight ?? '—'} كجم <span className="text-slate-400">←</span> {plan.targetWeight ?? '—'} كجم
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2.5 dark:bg-slate-800/70">
+                <p className="text-[11px] text-slate-500">محيط الخصر المستهدف</p>
+                <p className="mt-1 font-bold">{plan.targetWaist != null ? `${plan.targetWaist} سم` : 'لم يحدد'}</p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  آخر قياس: {latestWaistEntry ? `${latestWaistEntry.log.meas.waist} سم · ${latestWaistEntry.date}` : 'لا يوجد قياس مسجل'}
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2.5 dark:bg-slate-800/70">
+                <p className="text-[11px] text-slate-500">هدف الماء اليومي</p>
+                <p className="mt-1 font-bold">{plan.dailyWaterGoalMl} مل</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-2.5 dark:bg-slate-800/70">
+                <p className="text-[11px] text-slate-500">محتوى الخطة</p>
+                <p className="mt-1 font-bold">{plan.meals.length} وجبات · {plan.checklist.length} بنود متابعة</p>
+              </div>
+            </div>
+            {macroTargets.length > 0 && (
+              <section className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                <h3 className="text-xs font-black text-slate-800 dark:text-slate-100">الأهداف الغذائية اليومية في الخطة</h3>
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {macroTargets.map((target) => (
+                    <div key={target.label} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-800/70">
+                      <p className="text-[10px] text-slate-500">{target.label}</p>
+                      <p className="mt-1 text-sm font-black tabular-nums">
+                        {target.value.toLocaleString('ar-EG')} <span className="text-[10px] font-normal text-slate-500">{target.unit}</span>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-[10px] text-slate-500">
+                  هذه أهداف الخطة التي حددها الطبيب، وليست توصية محسوبة تلقائيًا.
+                </p>
+              </section>
+            )}
           </div>
         ) : (
           <EmptyState
