@@ -481,6 +481,7 @@ export async function listRecentDayLogActivity(
 /** أحدث إدخالات اليوم الفعلية للمرضى الذين حُددوا مسبقًا حسب نطاق الدور. */
 export interface RecentDayLogDetail extends RecentDayLogActivity {
   log: DayLog;
+  createdAt: string;
 }
 
 export async function listRecentDayLogDetails(
@@ -493,7 +494,7 @@ export async function listRecentDayLogDetails(
   const safeLimit = Math.max(1, Math.min(20, Math.floor(limit)));
   const { data, error } = await getSupabase()
     .from('day_logs')
-    .select('patient_id, log_date, log')
+    .select('patient_id, log_date, log, created_at')
     .in('patient_id', scopedUids)
     .order('log_date', { ascending: false })
     .limit(safeLimit);
@@ -504,10 +505,19 @@ export async function listRecentDayLogDetails(
   }
 
   const out: RecentDayLogDetail[] = [];
-  for (const row of (data as Array<{ patient_id: string; log_date: string; log: unknown }> | null) ?? []) {
-    if (typeof row.patient_id !== 'string' || typeof row.log_date !== 'string') continue;
+  for (const row of (data as Array<{ patient_id: string; log_date: string; log: unknown; created_at: string }> | null) ?? []) {
+    if (
+      typeof row.patient_id !== 'string' ||
+      typeof row.log_date !== 'string' ||
+      typeof row.created_at !== 'string'
+    ) continue;
     const parsed = dayLogFromDatabase(row.log);
-    if (parsed) out.push({ patientUid: row.patient_id, date: row.log_date, log: parsed });
+    if (parsed) out.push({
+      patientUid: row.patient_id,
+      date: row.log_date,
+      log: parsed,
+      createdAt: row.created_at,
+    });
   }
   return out;
 }
