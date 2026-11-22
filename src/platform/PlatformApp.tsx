@@ -70,6 +70,7 @@ import { PatientTagsEditor } from './PatientTagsEditor';
 import { AppointmentsSection } from './AppointmentsSection';
 import { StaffTasksSection } from './StaffTasksSection';
 import { PatientAppointmentsPanel } from './PatientAppointmentsPanel';
+import { PatientIntakeSection } from './PatientIntakeSection';
 import { PatientFollowUpQueue } from './PatientFollowUpQueue';
 import type { PatientFollowUpCandidate } from './patientFollowUpQueue';
 import { ClinicActivityFeed } from './ClinicActivityFeed';
@@ -1326,6 +1327,12 @@ function PatientDetail({
         )}
       </Card>
       {!isStaffView && <PatientAppointmentsPanel patientUid={patientUid} />}
+      <PatientIntakeSection
+        patientUid={patientUid}
+        clinicId={doc.clinicId}
+        clientName={doc.profile.clientName}
+        isStaffView={isStaffView}
+      />
       <PatientProgressCharts entries={entries} plan={plan} />
       <Card>
         <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
