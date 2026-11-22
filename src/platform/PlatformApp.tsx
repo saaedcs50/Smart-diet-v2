@@ -1816,7 +1816,7 @@ function AdminDashboard({ clinicId, uid }: { clinicId: string; uid: string }) {
       </div>
       <ClinicSummaryExportButtons
         clinicId={clinicId}
-        patients={patients}
+        patients={activePatients}
         staff={coaches}
         progressByUid={progressByUid}
         loading={loading}
@@ -2188,7 +2188,7 @@ function CoachDashboard({ clinicId, uid, doctorName }: { clinicId: string; uid: 
       <RecentActivityCard
         title="آخر نشاط مرضاي"
         activity={activity}
-        patientByUid={new Map(patients.map((patient) => [
+        patientByUid={new Map(activePatients.map((patient) => [
           patient.uid,
           { name: patient.doc.profile.clientName, plan: patient.doc.plan },
         ]))}
