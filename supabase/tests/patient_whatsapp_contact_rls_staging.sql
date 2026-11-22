@@ -32,6 +32,17 @@ BEGIN
   ) THEN RAISE EXCEPTION 'contact or consent was not saved'; END IF;
 
   UPDATE public.patients
+  SET whatsapp_phone=NULL, whatsapp_consent_at=NULL, whatsapp_consent_by=NULL
+  WHERE id='f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN RAISE EXCEPTION 'assigned coach could not clear WhatsApp consent'; END IF;
+  IF EXISTS (
+    SELECT 1 FROM public.patients
+    WHERE id='f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8'
+      AND (whatsapp_phone IS NOT NULL OR whatsapp_consent_at IS NOT NULL OR whatsapp_consent_by IS NOT NULL)
+  ) THEN RAISE EXCEPTION 'WhatsApp contact was not cleared completely'; END IF;
+
+  UPDATE public.patients
   SET whatsapp_phone='201012345678',
       whatsapp_consent_at=now(),
       whatsapp_consent_by=auth.uid()
