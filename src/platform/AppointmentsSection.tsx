@@ -8,9 +8,11 @@ import {
   buildAppointmentTimeRange,
   getClinicAppointmentsQueryRange,
   getClinicMonthRange,
+  filterAppointmentsForDashboard,
   getClinicWeekRange,
   localDateKey,
   summarizeAppointmentStatuses,
+  type AppointmentDashboardView,
   toDateTimeLocalValue,
   type AppointmentChannel,
   type AppointmentStatus,
@@ -24,7 +26,7 @@ import {
 } from './appointments';
 
 type StaffRole = 'admin' | 'coach';
-type AppointmentView = 'today' | 'week' | 'unconfirmed';
+type AppointmentView = AppointmentDashboardView;
 
 interface AppointmentsSectionProps {
   clinicId: string;
@@ -83,6 +85,7 @@ export function AppointmentsSection({
   const monthRange = useMemo(() => getClinicMonthRange(), []);
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
   const [view, setView] = useState<AppointmentView>('today');
+  const [providerFilter, setProviderFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [busyAppointmentId, setBusyAppointmentId] = useState<string | null>(null);
@@ -148,10 +151,14 @@ export function AppointmentsSection({
   });
   const todayAppointments = weekAppointments.filter((item) => localDateKey(new Date(item.starts_at)) === todayKey);
   const unconfirmedCount = weekAppointments.filter((item) => item.status === 'scheduled').length;
-  const visibleAppointments = weekAppointments.filter((item) => {
-    if (view === 'today') return localDateKey(new Date(item.starts_at)) === todayKey;
-    if (view === 'unconfirmed') return item.status === 'scheduled';
-    return true;
+  const visibleAppointments = filterAppointmentsForDashboard(appointments, {
+    view,
+    todayKey,
+    weekStart: weekRange.start,
+    weekEnd: weekRange.end,
+    monthStart: monthRange.start,
+    monthEnd: monthRange.end,
+    providerId: role === 'admin' ? providerFilter : null,
   });
   const monthAppointments = appointments.filter((item) => {
     const startsAt = new Date(item.starts_at).getTime();
@@ -363,10 +370,12 @@ export function AppointmentsSection({
         )}
       </section>
 
-      <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="فلترة المواعيد">
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="فلترة المواعيد">
         {([
           ['today', 'اليوم'],
           ['week', 'الأسبوع'],
+          ['month', 'الشهر'],
           ['unconfirmed', 'غير مؤكدة'],
         ] as Array<[AppointmentView, string]>).map(([key, label]) => (
           <button
@@ -379,6 +388,26 @@ export function AppointmentsSection({
             {label}
           </button>
         ))}
+        </div>
+        {role === 'admin' && (
+          <label className="min-w-[12rem] text-xs font-bold text-slate-600 dark:text-slate-300">
+            الطبيب
+            <select
+              value={providerFilter}
+              onChange={(event) => setProviderFilter(event.target.value)}
+              className={inputClass + ' mt-1'}
+              aria-label="فلترة المواعيد حسب الطبيب"
+            >
+              <option value="all">كل الأطباء</option>
+              {providers.map((provider) => (
+                <option key={provider.uid} value={provider.uid}>
+                  {provider.doc.displayName ?? provider.doc.email ?? 'طبيب'}
+                  {provider.doc.disabled ? ' (موقوف)' : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
 
       {showForm && (
@@ -502,8 +531,16 @@ export function AppointmentsSection({
         <p className="mt-3 text-sm text-slate-500">جارٍ تحميل المواعيد…</p>
       ) : visibleAppointments.length === 0 ? (
         <EmptyState
-          title={view === 'today' ? 'لا توجد مواعيد اليوم' : view === 'unconfirmed' ? 'كل مواعيد الأسبوع مؤكدة' : 'لا توجد مواعيد هذا الأسبوع'}
-          description="يمكنك إضافة موعد جديد من الزر أعلاه، وستظهر الحجوزات هنا بعد حفظها."
+          title={
+            view === 'today' ? 'لا توجد مواعيد اليوم'
+              : view === 'month' ? 'لا توجد مواعيد هذا الشهر'
+                : view === 'unconfirmed' ? 'لا توجد مواعيد غير مؤكدة في هذا الأسبوع'
+                  : 'لا توجد مواعيد هذا الأسبوع'
+          }
+          description={
+            providerFilter !== 'all' ? 'لا توجد حجوزات لهذا الطبيب في النطاق المحدد.'
+              : 'يمكنك إضافة موعد جديد من الزر أعلاه، وستظهر الحجوزات هنا بعد حفظها.'
+          }
           className="mt-3"
         />
       ) : (
