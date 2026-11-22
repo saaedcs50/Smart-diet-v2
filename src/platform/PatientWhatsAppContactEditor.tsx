@@ -26,6 +26,7 @@ export function PatientWhatsAppContactEditor({
 
   const normalized = normalizeEgyptianWhatsAppPhone(value);
   const hasSavedContact = Boolean(phone && consentAt);
+  const showingSavedConsent = hasSavedContact && normalized === phone;
 
   const save = async () => {
     if (saving) return;
@@ -80,7 +81,7 @@ export function PatientWhatsAppContactEditor({
           disabled={saving || (Boolean(value.trim()) && (!normalized || !confirmed)) || (!value.trim() && !hasSavedContact)}
           className="rounded-xl bg-emerald-700 px-4 py-2.5 text-xs font-black text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {saving ? 'جارٍ الحفظ…' : 'حفظ بيانات التواصل'}
+          {saving ? 'جارٍ الحفظ…' : value.trim() ? 'حفظ رقم واتساب' : 'حذف الرقم وإلغاء الموافقة'}
         </button>
       </div>
 
@@ -100,7 +101,7 @@ export function PatientWhatsAppContactEditor({
         </label>
       )}
 
-      {hasSavedContact && (
+      {showingSavedConsent && (
         <p className="mt-2 text-[11px] text-emerald-700 dark:text-emerald-300">
           توجد موافقة مسجلة بتاريخ {new Intl.DateTimeFormat('ar-EG', { dateStyle: 'medium' }).format(new Date(consentAt!))}.
         </p>
@@ -108,18 +109,7 @@ export function PatientWhatsAppContactEditor({
 
       {error && <p role="alert" className="mt-2 text-xs font-bold text-rose-600">{error}</p>}
       {message && <p role="status" className="mt-2 text-xs font-bold text-emerald-700 dark:text-emerald-300">{message}</p>}
-      {hasSavedContact && (
-        <button
-          type="button"
-          onClick={() => {
-            setValue('');
-            setConfirmed(false);
-          }}
-          className="mt-2 text-[11px] font-bold text-rose-700 underline dark:text-rose-300"
-        >
-          حذف الرقم وإلغاء موافقة واتساب
-        </button>
-      )}
+
     </section>
   );
 }
