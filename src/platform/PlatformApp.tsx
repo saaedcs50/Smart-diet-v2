@@ -37,6 +37,7 @@ import {
   type RecentDayLogDetail,
   type StaffEntry,
 } from './database';
+import { PatientPlanEditor } from './PatientPlanEditor';
 import {
   createInvitation,
   registerStaffWithGoogleInvitation,
@@ -47,6 +48,7 @@ import {
   SYNC_CONSENT_VERSION,
   loadSyncStatus,
   migrateLocalToCloud,
+  pullCloudPlanToLocal,
   readLocalSnapshot,
   saveSyncStatus,
   summarizeSnapshot,
@@ -935,6 +937,10 @@ function SyncSection({ patientUid }: { patientUid: string }) {
       return EMPTY_LOCAL_SYNC_SUMMARY;
     }
   });
+  const [pullBusy, setPullBusy] = useState(false);
+  const [pullMessage, setPullMessage] = useState<string | null>(null);
+  const [pullError, setPullError] = useState<string | null>(null);
+  const [pullReloadAvailable, setPullReloadAvailable] = useState(false);
 
   useEffect(() => {
     const nextBinding = getLocalDataBindingStatus(patientUid);
@@ -1102,11 +1108,74 @@ function SyncSection({ patientUid }: { patientUid: string }) {
     }
   };
 
+  const pullClinicianPlan = async () => {
+    setPullBusy(true);
+    setPullMessage(null);
+    setPullError(null);
+    setPullReloadAvailable(false);
+    try {
+      const result = await pullCloudPlanToLocal(
+        patientUid,
+        (cloudPlan) => window.confirm(
+          `تم العثور على خطة الطبيب «${cloudPlan.clientName || 'خطة المريض'}». سيتم استبدال الخطة المحلية لهذا الحساب على هذا الجهاز فقط. لن تتغير سجلات الأيام أو الصور أو بقية بيانات الحساب. هل تريد المتابعة؟`,
+        ),
+      );
+      if (result.status === 'no-cloud-plan') {
+        setPullMessage('لا توجد خطة سحابية محفوظة من الطبيب بعد.');
+      } else if (result.status === 'cancelled') {
+        setPullMessage('أُلغي السحب؛ بقيت الخطة المحلية دون تغيير.');
+      } else {
+        setSummary(summarizeSnapshot(readLocalSnapshot()));
+        setPullMessage('تم حفظ نسخة الطبيب في مساحة هذا الحساب على هذا الجهاز. افتح التطبيق الرئيسي لإظهار الخطة الجديدة.');
+        setPullReloadAvailable(true);
+      }
+    } catch (caught) {
+      setPullError(errorText(caught));
+    } finally {
+      setPullBusy(false);
+    }
+  };
+
   return (
     <Card>
       <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
         مزامنة بيانات جهازي
       </h3>
+      <section className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50/60 p-3 dark:border-indigo-900 dark:bg-indigo-950/20">
+        <h4 className="text-sm font-black text-slate-900 dark:text-slate-100">
+          سحب خطة الطبيب إلى التطبيق
+        </h4>
+        <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
+          يجلب أحدث خطة سحابية ويضعها في مساحة حسابك على هذا الجهاز فقط. لن تتغير الخطة السحابية أو سجلات الأيام أو الصور. سيطلب التطبيق تأكيدك قبل استبدال الخطة المحلية.
+        </p>
+        <button
+          type="button"
+          className={ghostButtonClass + ' mt-3'}
+          onClick={() => void pullClinicianPlan()}
+          disabled={pullBusy}
+        >
+          {pullBusy ? 'جارٍ سحب خطة الطبيب…' : 'سحب أحدث خطة من الطبيب'}
+        </button>
+        {pullMessage && (
+          <p role="status" className="mt-2 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+            {pullMessage}
+          </p>
+        )}
+        {pullError && (
+          <p role="alert" className="mt-2 text-xs font-bold text-red-700 dark:text-red-300">
+            {pullError}
+          </p>
+        )}
+        {pullReloadAvailable && (
+          <button
+            type="button"
+            className={buttonClass + ' mt-3'}
+            onClick={() => window.location.assign('/')}
+          >
+            فتح التطبيق بالخطة الجديدة
+          </button>
+        )}
+      </section>
       {bindingStatus === 'mismatch' ? (
         <p className="mt-1 text-xs font-bold text-red-700">
           بيانات هذا الجهاز مرتبطة بحساب آخر. تم إخفاء ملخصها ومنع رفعها إلى الحساب الحالي لحماية الخصوصية.
@@ -1311,6 +1380,14 @@ function PatientDetail({
       description="تأكد من رابط الملف أو من أن حسابك يملك صلاحية الوصول إليه."
     />
   );
+  if (isStaffView && (!viewerClinicId || doc.clinicId !== viewerClinicId)) {
+    return (
+      <EmptyState
+        title="الملف خارج نطاق عيادتك"
+        description="لا يمكن فتح أو تعديل خطة مريض لا يتبع عيادتك."
+      />
+    );
+  }
 
   const latestEntry = entries[0] ?? null;
   const latestWeightEntry = entries.find(({ log }) => log.weight != null) ?? null;
@@ -1355,8 +1432,28 @@ function PatientDetail({
           {doc.profile.clientName}
         </h2>
         <p className="mt-1 text-xs text-slate-500">
-          {isStaffView ? 'عرض طاقم العيادة (قراءة فقط)' : 'ملفي السحابي'}
+          {isStaffView ? 'ملف المريض — فريق العيادة' : 'ملفي السحابي'}
         </p>
+        {isStaffView && (
+          <div className="mt-4">
+            <PatientPlanEditor
+              patientUid={patientUid}
+              editorUid={viewerUid}
+              patientName={doc.profile.clientName}
+              initialPlan={plan}
+              presetStorageNamespace={`clinic:${doc.clinicId}`}
+              onSaved={(savedPlan) => {
+                setPlan(savedPlan);
+                setDoc((current) => current ? {
+                  ...current,
+                  plan: savedPlan,
+                  planUpdatedAt: new Date().toISOString(),
+                  planUpdatedBy: viewerUid,
+                } : current);
+              }}
+            />
+          </div>
+        )}
         {plan ? (
           <div className="mt-3 space-y-3 text-sm text-slate-700 dark:text-slate-200">
             <div className="grid gap-2 sm:grid-cols-2">
@@ -1415,6 +1512,16 @@ function PatientDetail({
         clinicId={doc.clinicId}
         clientName={doc.profile.clientName}
         isStaffView={isStaffView}
+        editorUid={viewerUid}
+        onPlanApproved={(approvedPlan, approvedAt, approvedBy) => {
+          setPlan(approvedPlan);
+          setDoc((current) => current ? {
+            ...current,
+            plan: approvedPlan,
+            planUpdatedAt: approvedAt,
+            planUpdatedBy: approvedBy,
+          } : current);
+        }}
       />
       <PatientReflectionsSection
         patientUid={patientUid}

@@ -1111,36 +1111,51 @@ export const PLAN_TEMPLATES: PlanPreset[] = BUILT_IN_PRESETS;
 
 const CUSTOM_PRESETS_STORAGE_KEY = 'nt_custom_plan_presets_v1';
 
-export function loadCustomPresets(): PlanPreset[] {
+/**
+ * Custom templates are device-local but partitioned by clinic when the
+ * multi-clinic platform supplies a namespace. The classic single-clinic
+ * application keeps its original key for backward compatibility.
+ */
+export function getCustomPresetsStorageKey(storageNamespace?: string): string {
+  const namespace = typeof storageNamespace === 'string' ? storageNamespace.trim() : '';
+  if (!namespace) return CUSTOM_PRESETS_STORAGE_KEY;
+  return `${CUSTOM_PRESETS_STORAGE_KEY}_${encodeURIComponent(namespace).slice(0, 180)}`;
+}
+
+export function loadCustomPresets(storageNamespace?: string): PlanPreset[] {
  try {
- const data = localStorage.getItem(CUSTOM_PRESETS_STORAGE_KEY);
+ const data = localStorage.getItem(getCustomPresetsStorageKey(storageNamespace));
  if (!data) return [];
  const parsed = JSON.parse(data);
- return Array.isArray(parsed)? parsed: [];
+ return Array.isArray(parsed)
+   ? parsed.filter((item): item is PlanPreset => Boolean(item && typeof item === 'object' && typeof item.id === 'string' && typeof item.name === 'string'))
+   : [];
  } catch (e) {
  console.error('Error loading custom presets:', e);
  return [];
  }
 }
 
-export function saveCustomPreset(preset: PlanPreset): boolean {
+export function saveCustomPreset(preset: PlanPreset, storageNamespace?: string): boolean {
  try {
- const existing = loadCustomPresets();
- const filtered = existing.filter((p) => p.id!== preset.id);
- const updated = [preset,...filtered];
- localStorage.setItem(CUSTOM_PRESETS_STORAGE_KEY, JSON.stringify(updated));
+ const key = getCustomPresetsStorageKey(storageNamespace);
+ const existing = loadCustomPresets(storageNamespace);
+ const filtered = existing.filter((p) => p.id !== preset.id);
+ const updated = [preset, ...filtered].slice(0, 200);
+ localStorage.setItem(key, JSON.stringify(updated));
  return true;
  } catch (e) {
- console.error('Error saving custom preset:', e);
+ console.error('Error saving custom presets:', e);
  return false;
  }
 }
 
-export function deleteCustomPreset(presetId: string): boolean {
+export function deleteCustomPreset(presetId: string, storageNamespace?: string): boolean {
  try {
- const existing = loadCustomPresets();
- const updated = existing.filter((p) => p.id!== presetId);
- localStorage.setItem(CUSTOM_PRESETS_STORAGE_KEY, JSON.stringify(updated));
+ const key = getCustomPresetsStorageKey(storageNamespace);
+ const existing = loadCustomPresets(storageNamespace);
+ const updated = existing.filter((p) => p.id !== presetId);
+ localStorage.setItem(key, JSON.stringify(updated));
  return true;
  } catch (e) {
  console.error('Error deleting custom preset:', e);
@@ -1148,9 +1163,9 @@ export function deleteCustomPreset(presetId: string): boolean {
  }
 }
 
-export function getAllPresets(): PlanPreset[] {
- const custom = loadCustomPresets();
- return [...BUILT_IN_PRESETS,...custom];
+export function getAllPresets(storageNamespace?: string): PlanPreset[] {
+ const custom = loadCustomPresets(storageNamespace);
+ return [...BUILT_IN_PRESETS, ...custom];
 }
 
 export function createPresetFromPlan(
@@ -1162,7 +1177,10 @@ export function createPresetFromPlan(
 ): PlanPreset {
  const mealsCount = plan.meals?.length || 0;
  const supplementsCount = plan.supplements?.length || 0;
- const id = `custom_${Date.now()}`;
+ const randomSuffix = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+   ? crypto.randomUUID()
+   : `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+ const id = `custom_${randomSuffix}`;
 
  return {
  id,
@@ -1200,9 +1218,16 @@ export function createPresetFromPlan(
  tips: [...(plan.tips || [])],
  visibleSections: JSON.parse(JSON.stringify(plan.visibleSections || {})),
  symptomsList: JSON.parse(JSON.stringify(plan.symptomsList || [])),
- medicalConditions: plan.medicalConditions? JSON.parse(JSON.stringify(plan.medicalConditions)): undefined,
- medicationPlan: plan.medicationPlan? JSON.parse(JSON.stringify(plan.medicationPlan)): undefined,
- fastingPlan: plan.fastingPlan? JSON.parse(JSON.stringify(plan.fastingPlan)): undefined,
+ // Patient diagnoses, allergy lists, medication names/doses and notes are
+ // deliberately excluded from a reusable/exportable clinic template.
+ fastingPlan: plan.fastingPlan
+   ? {
+       ...JSON.parse(JSON.stringify(plan.fastingPlan)),
+       notes: undefined,
+       lastUpdatedAt: undefined,
+       lastUpdatedBy: undefined,
+     }
+   : undefined,
  },
  };
 }

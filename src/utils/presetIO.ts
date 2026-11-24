@@ -1,4 +1,5 @@
 import type { PlanPreset } from './planPresets';
+import { SUPPORTED_CONDITIONS } from './medicalConditions';
 
 // ============================================================================
 // Batch 3.1: استيراد/تصدير قوالب الخطط كـ JSON
@@ -6,6 +7,8 @@ import type { PlanPreset } from './planPresets';
 // صيغة التصدير: مغلف { kind, version, preset } — والاستيراد يقبل المغلف أو
 // القالب الخام مباشرة ليتوافق مع النسخ الاحتياطية اليدوية.
 // ============================================================================
+
+export const MAX_PRESET_IMPORT_BYTES = 512 * 1024;
 
 export type PresetValidationResult =
   | { ok: true; preset: PlanPreset }
@@ -33,99 +36,239 @@ function fail(error: string): PresetValidationResult {
   return { ok: false, error };
 }
 
+const REUSABLE_PRESET_TOP_LEVEL_FIELDS = new Set([
+  'id', 'name', 'category', 'badge', 'icon', 'tagColor', 'summary', 'description',
+  'targetCalories', 'targetProtein', 'targetCarbs', 'targetFats', 'dailyWaterGoalMl',
+  'fastingHours', 'mealsCount', 'supplementsCount', 'isCustom', 'createdAt', 'scenario',
+  'planData',
+]);
+
+const REUSABLE_PLAN_DATA_FIELDS = new Set([
+  'targetCalories', 'targetProtein', 'targetCarbs', 'targetFats', 'dailyWaterGoalMl',
+  'enableFastingTimer', 'fastingTargetHours', 'enableMacrosTracker', 'freezeDaysPerMonth',
+  'scoreWeights', 'meals', 'checklist', 'supplements', 'tips', 'visibleSections',
+  'symptomsList', 'medicalConditions', 'fastingPlan',
+]);
+
+/**
+ * Remove patient-bound clinical data from a reusable/importable template.
+ * Diagnosis labels are replaced with canonical catalog labels; allergies,
+ * clinical notes, medicines, labs, cycle history, patient identity and PINs
+ * never cross clinic boundaries through a preset file.
+ */
+function sanitizeReusablePreset(preset: PlanPreset): PlanPreset {
+  const safe = JSON.parse(JSON.stringify(preset)) as PlanPreset & Record<string, unknown>;
+  for (const key of Object.keys(safe)) {
+    if (!REUSABLE_PRESET_TOP_LEVEL_FIELDS.has(key)) delete safe[key];
+  }
+
+  const planData = safe.planData as unknown as Record<string, unknown>;
+  for (const key of Object.keys(planData)) {
+    if (!REUSABLE_PLAN_DATA_FIELDS.has(key)) delete planData[key];
+  }
+
+  if (isRecord(planData.medicalConditions)) {
+    const sourceConditions = Array.isArray(planData.medicalConditions.conditions)
+      ? planData.medicalConditions.conditions
+      : [];
+    const canonicalConditions = sourceConditions.flatMap((condition) => {
+      if (!isRecord(condition) || typeof condition.id !== 'string') return [];
+      const canonical = SUPPORTED_CONDITIONS.find((item) => item.id === condition.id);
+      return canonical ? [{ id: canonical.id, label: canonical.label }] : [];
+    });
+    if (canonicalConditions.length > 0) {
+      planData.medicalConditions = {
+        conditions: canonicalConditions,
+        allergies: [],
+        showToClient: false,
+      };
+    } else {
+      delete planData.medicalConditions;
+    }
+  }
+
+  if (isRecord(planData.fastingPlan)) {
+    const fastingPlan = { ...planData.fastingPlan };
+    delete fastingPlan.notes;
+    delete fastingPlan.lastUpdatedAt;
+    delete fastingPlan.lastUpdatedBy;
+    planData.fastingPlan = fastingPlan;
+  }
+
+  return safe;
+}
+
 /** يتحقق من بنية قالب خطة كاملة. لا يرمي استثناءات أبدًا. */
 export function validatePresetData(raw: unknown): PresetValidationResult {
   if (!isRecord(raw)) {
     return fail('الملف لا يحتوي على قالب صالح: المحتوى ليس كائن JSON.');
   }
-  if (typeof raw.id !== 'string' || !raw.id.trim()) {
-    return fail('القالب مرفوض: يفتقد معرّفًا (id).');
+  if (typeof raw.id !== 'string' || !raw.id.trim() || raw.id.length > 120) {
+    return fail('القالب مرفوض: المعرّف (id) مطلوب وبحد أقصى 120 حرفًا.');
   }
-  if (typeof raw.name !== 'string' || !raw.name.trim()) {
-    return fail('القالب مرفوض: يفتقد اسمًا (name).');
+  if (typeof raw.name !== 'string' || !raw.name.trim() || raw.name.length > 100) {
+    return fail('القالب مرفوض: الاسم (name) مطلوب وبحد أقصى 100 حرف.');
   }
   if (typeof raw.category !== 'string' || !PRESET_CATEGORIES.includes(raw.category as PlanPreset['category'])) {
     return fail('القالب مرفوض: تصنيف (category) غير معروف.');
   }
-  for (const key of ['targetCalories', 'targetProtein', 'targetCarbs', 'targetFats', 'dailyWaterGoalMl'] as const) {
-    if (!isFiniteNumber(raw[key]) || (raw[key] as number) < 0) {
-      return fail(`القالب مرفوض: حقل (${key}) يجب أن يكون رقمًا صالحًا.`);
+  if (raw.description !== undefined && (typeof raw.description !== 'string' || raw.description.length > 2000)) {
+    return fail('القالب مرفوض: الوصف أطول من 2000 حرف أو غير صالح.');
+  }
+  if (raw.summary !== undefined && (typeof raw.summary !== 'string' || raw.summary.length > 500)) {
+    return fail('القالب مرفوض: الملخص أطول من 500 حرف أو غير صالح.');
+  }
+
+  const topLevelBounds = {
+    targetCalories: 10000,
+    targetProtein: 1000,
+    targetCarbs: 1500,
+    targetFats: 1000,
+    dailyWaterGoalMl: 10000,
+  } as const;
+  for (const [key, max] of Object.entries(topLevelBounds)) {
+    const value = raw[key];
+    if (!isFiniteNumber(value) || value < 0 || value > max) {
+      return fail(`القالب مرفوض: حقل (${key}) يجب أن يكون رقمًا بين 0 و${max}.`);
     }
   }
+  if (raw.fastingHours !== undefined && (!isFiniteNumber(raw.fastingHours) || raw.fastingHours < 0 || raw.fastingHours > 24)) {
+    return fail('القالب مرفوض: ساعات الصيام يجب أن تكون بين 0 و24.');
+  }
+
   if (!isRecord(raw.planData)) {
     return fail('القالب مرفوض: يفتقد بيانات الخطة (planData).');
   }
   const pd = raw.planData as Record<string, unknown>;
 
-  if (!Array.isArray(pd.meals) || pd.meals.length === 0) {
-    return fail('القالب مرفوض: الخطة بلا وجبات (planData.meals فارغة أو مفقودة).');
+  if (!Array.isArray(pd.meals) || pd.meals.length === 0 || pd.meals.length > 40) {
+    return fail('القالب مرفوض: عدد الوجبات يجب أن يكون بين 1 و40.');
   }
-  for (const m of pd.meals) {
-    if (!isRecord(m)) return fail('القالب مرفوض: إحدى الوجبات ليست كائنًا صالحًا.');
-    if (typeof m.id !== 'string' || !m.id.trim()) return fail('القالب مرفوض: إحدى الوجبات تفتقد معرّفًا.');
-    if (typeof m.name !== 'string' || !m.name.trim()) return fail('القالب مرفوض: إحدى الوجبات تفتقد اسمًا.');
-    if (typeof m.items !== 'string' || !m.items.trim()) return fail('القالب مرفوض: إحدى الوجبات بلا محتوى (items).');
-    if (m.alternatives !== undefined) {
-      if (!Array.isArray(m.alternatives) || m.alternatives.some((a) => typeof a !== 'string')) {
-        return fail('القالب مرفوض: بدائل إحدى الوجبات ليست قائمة نصوص.');
+  for (const [index, meal] of pd.meals.entries()) {
+    if (!isRecord(meal)) return fail(`القالب مرفوض: الوجبة ${index + 1} ليست كائنًا صالحًا.`);
+    if (typeof meal.id !== 'string' || !meal.id.trim() || meal.id.length > 120) {
+      return fail(`القالب مرفوض: معرّف الوجبة ${index + 1} غير صالح.`);
+    }
+    if (typeof meal.name !== 'string' || !meal.name.trim() || meal.name.length > 100) {
+      return fail(`القالب مرفوض: اسم الوجبة ${index + 1} مطلوب وبحد أقصى 100 حرف.`);
+    }
+    if (typeof meal.items !== 'string' || !meal.items.trim() || meal.items.length > 2500) {
+      return fail(`القالب مرفوض: مكونات الوجبة ${index + 1} مطلوبة وبحد أقصى 2500 حرف.`);
+    }
+    if (meal.alternatives !== undefined) {
+      if (
+        !Array.isArray(meal.alternatives) ||
+        meal.alternatives.length > 20 ||
+        meal.alternatives.some((item) => typeof item !== 'string' || !item.trim() || item.length > 200)
+      ) {
+        return fail(`القالب مرفوض: بدائل الوجبة ${index + 1} غير صالحة أو تتجاوز الحد المسموح.`);
       }
     }
-    if (m.calories !== undefined && !isFiniteNumber(m.calories)) {
-      return fail('القالب مرفوض: سعرات إحدى الوجبات ليست رقمًا.');
+    if (meal.calories !== undefined && (!isFiniteNumber(meal.calories) || meal.calories < 0 || meal.calories > 5000)) {
+      return fail(`القالب مرفوض: سعرات الوجبة ${index + 1} يجب أن تكون بين 0 و5000.`);
     }
-    if (m.proteinGrams !== undefined && !isFiniteNumber(m.proteinGrams)) {
-      return fail('القالب مرفوض: بروتين إحدى الوجبات ليس رقمًا.');
+    if (meal.proteinGrams !== undefined && (!isFiniteNumber(meal.proteinGrams) || meal.proteinGrams < 0 || meal.proteinGrams > 500)) {
+      return fail(`القالب مرفوض: بروتين الوجبة ${index + 1} يجب أن يكون بين 0 و500.`);
+    }
+    if (meal.time !== undefined && (typeof meal.time !== 'string' || (meal.time && !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(meal.time)))) {
+      return fail(`القالب مرفوض: وقت الوجبة ${index + 1} غير صالح.`);
+    }
+  }
+
+  if (pd.dailyWaterGoalMl !== undefined && (!isFiniteNumber(pd.dailyWaterGoalMl) || pd.dailyWaterGoalMl < 250 || pd.dailyWaterGoalMl > 10000)) {
+    return fail('القالب مرفوض: هدف الماء اليومي يجب أن يكون بين 250 و10000 مل.');
+  }
+  for (const [key, max] of Object.entries(topLevelBounds)) {
+    if (key === 'dailyWaterGoalMl' || pd[key] === undefined || pd[key] === null) continue;
+    const value = pd[key];
+    if (!isFiniteNumber(value) || value < 0 || value > max) {
+      return fail(`القالب مرفوض: بيانات الخطة (${key}) غير صالحة.`);
     }
   }
 
   if (pd.checklist !== undefined) {
-    if (!Array.isArray(pd.checklist) || pd.checklist.some((c) => !isRecord(c) || typeof c.id !== 'string' || typeof c.label !== 'string')) {
-      return fail('القالب مرفوض: قائمة المهام (checklist) غير صالحة.');
+    if (!Array.isArray(pd.checklist) || pd.checklist.length > 60 || pd.checklist.some((item) =>
+      !isRecord(item) ||
+      typeof item.id !== 'string' || !item.id.trim() || item.id.length > 120 ||
+      typeof item.label !== 'string' || !item.label.trim() || item.label.length > 160
+    )) {
+      return fail('القالب مرفوض: قائمة المهام (checklist) غير صالحة أو تتجاوز 60 بندًا.');
     }
   }
   if (pd.supplements !== undefined) {
-    if (!Array.isArray(pd.supplements) || pd.supplements.some((s) => !isRecord(s) || typeof s.id !== 'string' || typeof s.name !== 'string')) {
-      return fail('القالب مرفوض: قائمة المكملات (supplements) غير صالحة.');
+    if (!Array.isArray(pd.supplements) || pd.supplements.length > 40 || pd.supplements.some((item) =>
+      !isRecord(item) ||
+      typeof item.id !== 'string' || !item.id.trim() || item.id.length > 120 ||
+      typeof item.name !== 'string' || !item.name.trim() || item.name.length > 120 ||
+      (item.time !== undefined && (typeof item.time !== 'string' || item.time.length > 500)) ||
+      (item.notes !== undefined && (typeof item.notes !== 'string' || item.notes.length > 500))
+    )) {
+      return fail('القالب مرفوض: قائمة المكملات (supplements) غير صالحة أو تتجاوز 40 عنصرًا.');
     }
   }
   if (pd.tips !== undefined) {
-    if (!Array.isArray(pd.tips) || pd.tips.some((t) => typeof t !== 'string')) {
-      return fail('القالب مرفوض: قائمة النصائح (tips) ليست قائمة نصوص.');
+    if (!Array.isArray(pd.tips) || pd.tips.length > 30 || pd.tips.some((tip) => typeof tip !== 'string' || tip.length > 1000)) {
+      return fail('القالب مرفوض: قائمة النصائح (tips) غير صالحة أو تتجاوز 30 نصيحة.');
     }
   }
   if (pd.symptomsList !== undefined) {
-    if (!Array.isArray(pd.symptomsList) || pd.symptomsList.some((s) => !isRecord(s) || typeof s.id !== 'string' || typeof s.label !== 'string')) {
-      return fail('القالب مرفوض: قائمة الأعراض (symptomsList) غير صالحة.');
+    if (!Array.isArray(pd.symptomsList) || pd.symptomsList.length > 40 || pd.symptomsList.some((item) =>
+      !isRecord(item) ||
+      typeof item.id !== 'string' || !item.id.trim() || item.id.length > 120 ||
+      typeof item.label !== 'string' || !item.label.trim() || item.label.length > 120
+    )) {
+      return fail('القالب مرفوض: قائمة الأعراض (symptomsList) غير صالحة أو تتجاوز 40 عنصرًا.');
     }
   }
   if (pd.scoreWeights !== undefined) {
     if (!isRecord(pd.scoreWeights)) return fail('القالب مرفوض: أوزان النقاط (scoreWeights) غير صالحة.');
-    for (const k of ['checklist', 'water', 'sleep', 'meals'] as const) {
-      if (!isFiniteNumber(pd.scoreWeights[k])) {
-        return fail(`القالب مرفوض: وزن النقاط (${k}) ليس رقمًا.`);
+    for (const key of ['checklist', 'water', 'sleep', 'meals'] as const) {
+      const value = pd.scoreWeights[key];
+      if (!isFiniteNumber(value) || value < 0 || value > 100) {
+        return fail(`القالب مرفوض: وزن النقاط (${key}) يجب أن يكون بين 0 و100.`);
       }
     }
   }
-  if (pd.visibleSections !== undefined && !isRecord(pd.visibleSections)) {
-    return fail('القالب مرفوض: إعدادات الأقسام (visibleSections) غير صالحة.');
+  if (pd.visibleSections !== undefined) {
+    if (!isRecord(pd.visibleSections) || Object.values(pd.visibleSections).some((value) => typeof value !== 'boolean')) {
+      return fail('القالب مرفوض: إعدادات الأقسام (visibleSections) غير صالحة.');
+    }
+  }
+  if (pd.medicalConditions !== undefined && !isRecord(pd.medicalConditions)) {
+    return fail('القالب مرفوض: إعدادات الحالة الطبية غير صالحة.');
+  }
+  if (pd.medicationPlan !== undefined && !isRecord(pd.medicationPlan)) {
+    return fail('القالب مرفوض: إعدادات الأدوية غير صالحة.');
+  }
+  if (pd.fastingPlan !== undefined && !isRecord(pd.fastingPlan)) {
+    return fail('القالب مرفوض: إعدادات الصيام غير صالحة.');
   }
   if (raw.scenario !== undefined) {
-    if (!isRecord(raw.scenario) || typeof raw.scenario.clientGuidance !== 'string' || !Array.isArray(raw.scenario.coachAlerts)) {
+    if (
+      !isRecord(raw.scenario) ||
+      typeof raw.scenario.clientGuidance !== 'string' ||
+      raw.scenario.clientGuidance.length > 2000 ||
+      !Array.isArray(raw.scenario.coachAlerts) ||
+      raw.scenario.coachAlerts.length > 30 ||
+      raw.scenario.coachAlerts.some((alert) => typeof alert !== 'string' || !alert.trim() || alert.length > 500) ||
+      (raw.scenario.cautionLevel !== undefined && !['standard', 'high'].includes(String(raw.scenario.cautionLevel)))
+    ) {
       return fail('القالب مرفوض: بيانات السيناريو (scenario) غير صالحة.');
     }
   }
 
-  // نجاح: نسخة عميقة آمنة مع قيم افتراضية للحقول الاختيارية المطلوبة في النوع
   const clone = JSON.parse(JSON.stringify(raw)) as PlanPreset;
-  clone.planData.meals = clone.planData.meals.map((m) => ({ ...m, alternatives: m.alternatives || [] }));
+  clone.planData.meals = clone.planData.meals.map((meal) => ({
+    ...meal,
+    alternatives: meal.alternatives || [],
+  }));
   clone.planData.checklist = clone.planData.checklist || [];
   clone.planData.supplements = clone.planData.supplements || [];
   clone.planData.tips = clone.planData.tips || [];
   clone.planData.symptomsList = clone.planData.symptomsList || [];
-  // العدّادات مشتقة: تُملأ فقط إن غابت، حتى يعود القالب مطابقًا كما صُدِّر
   if (typeof clone.mealsCount !== 'number') clone.mealsCount = clone.planData.meals.length;
   if (typeof clone.supplementsCount !== 'number') clone.supplementsCount = clone.planData.supplements.length;
-  return { ok: true, preset: clone };
+  return { ok: true, preset: sanitizeReusablePreset(clone) };
 }
 
 export interface PresetExportEnvelope {
@@ -140,13 +283,17 @@ export function serializePreset(preset: PlanPreset): string {
     kind: 'smart-diet-preset',
     version: 1,
     exportedAt: new Date().toISOString(),
-    preset,
+    preset: sanitizeReusablePreset(preset),
   };
   return JSON.stringify(envelope, null, 2);
 }
 
 /** يقرأ نص JSON (مغلفًا أو قالبًا خامًا) ويتحقق منه. لا يرمي أبدًا. */
 export function parsePresetImport(text: string): PresetValidationResult {
+  if (typeof text !== 'string') return fail('تعذّرت قراءة الملف: المحتوى النصي غير صالح.');
+  if (new TextEncoder().encode(text).byteLength > MAX_PRESET_IMPORT_BYTES) {
+    return fail('حجم ملف القالب يتجاوز الحد المسموح (512 كيلوبايت).');
+  }
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -156,6 +303,9 @@ export function parsePresetImport(text: string): PresetValidationResult {
   if (isRecord(parsed) && 'preset' in parsed) {
     if (parsed.kind !== undefined && parsed.kind !== 'smart-diet-preset') {
       return fail('هذا الملف ليس قالب خطة Smart Diet.');
+    }
+    if (parsed.kind === 'smart-diet-preset' && parsed.version !== 1) {
+      return fail('إصدار ملف القالب غير مدعوم. حدّث الملف إلى الإصدار 1.');
     }
     return validatePresetData(parsed.preset);
   }

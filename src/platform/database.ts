@@ -310,6 +310,22 @@ export async function getPatientPlan(
   return planFromDatabase(patient.plan);
 }
 
+export interface PatientPlanSnapshot {
+  plan: PlanConfig | null;
+  updatedAt: string | null;
+}
+
+export async function getPatientPlanSnapshot(
+  uid: string,
+): Promise<PatientPlanSnapshot> {
+  const patient = await getPatient(uid);
+  if (!patient?.plan) return { plan: null, updatedAt: null };
+  return {
+    plan: planFromDatabase(patient.plan),
+    updatedAt: patient.planUpdatedAt ?? null,
+  };
+}
+
 // إنشاء/تأكيد سجل المريض (clinicId + الاسم المعروض) بلا خطة بعد.
 export async function ensurePatientDoc(
   uid: string,
@@ -334,11 +350,17 @@ export async function savePatientPlan(
   plan: PlanConfig,
   editorUid: string,
 ): Promise<void> {
-  const { error } = await getSupabase()
+  if (!uid.trim() || !editorUid.trim()) throw new Error('معرّف المريض أو محرر الخطة غير صالح.');
+  const { data, error } = await getSupabase()
     .from('patients')
     .update({ plan: planToDatabase(plan, editorUid) })
-    .eq('id', uid);
-  if (error) throw new Error(error.message);
+    .eq('id', uid)
+    .select('id')
+    .maybeSingle();
+  if (error) throw new Error(`تعذّر حفظ الخطة: ${error.message}`);
+  if (!data) {
+    throw new Error('لم يتم حفظ الخطة: الملف غير موجود أو لم تعد تملك صلاحية تعديله داخل العيادة.');
+  }
 }
 
 /** Saves staff-managed patient tags; authorization is enforced by patients RLS. */

@@ -23,12 +23,14 @@ import {
   getActiveFastingSession,
   getAllStoredDayLogs,
   loadPlanFromStorage,
+  savePlanToStorage,
 } from '../utils/storage';
 import {
   loadNotificationSettings,
   type NotificationSettings,
 } from '../utils/notifications';
 import { StorageKeys } from '../utils/storageKeys';
+import { getStorageScope } from '../utils/storageScope';
 import { loadSeasonalActivation } from '../utils/seasonalTemplate';
 import type { ActiveFastingSession, DayLog, PlanConfig } from '../types/index';
 import type { SeasonalActivation } from '../utils/seasonalTemplate';
@@ -127,6 +129,63 @@ export const defaultSyncWriters: SyncWriters = {
   saveDayLog,
   saveConsent,
 };
+
+export interface PlanPullWriters {
+  getPatientPlan: (uid: string) => Promise<PlanConfig | null>;
+  getStorageScope: () => string;
+  saveLocalPlan: (plan: PlanConfig) => boolean;
+}
+
+export type PlanPullResult =
+  | { status: 'no-cloud-plan' }
+  | { status: 'cancelled' }
+  | { status: 'pulled'; plan: PlanConfig };
+
+const defaultPlanPullWriters: PlanPullWriters = {
+  getPatientPlan,
+  getStorageScope,
+  saveLocalPlan: savePlanToStorage,
+};
+
+/**
+ * Pull the clinician's canonical cloud plan into the signed-in patient's
+ * private browser namespace. It never writes unless the identity scope matches
+ * and the patient explicitly confirms replacement.
+ */
+export async function pullCloudPlanToLocal(
+  patientUid: string,
+  confirmOverwrite: (cloudPlan: PlanConfig) => boolean,
+  writers: PlanPullWriters = defaultPlanPullWriters,
+): Promise<PlanPullResult> {
+  const uid = patientUid.trim();
+  if (!uid) throw new Error('تعذّر تحديد حساب المريض الحالي.');
+
+  const expectedScope = `user:${uid}`;
+  const assertStorageScope = () => {
+    if (writers.getStorageScope() !== expectedScope) {
+      throw new Error('تم إيقاف السحب: مساحة التخزين المحلية لم تعد تطابق حساب المريض الحالي بعد تغيّر الحساب أو مساحة التخزين. أعد المحاولة من حساب المريض الصحيح.');
+    }
+  };
+
+  assertStorageScope();
+  const cloudPlan = await writers.getPatientPlan(uid);
+  // The active account can change while the cloud request is in flight.
+  // Re-check immediately after the await, before showing or writing any plan.
+  assertStorageScope();
+  if (!cloudPlan) return { status: 'no-cloud-plan' };
+
+  if (!confirmOverwrite(cloudPlan)) return { status: 'cancelled' };
+
+  // A confirmation dialog can remain open while the app/session changes.
+  // Never write the previous patient's plan into the newly active namespace.
+  assertStorageScope();
+
+  if (!writers.saveLocalPlan(cloudPlan)) {
+    throw new Error('تعذّر حفظ الخطة على هذا الجهاز؛ لم يتم تأكيد الاستبدال.');
+  }
+
+  return { status: 'pulled', plan: cloudPlan };
+}
 
 export const SYNC_CONSENT_TEXT =
   'أوافق على رفع نسخة من بيانات جهازي (خطتي وسجلاتي اليومية) إلى حسابي السحابي في عيادتي، حتى أتابعها من أي جهاز وحتى يراها طبيبي. يمكنني سحب الموافقة في أي وقت فيوقف الرفع فورًا.';

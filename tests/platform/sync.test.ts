@@ -3,9 +3,11 @@ import { describe, it, expect } from 'vitest';
 import {
   loadSyncStatus,
   migrateLocalToCloud,
+  pullCloudPlanToLocal,
   saveSyncStatus,
   summarizeSnapshot,
   type LocalSnapshot,
+  type PlanPullWriters,
   type SyncWriters,
 } from '../../src/platform/sync';
 import type { DayLog, PlanConfig } from '../../src/types/index';
@@ -185,4 +187,146 @@ describe('sync status store', () => {
     expect(loadSyncStatus(store, 'patient-b').state).toBe('idle');
   });
 
+});
+
+function memoryPullWriters(options?: {
+  cloudPlan?: PlanConfig | null;
+  localPlan?: PlanConfig | null;
+  scope?: string;
+  scopeAfterRead?: string;
+  saveResult?: boolean;
+}): { writers: PlanPullWriters; state: {
+  reads: number;
+  saves: number;
+  requestedUid: string | null;
+  savedPlan: PlanConfig | null;
+  scope: string;
+} } {
+  const state = {
+    reads: 0,
+    saves: 0,
+    requestedUid: null as string | null,
+    savedPlan: options?.localPlan ?? null,
+    scope: options?.scope ?? 'user:patient-1',
+  };
+  const cloudPlan = options && Object.prototype.hasOwnProperty.call(options, 'cloudPlan')
+    ? options.cloudPlan ?? null
+    : fakePlan();
+  const writers: PlanPullWriters = {
+    getPatientPlan: async (uid) => {
+      state.reads += 1;
+      state.requestedUid = uid;
+      if (options?.scopeAfterRead) state.scope = options.scopeAfterRead;
+      return cloudPlan;
+    },
+    getStorageScope: () => state.scope,
+    saveLocalPlan: (plan) => {
+      state.saves += 1;
+      if (options?.saveResult === false) return false;
+      state.savedPlan = plan;
+      return true;
+    },
+  };
+  return { writers, state };
+}
+
+describe('pullCloudPlanToLocal', () => {
+  it('يسحب خطة الطبيب بعد تأكيد الاستبدال إلى مساحة الحساب المطابقة فقط', async () => {
+    const cloudPlan = fakePlan();
+    const { writers, state } = memoryPullWriters({ cloudPlan });
+    const result = await pullCloudPlanToLocal(
+      'patient-1',
+      (plan) => plan === cloudPlan,
+      writers,
+    );
+    expect(result.status).toBe('pulled');
+    expect(state.requestedUid).toBe('patient-1');
+    expect(state.reads).toBe(1);
+    expect(state.saves).toBe(1);
+    expect(state.savedPlan).toBe(cloudPlan);
+  });
+
+  it('يرفض الحساب المختلف قبل قراءة السحابة أو الكتابة محليًا', async () => {
+    const { writers, state } = memoryPullWriters({ scope: 'user:patient-2' });
+    await expect(
+      pullCloudPlanToLocal('patient-1', () => true, writers),
+    ).rejects.toThrow('مساحة التخزين المحلية');
+    expect(state.reads).toBe(0);
+    expect(state.saves).toBe(0);
+  });
+
+  it('لا يستبدل الخطة المحلية عند رفض تأكيد المريض', async () => {
+    const localPlan = { ...fakePlan(), targetCalories: 1200 } as PlanConfig;
+    const { writers, state } = memoryPullWriters({ localPlan });
+    const result = await pullCloudPlanToLocal('patient-1', () => false, writers);
+    expect(result.status).toBe('cancelled');
+    expect(state.reads).toBe(1);
+    expect(state.saves).toBe(0);
+    expect(state.savedPlan).toBe(localPlan);
+  });
+
+  it('عند تعارض نسخة الجهاز مع خطة الطبيب، تصبح نسخة الطبيب المرجعية بعد التأكيد', async () => {
+    const localPlan = { ...fakePlan(), targetCalories: 1200 } as PlanConfig;
+    const cloudPlan = { ...fakePlan(), targetCalories: 1800 } as PlanConfig;
+    const { writers, state } = memoryPullWriters({ localPlan, cloudPlan });
+
+    const result = await pullCloudPlanToLocal('patient-1', () => true, writers);
+
+    expect(result.status).toBe('pulled');
+    expect(state.saves).toBe(1);
+    expect(state.savedPlan).toBe(cloudPlan);
+    expect(state.savedPlan?.targetCalories).toBe(1800);
+    expect(state.savedPlan).not.toBe(localPlan);
+  });
+
+  it('يوقف السحب إذا تغيّر الحساب أثناء تحميل الخطة من السحابة', async () => {
+    const { writers, state } = memoryPullWriters({ scopeAfterRead: 'user:patient-2' });
+    await expect(
+      pullCloudPlanToLocal('patient-1', () => true, writers),
+    ).rejects.toThrow('مساحة التخزين المحلية');
+    expect(state.reads).toBe(1);
+    expect(state.saves).toBe(0);
+    expect(state.savedPlan).toBeNull();
+  });
+
+  it('يعيد التحقق من الحساب بعد نافذة التأكيد قبل الاستبدال المحلي', async () => {
+    const localPlan = { ...fakePlan(), targetCalories: 1200 } as PlanConfig;
+    const { writers, state } = memoryPullWriters({ localPlan });
+    await expect(
+      pullCloudPlanToLocal('patient-1', () => {
+        state.scope = 'user:patient-2';
+        return true;
+      }, writers),
+    ).rejects.toThrow('مساحة التخزين المحلية');
+    expect(state.saves).toBe(0);
+    expect(state.savedPlan).toBe(localPlan);
+  });
+
+  it('لا يطلب تأكيدًا ولا يكتب عندما لا توجد خطة سحابية', async () => {
+    const { writers, state } = memoryPullWriters({ cloudPlan: null });
+    let asked = false;
+    const result = await pullCloudPlanToLocal('patient-1', () => {
+      asked = true;
+      return true;
+    }, writers);
+    expect(result.status).toBe('no-cloud-plan');
+    expect(asked).toBe(false);
+    expect(state.saves).toBe(0);
+  });
+
+  it('يعرض فشل التخزين ولا يدّعي نجاح السحب', async () => {
+    const { writers, state } = memoryPullWriters({ saveResult: false });
+    await expect(
+      pullCloudPlanToLocal('patient-1', () => true, writers),
+    ).rejects.toThrow('تعذّر حفظ الخطة');
+    expect(state.saves).toBe(1);
+    expect(state.savedPlan).toBeNull();
+  });
+
+  it('يرفض معرّف مريض فارغًا دون أي قراءة أو كتابة', async () => {
+    const { writers, state } = memoryPullWriters();
+    await expect(pullCloudPlanToLocal(' ', () => true, writers)).rejects.toThrow('حساب المريض');
+    expect(state.reads).toBe(0);
+    expect(state.saves).toBe(0);
+  });
 });

@@ -1,16 +1,25 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import type { ConditionItem } from '../types';
+import type { ConditionItem, PlanConfig } from '../types';
 import type { IntakeAnswers } from '../utils/intake';
+import { DEFAULT_PLAN } from '../utils/storage';
 import { SUPPORTED_CONDITIONS } from '../utils/medicalConditions';
 import {
+  buildPatientIntakeDraftPlan,
   splitPatientIntakeList,
   validatePatientIntakeAnswers,
 } from './patientIntakeUtils';
+import { getPatientPlanSnapshot } from './database';
+import { PatientPlanEditor } from './PatientPlanEditor';
 import {
+  approvePatientIntakeDraft,
+  createPatientIntakeDraft,
   listPatientIntakes,
+  listPatientIntakeDrafts,
   markPatientIntakeReviewed,
   submitPatientIntake,
+  updatePatientIntakeDraft,
+  type PatientIntakeDraftRecord,
   type PatientIntakeRecord,
 } from './patientIntakes';
 
@@ -232,26 +241,56 @@ export function PatientIntakeSection({
   clinicId,
   clientName,
   isStaffView,
+  editorUid,
+  onPlanApproved,
 }: {
   patientUid: string;
   clinicId: string;
   clientName: string;
   isStaffView: boolean;
+  editorUid: string;
+  onPlanApproved: (plan: PlanConfig, approvedAt: string, approvedBy: string) => void;
 }) {
   const [records, setRecords] = useState<PatientIntakeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, PatientIntakeDraftRecord>>({});
+  const [draftBusy, setDraftBusy] = useState<string | null>(null);
+  const [draftFeedback, setDraftFeedback] = useState<Record<string, string>>({});
+  const [draftErrors, setDraftErrors] = useState<Record<string, string>>({});
+  const [draftLoadError, setDraftLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
+    setRecords([]);
+    setDrafts({});
+    setDraftFeedback({});
+    setDraftErrors({});
+    setDraftLoadError(null);
+    setLoading(true);
+
     void listPatientIntakes(patientUid)
-      .then((rows) => {
+      .then(async (rows) => {
         if (!active) return;
         setRecords(rows);
         setError(null);
         if (!isStaffView && rows.length === 0) setShowForm(true);
+
+        // Patient sessions never query the staff-only draft table.
+        if (isStaffView && rows.length > 0) {
+          try {
+            const savedDrafts = await listPatientIntakeDrafts(rows.map((row) => row.id));
+            if (!active) return;
+            setDrafts(Object.fromEntries(savedDrafts.map((draft) => [draft.intake_id, draft])));
+          } catch (caught) {
+            if (!active) return;
+            setDraftLoadError(caught instanceof Error
+              ? caught.message
+              : 'تعذّر تحميل مسودات الخطط السابقة.');
+          }
+        }
       })
       .catch((caught: unknown) => {
         if (!active) return;
@@ -281,6 +320,89 @@ export function PatientIntakeSection({
       setError(caught instanceof Error ? caught.message : 'تعذّرت مراجعة الاستبيان.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const createDraft = async (record: PatientIntakeRecord) => {
+    if (!isStaffView || draftBusy) return;
+    setDraftBusy(record.id);
+    setDraftFeedback((current) => ({ ...current, [record.id]: '' }));
+    setDraftErrors((current) => ({ ...current, [record.id]: '' }));
+    try {
+      const validationError = validatePatientIntakeAnswers(record.answers);
+      if (validationError) throw new Error(validationError);
+
+      const activeSnapshot = await getPatientPlanSnapshot(patientUid);
+      const draftPlan = buildPatientIntakeDraftPlan(
+        record.answers,
+        activeSnapshot.plan ?? DEFAULT_PLAN,
+      );
+      const result = await createPatientIntakeDraft({
+        intakeId: record.id,
+        draftPlan,
+        basePlanUpdatedAt: activeSnapshot.updatedAt,
+      });
+
+      setDrafts((current) => ({ ...current, [record.id]: result.draft }));
+      setDraftFeedback((current) => ({
+        ...current,
+        [record.id]: result.created
+          ? 'تم إنشاء مسودة منفصلة من إجابات الاستبيان. الخطة النشطة لم تتغير، والمسودة لا تظهر للمريض.'
+          : 'توجد مسودة محفوظة لهذا الاستبيان بالفعل؛ لم يتم استبدال محتواها.',
+      }));
+    } catch (caught) {
+      setDraftErrors((current) => ({
+        ...current,
+        [record.id]: caught instanceof Error
+          ? caught.message
+          : 'تعذّر إنشاء مسودة الخطة.',
+      }));
+    } finally {
+      setDraftBusy(null);
+    }
+  };
+
+  const approveDraft = async (record: PatientIntakeRecord) => {
+    const savedDraft = drafts[record.id];
+    if (!isStaffView || !savedDraft || savedDraft.status !== 'draft' || draftBusy) return;
+    if (record.status !== 'reviewed') {
+      setDraftErrors((current) => ({ ...current, [record.id]: 'سجّل مراجعة الاستبيان أولًا قبل اعتماد الخطة.' }));
+      return;
+    }
+    const confirmed = window.confirm(
+      'أنت على وشك اعتماد هذه المسودة ونشرها في الخطة السارية للمريض. سيبدأ المريض برؤية البيانات التي جعلتَها متاحة له داخل المسودة. هل تؤكد اعتماد الطبيب ونشر الخطة؟',
+    );
+    if (!confirmed) return;
+
+    setDraftBusy(record.id);
+    setDraftErrors((current) => ({ ...current, [record.id]: '' }));
+    setDraftFeedback((current) => ({ ...current, [record.id]: '' }));
+    try {
+      const approval = await approvePatientIntakeDraft(record.id, patientUid);
+      setDrafts((current) => ({
+        ...current,
+        [record.id]: {
+          ...savedDraft,
+          draft_plan: approval.plan,
+          status: 'approved',
+          approved_at: approval.approvedAt,
+          approved_by: approval.approvedBy,
+          updated_at: approval.approvedAt,
+          updated_by: approval.approvedBy,
+        },
+      }));
+      onPlanApproved(approval.plan, approval.approvedAt, approval.approvedBy);
+      setDraftFeedback((current) => ({
+        ...current,
+        [record.id]: 'تم اعتماد الخطة ونشرها في ملف المريض. المسودة أصبحت مقفلة.',
+      }));
+    } catch (caught) {
+      setDraftErrors((current) => ({
+        ...current,
+        [record.id]: caught instanceof Error ? caught.message : 'تعذّر اعتماد مسودة الخطة.',
+      }));
+    } finally {
+      setDraftBusy(null);
     }
   };
 
@@ -331,6 +453,11 @@ export function PatientIntakeSection({
               لم يرسل المريض استبيانًا بعد.
             </div>
           )}
+          {isStaffView && draftLoadError && (
+            <p role="alert" className="mt-3 text-xs font-bold text-rose-600 dark:text-rose-300">
+              {draftLoadError}
+            </p>
+          )}
 
           {isStaffView && records.map((record) => (
             <article key={record.id} className="mt-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
@@ -339,6 +466,88 @@ export function PatientIntakeSection({
                 <IntakeStatus record={record} />
               </div>
               <IntakeAnswersSummary answers={record.answers} />
+
+              <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/50 p-3 dark:border-indigo-900 dark:bg-indigo-950/20">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">
+                    مسودة الخطة السحابية
+                  </h3>
+                  {drafts[record.id] && (
+                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                      {drafts[record.id].status === 'approved' ? 'معتمدة' : 'مسودة غير معتمدة'}
+                    </span>
+                  )}
+                </div>
+                {drafts[record.id] ? (
+                  <>
+                    <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                      آخر تحديث للمسودة: {formatSubmittedAt(drafts[record.id].updated_at)}.
+                      {drafts[record.id].status === 'approved'
+                        ? ' تم نشر النسخة المعتمدة في الخطة السارية.'
+                        : ' الخطة النشطة لم تتغير، وهذه المسودة لا تظهر للمريض.'}
+                    </p>
+                    {drafts[record.id].status === 'draft' && (
+                      <>
+                        <PatientPlanEditor
+                          key={record.id}
+                          patientUid={patientUid}
+                          editorUid={editorUid}
+                          patientName={clientName}
+                          initialPlan={drafts[record.id].draft_plan}
+                          editorTitle="مراجعة وتحرير مسودة الخطة"
+                          editorDescription="هذه مسودة غير معتمدة؛ حفظها لا يغيّر الخطة السارية أو ما يراه المريض."
+                          saveButtonLabel="حفظ المسودة فقط"
+                          presetStorageNamespace={`clinic:${clinicId}`}
+                          saveOverride={async (nextPlan) => {
+                            const saved = await updatePatientIntakeDraft({ intakeId: record.id, draftPlan: nextPlan });
+                            setDrafts((current) => ({ ...current, [record.id]: saved }));
+                          }}
+                          onSaved={() => undefined}
+                        />
+                        {record.status === 'reviewed' ? (
+                          <button
+                            type="button"
+                            onClick={() => void approveDraft(record)}
+                            disabled={draftBusy !== null}
+                            className="mt-3 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {draftBusy === record.id ? 'جارٍ اعتماد الخطة…' : 'موافقة الطبيب ونشر الخطة للمريض'}
+                          </button>
+                        ) : (
+                          <p className="mt-3 rounded-lg bg-amber-50 p-2 text-xs font-bold text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                            سجّل «تمت المراجعة» للاستبيان قبل إتاحة اعتماد الخطة.
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                      تحويل الإجابات إلى مسودة قابلة لمراجعة الطبيب. لن تُعدّل الخطة الحالية ولن يراها المريض.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void createDraft(record)}
+                      disabled={draftBusy !== null}
+                      className="mt-3 rounded-lg bg-indigo-700 px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {draftBusy === record.id ? 'جارٍ إنشاء المسودة…' : 'تحويل إجابات الاستبيان إلى مسودة'}
+                    </button>
+                  </>
+                )}
+                {draftFeedback[record.id] && (
+                  <p role="status" className="mt-2 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                    {draftFeedback[record.id]}
+                  </p>
+                )}
+                {draftErrors[record.id] && (
+                  <p role="alert" className="mt-2 text-xs font-bold text-rose-700 dark:text-rose-300">
+                    {draftErrors[record.id]}
+                  </p>
+                )}
+              </div>
+
               {record.status === 'submitted' && (
                 <button
                   type="button"
