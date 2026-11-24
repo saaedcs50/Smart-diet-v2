@@ -495,6 +495,7 @@ export function PatientIntakeSection({
                           patientName={clientName}
                           initialPlan={drafts[record.id].draft_plan}
                           editorTitle="مراجعة وتحرير مسودة الخطة"
+                          editorDescription="هذه مسودة غير معتمدة؛ حفظها لا يغيّر الخطة السارية أو ما يراه المريض."
                           saveButtonLabel="حفظ المسودة فقط"
                           saveOverride={async (nextPlan) => {
                             const saved = await updatePatientIntakeDraft({ intakeId: record.id, draftPlan: nextPlan });
