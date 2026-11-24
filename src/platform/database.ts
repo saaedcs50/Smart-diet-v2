@@ -310,6 +310,22 @@ export async function getPatientPlan(
   return planFromDatabase(patient.plan);
 }
 
+export interface PatientPlanSnapshot {
+  plan: PlanConfig | null;
+  updatedAt: string | null;
+}
+
+export async function getPatientPlanSnapshot(
+  uid: string,
+): Promise<PatientPlanSnapshot> {
+  const patient = await getPatient(uid);
+  if (!patient?.plan) return { plan: null, updatedAt: null };
+  return {
+    plan: planFromDatabase(patient.plan),
+    updatedAt: patient.planUpdatedAt ?? null,
+  };
+}
+
 // إنشاء/تأكيد سجل المريض (clinicId + الاسم المعروض) بلا خطة بعد.
 export async function ensurePatientDoc(
   uid: string,
