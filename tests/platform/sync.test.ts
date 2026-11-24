@@ -283,7 +283,7 @@ describe('pullCloudPlanToLocal', () => {
     const { writers, state } = memoryPullWriters({ scopeAfterRead: 'user:patient-2' });
     await expect(
       pullCloudPlanToLocal('patient-1', () => true, writers),
-    ).rejects.toThrow('تغيّر الحساب أو مساحة التخزين أثناء العملية');
+    ).rejects.toThrow('مساحة التخزين المحلية');
     expect(state.reads).toBe(1);
     expect(state.saves).toBe(0);
     expect(state.savedPlan).toBeNull();
@@ -297,7 +297,7 @@ describe('pullCloudPlanToLocal', () => {
         state.scope = 'user:patient-2';
         return true;
       }, writers),
-    ).rejects.toThrow('تغيّر الحساب أو مساحة التخزين أثناء العملية');
+    ).rejects.toThrow('مساحة التخزين المحلية');
     expect(state.saves).toBe(0);
     expect(state.savedPlan).toBe(localPlan);
   });
