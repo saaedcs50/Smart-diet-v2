@@ -179,7 +179,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
 
  const categories = [
  { id: 'all', label: 'كافة القوالب' },
- { id: 'medical', label: ' علاجي وتكيسات' },
+ { id: 'medical', label: 'السيناريوهات الصحية' },
  { id: 'weight_loss', label: ' نزول سريع' },
  { id: 'fitness', label: ' تنشيف ولياقة' },
  { id: 'keto', label: ' كيتو علاجي' },
@@ -206,7 +206,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  </span>
  </h3>
  <p className="text-xs text-slate-500 dark:text-slate-400">
- اختاري القالب المناسب لحالة المتدرب لتطبيقه وتعديله فوراً في ثوانٍ
+ قوالب استرشادية للحالات الصحية والرياضيين. صدّري القالب كملف JSON لمشاركته مع عيادة أخرى؛ تطبيقه هنا يغيّر المسودة فقط حتى تحفظيها أو تعتمديها.
  </p>
  </div>
  </div>
