@@ -123,6 +123,22 @@ export function buildPatientIntakeDraftPlan(
   basePlan: PlanConfig,
 ): PlanConfig {
   const draft = buildIntakeDraftPlan(answers, basePlan);
+  draft.adminPin = '';
+
+  if (answers.goal?.trim()) draft.goal = answers.goal.trim();
+  if (answers.notes?.trim()) draft.notes = answers.notes.trim();
+
+  const intakeContext = [
+    answers.sleepHours != null ? `النوم المذكور في الاستبيان: ${answers.sleepHours} ساعة يوميًا` : '',
+    answers.activityLevel ? `مستوى النشاط المذكور: ${({
+      low: 'منخفض',
+      moderate: 'متوسط',
+      high: 'مرتفع',
+    } as const)[answers.activityLevel]}` : '',
+  ].filter(Boolean).join(' — ');
+  if (intakeContext) {
+    draft.notes = [draft.notes?.trim(), intakeContext].filter(Boolean).join(' | ');
+  }
 
   if (draft.medicalConditions) {
     draft.medicalConditions = { ...draft.medicalConditions, showToClient: false };
