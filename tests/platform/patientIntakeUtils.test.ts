@@ -70,8 +70,8 @@ describe('patient intake draft generation', () => {
     const answersWithConditions: IntakeAnswers = {
       ...valid,
       conditions: [
-        { id: 't2dm', label: 'سكري نوع 2' },
-        { id: 'pcos', label: 'تكيس المبايض' },
+        { id: 't2dm', label: 'سكري نوع 2 (T2DM)' },
+        { id: 'pcos', label: 'تكيس مبايض (PCOS)' },
       ],
       medicationsText: 'دواء تجريبي - 500 مجم',
       fastingType: 'intermittent',
