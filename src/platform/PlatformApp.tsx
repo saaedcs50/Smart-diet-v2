@@ -48,6 +48,7 @@ import {
   SYNC_CONSENT_VERSION,
   loadSyncStatus,
   migrateLocalToCloud,
+  pullCloudPlanToLocal,
   readLocalSnapshot,
   saveSyncStatus,
   summarizeSnapshot,
@@ -936,6 +937,10 @@ function SyncSection({ patientUid }: { patientUid: string }) {
       return EMPTY_LOCAL_SYNC_SUMMARY;
     }
   });
+  const [pullBusy, setPullBusy] = useState(false);
+  const [pullMessage, setPullMessage] = useState<string | null>(null);
+  const [pullError, setPullError] = useState<string | null>(null);
+  const [pullReloadAvailable, setPullReloadAvailable] = useState(false);
 
   useEffect(() => {
     const nextBinding = getLocalDataBindingStatus(patientUid);
@@ -1103,11 +1108,74 @@ function SyncSection({ patientUid }: { patientUid: string }) {
     }
   };
 
+  const pullClinicianPlan = async () => {
+    setPullBusy(true);
+    setPullMessage(null);
+    setPullError(null);
+    setPullReloadAvailable(false);
+    try {
+      const result = await pullCloudPlanToLocal(
+        patientUid,
+        (cloudPlan) => window.confirm(
+          `تم العثور على خطة الطبيب «${cloudPlan.clientName || 'خطة المريض'}». سيتم استبدال الخطة المحلية لهذا الحساب على هذا الجهاز فقط. لن تتغير سجلات الأيام أو الصور أو بقية بيانات الحساب. هل تريد المتابعة؟`,
+        ),
+      );
+      if (result.status === 'no-cloud-plan') {
+        setPullMessage('لا توجد خطة سحابية محفوظة من الطبيب بعد.');
+      } else if (result.status === 'cancelled') {
+        setPullMessage('أُلغي السحب؛ بقيت الخطة المحلية دون تغيير.');
+      } else {
+        setSummary(summarizeSnapshot(readLocalSnapshot()));
+        setPullMessage('تم حفظ نسخة الطبيب في مساحة هذا الحساب على هذا الجهاز. افتح التطبيق الرئيسي لإظهار الخطة الجديدة.');
+        setPullReloadAvailable(true);
+      }
+    } catch (caught) {
+      setPullError(errorText(caught));
+    } finally {
+      setPullBusy(false);
+    }
+  };
+
   return (
     <Card>
       <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
         مزامنة بيانات جهازي
       </h3>
+      <section className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50/60 p-3 dark:border-indigo-900 dark:bg-indigo-950/20">
+        <h4 className="text-sm font-black text-slate-900 dark:text-slate-100">
+          سحب خطة الطبيب إلى التطبيق
+        </h4>
+        <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
+          يجلب أحدث خطة سحابية ويضعها في مساحة حسابك على هذا الجهاز فقط. لن تتغير الخطة السحابية أو سجلات الأيام أو الصور. سيطلب التطبيق تأكيدك قبل استبدال الخطة المحلية.
+        </p>
+        <button
+          type="button"
+          className={ghostButtonClass + ' mt-3'}
+          onClick={() => void pullClinicianPlan()}
+          disabled={pullBusy}
+        >
+          {pullBusy ? 'جارٍ سحب خطة الطبيب…' : 'سحب أحدث خطة من الطبيب'}
+        </button>
+        {pullMessage && (
+          <p role="status" className="mt-2 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+            {pullMessage}
+          </p>
+        )}
+        {pullError && (
+          <p role="alert" className="mt-2 text-xs font-bold text-red-700 dark:text-red-300">
+            {pullError}
+          </p>
+        )}
+        {pullReloadAvailable && (
+          <button
+            type="button"
+            className={buttonClass + ' mt-3'}
+            onClick={() => window.location.assign('/')}
+          >
+            فتح التطبيق بالخطة الجديدة
+          </button>
+        )}
+      </section>
       {bindingStatus === 'mismatch' ? (
         <p className="mt-1 text-xs font-bold text-red-700">
           بيانات هذا الجهاز مرتبطة بحساب آخر. تم إخفاء ملخصها ومنع رفعها إلى الحساب الحالي لحماية الخصوصية.
