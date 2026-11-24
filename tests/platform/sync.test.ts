@@ -191,6 +191,7 @@ describe('sync status store', () => {
 
 function memoryPullWriters(options?: {
   cloudPlan?: PlanConfig | null;
+  localPlan?: PlanConfig | null;
   scope?: string;
   saveResult?: boolean;
 }): { writers: PlanPullWriters; state: {
@@ -203,7 +204,7 @@ function memoryPullWriters(options?: {
     reads: 0,
     saves: 0,
     requestedUid: null as string | null,
-    savedPlan: null as PlanConfig | null,
+    savedPlan: options?.localPlan ?? null,
   };
   const cloudPlan = options && Object.prototype.hasOwnProperty.call(options, 'cloudPlan')
     ? options.cloudPlan ?? null
@@ -251,12 +252,27 @@ describe('pullCloudPlanToLocal', () => {
   });
 
   it('لا يستبدل الخطة المحلية عند رفض تأكيد المريض', async () => {
-    const { writers, state } = memoryPullWriters();
+    const localPlan = { ...fakePlan(), targetCalories: 1200 } as PlanConfig;
+    const { writers, state } = memoryPullWriters({ localPlan });
     const result = await pullCloudPlanToLocal('patient-1', () => false, writers);
     expect(result.status).toBe('cancelled');
     expect(state.reads).toBe(1);
     expect(state.saves).toBe(0);
-    expect(state.savedPlan).toBeNull();
+    expect(state.savedPlan).toBe(localPlan);
+  });
+
+  it('عند تعارض نسخة الجهاز مع خطة الطبيب، تصبح نسخة الطبيب المرجعية بعد التأكيد', async () => {
+    const localPlan = { ...fakePlan(), targetCalories: 1200 } as PlanConfig;
+    const cloudPlan = { ...fakePlan(), targetCalories: 1800 } as PlanConfig;
+    const { writers, state } = memoryPullWriters({ localPlan, cloudPlan });
+
+    const result = await pullCloudPlanToLocal('patient-1', () => true, writers);
+
+    expect(result.status).toBe('pulled');
+    expect(state.saves).toBe(1);
+    expect(state.savedPlan).toBe(cloudPlan);
+    expect(state.savedPlan?.targetCalories).toBe(1800);
+    expect(state.savedPlan).not.toBe(localPlan);
   });
 
   it('لا يطلب تأكيدًا ولا يكتب عندما لا توجد خطة سحابية', async () => {
