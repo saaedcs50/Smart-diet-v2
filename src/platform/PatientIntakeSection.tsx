@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import type { ConditionItem } from '../types';
+import type { ConditionItem, PlanConfig } from '../types';
 import type { IntakeAnswers } from '../utils/intake';
 import { DEFAULT_PLAN } from '../utils/storage';
 import { SUPPORTED_CONDITIONS } from '../utils/medicalConditions';
@@ -249,7 +249,7 @@ export function PatientIntakeSection({
   clientName: string;
   isStaffView: boolean;
   editorUid: string;
-  onPlanApproved: (plan: import('../types').PlanConfig) => void;
+  onPlanApproved: (plan: PlanConfig, approvedAt: string, approvedBy: string) => void;
 }) {
   const [records, setRecords] = useState<PatientIntakeRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -378,7 +378,7 @@ export function PatientIntakeSection({
     setDraftErrors((current) => ({ ...current, [record.id]: '' }));
     setDraftFeedback((current) => ({ ...current, [record.id]: '' }));
     try {
-      const approval = await approvePatientIntakeDraft(record.id);
+      const approval = await approvePatientIntakeDraft(record.id, patientUid);
       setDrafts((current) => ({
         ...current,
         [record.id]: {
@@ -391,7 +391,7 @@ export function PatientIntakeSection({
           updated_by: approval.approvedBy,
         },
       }));
-      onPlanApproved(approval.plan);
+      onPlanApproved(approval.plan, approval.approvedAt, approval.approvedBy);
       setDraftFeedback((current) => ({
         ...current,
         [record.id]: 'تم اعتماد الخطة ونشرها في ملف المريض. المسودة أصبحت مقفلة.',
