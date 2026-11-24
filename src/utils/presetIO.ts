@@ -1,4 +1,5 @@
 import type { PlanPreset } from './planPresets';
+import { SUPPORTED_CONDITIONS } from './medicalConditions';
 
 // ============================================================================
 // Batch 3.1: استيراد/تصدير قوالب الخطط كـ JSON
@@ -33,6 +34,68 @@ function isFiniteNumber(v: unknown): v is number {
 
 function fail(error: string): PresetValidationResult {
   return { ok: false, error };
+}
+
+const REUSABLE_PRESET_TOP_LEVEL_FIELDS = new Set([
+  'id', 'name', 'category', 'badge', 'icon', 'tagColor', 'summary', 'description',
+  'targetCalories', 'targetProtein', 'targetCarbs', 'targetFats', 'dailyWaterGoalMl',
+  'fastingHours', 'mealsCount', 'supplementsCount', 'isCustom', 'createdAt', 'scenario',
+  'planData',
+]);
+
+const REUSABLE_PLAN_DATA_FIELDS = new Set([
+  'targetCalories', 'targetProtein', 'targetCarbs', 'targetFats', 'dailyWaterGoalMl',
+  'enableFastingTimer', 'fastingTargetHours', 'enableMacrosTracker', 'freezeDaysPerMonth',
+  'scoreWeights', 'meals', 'checklist', 'supplements', 'tips', 'visibleSections',
+  'symptomsList', 'medicalConditions', 'fastingPlan',
+]);
+
+/**
+ * Remove patient-bound clinical data from a reusable/importable template.
+ * Diagnosis labels are replaced with canonical catalog labels; allergies,
+ * clinical notes, medicines, labs, cycle history, patient identity and PINs
+ * never cross clinic boundaries through a preset file.
+ */
+function sanitizeReusablePreset(preset: PlanPreset): PlanPreset {
+  const safe = JSON.parse(JSON.stringify(preset)) as PlanPreset & Record<string, unknown>;
+  for (const key of Object.keys(safe)) {
+    if (!REUSABLE_PRESET_TOP_LEVEL_FIELDS.has(key)) delete safe[key];
+  }
+
+  const planData = safe.planData as unknown as Record<string, unknown>;
+  for (const key of Object.keys(planData)) {
+    if (!REUSABLE_PLAN_DATA_FIELDS.has(key)) delete planData[key];
+  }
+
+  if (isRecord(planData.medicalConditions)) {
+    const sourceConditions = Array.isArray(planData.medicalConditions.conditions)
+      ? planData.medicalConditions.conditions
+      : [];
+    const canonicalConditions = sourceConditions.flatMap((condition) => {
+      if (!isRecord(condition) || typeof condition.id !== 'string') return [];
+      const canonical = SUPPORTED_CONDITIONS.find((item) => item.id === condition.id);
+      return canonical ? [{ id: canonical.id, label: canonical.label }] : [];
+    });
+    if (canonicalConditions.length > 0) {
+      planData.medicalConditions = {
+        conditions: canonicalConditions,
+        allergies: [],
+        showToClient: false,
+      };
+    } else {
+      delete planData.medicalConditions;
+    }
+  }
+
+  if (isRecord(planData.fastingPlan)) {
+    const fastingPlan = { ...planData.fastingPlan };
+    delete fastingPlan.notes;
+    delete fastingPlan.lastUpdatedAt;
+    delete fastingPlan.lastUpdatedBy;
+    planData.fastingPlan = fastingPlan;
+  }
+
+  return safe;
 }
 
 /** يتحقق من بنية قالب خطة كاملة. لا يرمي استثناءات أبدًا. */
@@ -205,7 +268,7 @@ export function validatePresetData(raw: unknown): PresetValidationResult {
   clone.planData.symptomsList = clone.planData.symptomsList || [];
   if (typeof clone.mealsCount !== 'number') clone.mealsCount = clone.planData.meals.length;
   if (typeof clone.supplementsCount !== 'number') clone.supplementsCount = clone.planData.supplements.length;
-  return { ok: true, preset: clone };
+  return { ok: true, preset: sanitizeReusablePreset(clone) };
 }
 
 export interface PresetExportEnvelope {
@@ -220,7 +283,7 @@ export function serializePreset(preset: PlanPreset): string {
     kind: 'smart-diet-preset',
     version: 1,
     exportedAt: new Date().toISOString(),
-    preset,
+    preset: sanitizeReusablePreset(preset),
   };
   return JSON.stringify(envelope, null, 2);
 }
