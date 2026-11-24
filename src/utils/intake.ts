@@ -34,7 +34,7 @@ export interface IntakeDraftRecord {
 
 const DIABETES_CONDITION_IDS = ['t2dm', 't1dm', 'insulin_resistance'];
 
-/** تحويل أسطر الأدوية النصية إلى بنود منظمة بجرعة صباحية افتراضية واحدة. */
+/** تحويل الأدوية المكتوبة إلى مسودة غير مكتملة؛ لا نفترض جرعة أو تكرارًا أو توقيتًا. */
 export function parseIntakeMedications(text: string): MedicationItem[] {
   return String(text || '')
     .split(/\n|؛|;/)
@@ -48,10 +48,10 @@ export function parseIntakeMedications(text: string): MedicationItem[] {
         id: `intake_med_${idx + 1}`,
         name,
         dose,
-        timesPerDay: 1,
-        timings: [{ id: `intake_med_${idx + 1}_morning`, slot: 'morning' as const, label: 'صباحًا' }],
+        timesPerDay: 0,
+        timings: [],
         active: true,
-        coachNotes: 'من استبيان العميل — راجِع الجرعة والمواعيد قبل الاعتماد',
+        coachNotes: 'من استبيان المريض — لم تُذكر مرات التناول أو مواعيده؛ أدخلها بعد مراجعة الوصفة',
       };
     })
     .filter((m) => m.name.length > 0);
