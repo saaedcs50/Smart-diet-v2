@@ -183,6 +183,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  { id: 'weight_loss', label: ' نزول سريع' },
  { id: 'fitness', label: ' تنشيف ولياقة' },
  { id: 'keto', label: ' كيتو علاجي' },
+ { id: 'fasting', label: ' صيام ورمضان' },
  { id: 'maintenance', label: ' تثبيت وتوازن' },
  { id: 'custom', label: ' قوالبي الخاصة' },
  ];
