@@ -241,12 +241,21 @@ export async function approvePatientIntakeDraft(
     throw new Error(`تعذّر اعتماد الخطة: ${message || 'رفضت قاعدة البيانات الطلب.'}`);
   }
 
-  const payload = data as { plan?: unknown; approvedAt?: unknown; approvedBy?: unknown } | null;
-  const plan = planFromDatabase(payload?.plan);
-  if (!plan || typeof payload?.approvedAt !== 'string' || typeof payload.approvedBy !== 'string') {
+  const payload = data as {
+    plan?: unknown;
+    draft_plan?: unknown;
+    approvedAt?: unknown;
+    approved_at?: unknown;
+    approvedBy?: unknown;
+    approved_by?: unknown;
+  } | null;
+  const plan = planFromDatabase(payload?.draft_plan ?? payload?.plan);
+  const approvedAt = payload?.approved_at ?? payload?.approvedAt;
+  const approvedBy = payload?.approved_by ?? payload?.approvedBy;
+  if (!plan || typeof approvedAt !== 'string' || typeof approvedBy !== 'string') {
     throw new Error('لم تُرجع قاعدة البيانات بيانات اعتماد صالحة؛ لم يتم تحديث واجهة المريض.');
   }
-  return { plan, approvedAt: payload.approvedAt, approvedBy: payload.approvedBy };
+  return { plan, approvedAt, approvedBy };
 }
 
 export async function savePatientIntakeDraft(input: {
