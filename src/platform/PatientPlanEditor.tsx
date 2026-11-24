@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
+import { PresetsLibraryModal } from '../components/PresetsLibraryModal';
 import type {
   MedicationItem,
   MedicationSlot,
@@ -128,6 +129,7 @@ export function PatientPlanEditor({
   editorTitle = 'محرر الخطة الغذائية السحابية',
   editorDescription = 'التعديلات تُحفظ في ملف هذا المريض داخل عيادتك. لا تُحسب الأهداف أو توصف الأدوية تلقائيًا.',
   saveButtonLabel = 'حفظ الخطة السحابية',
+  presetStorageNamespace,
 }: {
   patientUid: string;
   editorUid: string;
@@ -138,6 +140,7 @@ export function PatientPlanEditor({
   editorTitle?: string;
   editorDescription?: string;
   saveButtonLabel?: string;
+  presetStorageNamespace?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<PlanConfig>(() =>
@@ -147,6 +150,7 @@ export function PatientPlanEditor({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showPresetLibrary, setShowPresetLibrary] = useState(false);
 
   const updateDraft = (patch: Partial<PlanConfig>) => {
     setDraft((current) => ({ ...current, ...patch }));
@@ -322,6 +326,19 @@ export function PatientPlanEditor({
 
       {editing && (
         <form onSubmit={(event) => void submit(event)} className="mt-4 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-white p-3 dark:border-indigo-900 dark:bg-slate-900">
+            <div>
+              <p className="text-xs font-black text-slate-800 dark:text-slate-100">قوالب الحالات والسيناريوهات</p>
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">تطبيق القالب يغيّر هذه المسودة فقط؛ لا ينشر الخطة ولا يحفظها تلقائيًا.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPresetLibrary(true)}
+              className={secondaryButtonClass}
+            >
+              فتح مكتبة القوالب واستيرادها
+            </button>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
               <span className={labelClass}>اسم المريض</span>
@@ -562,6 +579,23 @@ export function PatientPlanEditor({
           )}
           {saveError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-xs font-bold text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">{saveError}</p>}
         </form>
+      )}
+      {showPresetLibrary && editing && (
+        <PresetsLibraryModal
+          currentDraft={draft}
+          storageNamespace={presetStorageNamespace}
+          onApplyPreset={(nextDraft) => {
+            setDraft(nextDraft);
+            setValidationErrors([]);
+            setSaveError(null);
+          }}
+          onClose={() => setShowPresetLibrary(false)}
+          onNotify={(message) => {
+            setNotice(message.includes('تم تطبيق قالب')
+              ? 'تم تطبيق القالب على المسودة الحالية فقط. راجع بياناته ثم احفظ المسودة أو اطلب اعتمادها.'
+              : message);
+          }}
+        />
       )}
     </section>
   );
