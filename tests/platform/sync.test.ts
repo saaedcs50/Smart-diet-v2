@@ -193,18 +193,21 @@ function memoryPullWriters(options?: {
   cloudPlan?: PlanConfig | null;
   localPlan?: PlanConfig | null;
   scope?: string;
+  scopeAfterRead?: string;
   saveResult?: boolean;
 }): { writers: PlanPullWriters; state: {
   reads: number;
   saves: number;
   requestedUid: string | null;
   savedPlan: PlanConfig | null;
+  scope: string;
 } } {
   const state = {
     reads: 0,
     saves: 0,
     requestedUid: null as string | null,
     savedPlan: options?.localPlan ?? null,
+    scope: options?.scope ?? 'user:patient-1',
   };
   const cloudPlan = options && Object.prototype.hasOwnProperty.call(options, 'cloudPlan')
     ? options.cloudPlan ?? null
@@ -213,9 +216,10 @@ function memoryPullWriters(options?: {
     getPatientPlan: async (uid) => {
       state.reads += 1;
       state.requestedUid = uid;
+      if (options?.scopeAfterRead) state.scope = options.scopeAfterRead;
       return cloudPlan;
     },
-    getStorageScope: () => options?.scope ?? 'user:patient-1',
+    getStorageScope: () => state.scope,
     saveLocalPlan: (plan) => {
       state.saves += 1;
       if (options?.saveResult === false) return false;
@@ -273,6 +277,29 @@ describe('pullCloudPlanToLocal', () => {
     expect(state.savedPlan).toBe(cloudPlan);
     expect(state.savedPlan?.targetCalories).toBe(1800);
     expect(state.savedPlan).not.toBe(localPlan);
+  });
+
+  it('يوقف السحب إذا تغيّر الحساب أثناء تحميل الخطة من السحابة', async () => {
+    const { writers, state } = memoryPullWriters({ scopeAfterRead: 'user:patient-2' });
+    await expect(
+      pullCloudPlanToLocal('patient-1', () => true, writers),
+    ).rejects.toThrow('تغيّر الحساب أو مساحة التخزين أثناء العملية');
+    expect(state.reads).toBe(1);
+    expect(state.saves).toBe(0);
+    expect(state.savedPlan).toBeNull();
+  });
+
+  it('يعيد التحقق من الحساب بعد نافذة التأكيد قبل الاستبدال المحلي', async () => {
+    const localPlan = { ...fakePlan(), targetCalories: 1200 } as PlanConfig;
+    const { writers, state } = memoryPullWriters({ localPlan });
+    await expect(
+      pullCloudPlanToLocal('patient-1', () => {
+        state.scope = 'user:patient-2';
+        return true;
+      }, writers),
+    ).rejects.toThrow('تغيّر الحساب أو مساحة التخزين أثناء العملية');
+    expect(state.saves).toBe(0);
+    expect(state.savedPlan).toBe(localPlan);
   });
 
   it('لا يطلب تأكيدًا ولا يكتب عندما لا توجد خطة سحابية', async () => {
