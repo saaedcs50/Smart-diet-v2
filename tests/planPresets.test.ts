@@ -36,6 +36,8 @@ describe('clinic plan preset library', () => {
       'scenario_pcos',
       'scenario_ibs',
       'scenario_athletes',
+      'scenario_gout',
+      'scenario_pregnancy',
     ]));
   });
 
