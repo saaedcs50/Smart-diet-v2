@@ -35,11 +35,12 @@ import {
  createPresetFromPlan, 
  applyPresetToPlanDraft 
 } from '../utils/planPresets';
-import { serializePreset, parsePresetImport } from '../utils/presetIO';
+import { serializePreset, parsePresetImport, validatePresetData } from '../utils/presetIO';
 import { SCENARIO_DISCLAIMER, isScenarioPreset } from '../utils/caseScenarios';
 
 interface PresetsLibraryModalProps {
  currentDraft: PlanConfig;
+ storageNamespace?: string;
  onApplyPreset: (newDraft: PlanConfig) => void;
  onClose: () => void;
  onNotify: (msg: string) => void;
@@ -47,11 +48,12 @@ interface PresetsLibraryModalProps {
 
 export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  currentDraft,
+ storageNamespace,
  onApplyPreset,
  onClose,
  onNotify,
 }) => {
- const [presets, setPresets] = useState<PlanPreset[]>(getAllPresets);
+ const [presets, setPresets] = useState<PlanPreset[]>(() => getAllPresets(storageNamespace));
  const [selectedCategory, setSelectedCategory] = useState<string>('all');
  const [previewPreset, setPreviewPreset] = useState<PlanPreset | null>(null);
  const [showSaveCustomModal, setShowSaveCustomModal] = useState(false);
@@ -72,7 +74,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  document.body.appendChild(a);
  a.click();
  a.remove();
- URL.revokeObjectURL(url);
+ window.setTimeout(() => URL.revokeObjectURL(url), 1000);
  onNotify(`تم تصدير قالب «${preset.name}» كملف JSON `);
  };
 
@@ -81,6 +83,11 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  e.target.value = '';
  if (!file) return;
  setImportError(null);
+ if (file.size > 512 * 1024) {
+   setImportError('حجم ملف القالب يتجاوز 512 كيلوبايت.');
+   onNotify('تم رفض القالب المستورد: حجم الملف أكبر من الحد المسموح.');
+   return;
+ }
  try {
  const text = await file.text();
  const result = parsePresetImport(text);
@@ -91,14 +98,14 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  return;
  }
  const imported = result.preset;
- const collides = getAllPresets().some((p) => p.id === imported.id);
+ const collides = getAllPresets(storageNamespace).some((p) => p.id === imported.id);
  const toSave: PlanPreset = {
 ...imported,
- id: collides? `custom_import_${Date.now()}`: imported.id,
+ id: collides ? `custom_import_${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now()}` : imported.id,
  isCustom: true,
  createdAt: new Date().toISOString(),
  };
- if (saveCustomPreset(toSave)) {
+ if (saveCustomPreset(toSave, storageNamespace)) {
  reloadPresets();
  onNotify(`تم استيراد قالب «${toSave.name}» إلى مكتبتك الخاصة `);
  } else {
@@ -110,7 +117,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  };
 
  const reloadPresets = () => {
- setPresets(getAllPresets());
+ setPresets(getAllPresets(storageNamespace));
  };
 
  const filteredPresets = presets.filter((p) => {
@@ -129,7 +136,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  const handleDeleteCustom = (preset: PlanPreset, e: React.MouseEvent) => {
  e.stopPropagation();
  if (window.confirm(`هل أنتِ متأكدة من حذف قالب «${preset.name}» من مكتبتك الخاصة؟`)) {
- deleteCustomPreset(preset.id);
+ deleteCustomPreset(preset.id, storageNamespace);
  reloadPresets();
  if (previewPreset?.id === preset.id) {
  setPreviewPreset(null);
@@ -152,7 +159,13 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  customPresetSummary.trim()
  );
 
- const ok = saveCustomPreset(newPreset);
+ const validation = validatePresetData(newPreset);
+ if (!validation.ok) {
+   setImportError(validation.error);
+   onNotify(`تعذّر حفظ القالب: ${validation.error}`);
+   return;
+ }
+ const ok = saveCustomPreset(newPreset, storageNamespace);
  if (ok) {
  reloadPresets();
  setShowSaveCustomModal(false);
