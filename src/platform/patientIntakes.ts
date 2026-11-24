@@ -1,5 +1,6 @@
 import { getSupabase } from './supabase';
 import type { IntakeAnswers } from '../utils/intake';
+import type { PlanConfig } from '../types';
 import { validatePatientIntakeAnswers } from './patientIntakeUtils';
 
 export const PATIENT_INTAKE_CONSENT_VERSION = 'patient-intake-v1-2026-11-22';
@@ -17,6 +18,30 @@ export interface PatientIntakeRecord {
   reviewed_at: string | null;
   reviewed_by: string | null;
 }
+
+export interface PatientIntakeDraftRecord {
+  intake_id: string;
+  draft_plan: PlanConfig;
+  status: 'draft' | 'approved';
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+  approved_at: string | null;
+  approved_by: string | null;
+}
+
+const INTAKE_DRAFT_COLUMNS = [
+  'intake_id',
+  'draft_plan',
+  'status',
+  'created_by',
+  'updated_by',
+  'created_at',
+  'updated_at',
+  'approved_at',
+  'approved_by',
+].join(',');
 
 const INTAKE_COLUMNS = [
   'id',
@@ -43,6 +68,86 @@ export async function listPatientIntakes(patientUid: string): Promise<PatientInt
 
   if (error) throw new Error(`تعذّر تحميل الاستبيان: ${error.message}`);
   return (data ?? []) as unknown as PatientIntakeRecord[];
+}
+
+export async function listPatientIntakeDrafts(
+  intakeIds: string[],
+): Promise<PatientIntakeDraftRecord[]> {
+  const ids = [...new Set(intakeIds.map((id) => id.trim()).filter(Boolean))];
+  if (ids.length === 0) return [];
+
+  const { data, error } = await getSupabase()
+    .from('patient_intake_drafts')
+    .select(INTAKE_DRAFT_COLUMNS)
+    .in('intake_id', ids);
+
+  if (error) throw new Error(`تعذّر تحميل مسودات الاستبيان: ${error.message}`);
+  return (data ?? []) as unknown as PatientIntakeDraftRecord[];
+}
+
+/**
+ * Create at most one draft per intake. Repeated clicks return the existing
+ * draft instead of overwriting a clinician's work or an approved version.
+ */
+export async function createPatientIntakeDraft(input: {
+  intakeId: string;
+  draftPlan: PlanConfig;
+}): Promise<PatientIntakeDraftRecord> {
+  const intakeId = input.intakeId.trim();
+  if (!intakeId) throw new Error('معرّف الاستبيان غير صالح.');
+
+  let serialized: string;
+  try {
+    serialized = JSON.stringify(input.draftPlan);
+  } catch {
+    throw new Error('تعذّر تجهيز مسودة الخطة.');
+  }
+  if (!input.draftPlan || typeof input.draftPlan !== 'object' || serialized.length === 0) {
+    throw new Error('بيانات مسودة الخطة غير صالحة.');
+  }
+  if (new TextEncoder().encode(serialized).byteLength > 262144) {
+    throw new Error('حجم مسودة الخطة أكبر من الحد المسموح.');
+  }
+
+  const supabase = getSupabase();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError) throw new Error('تعذّر التحقق من حساب الطبيب.');
+  if (!user) throw new Error('يجب تسجيل الدخول بحساب العيادة أولًا.');
+
+  const { data: existing, error: existingError } = await supabase
+    .from('patient_intake_drafts')
+    .select(INTAKE_DRAFT_COLUMNS)
+    .eq('intake_id', intakeId)
+    .maybeSingle();
+
+  if (existingError) {
+    throw new Error(`تعذّر التحقق من وجود مسودة سابقة: ${existingError.message}`);
+  }
+  if (existing) return existing as unknown as PatientIntakeDraftRecord;
+
+  const { data, error } = await supabase
+    .from('patient_intake_drafts')
+    .insert({ intake_id: intakeId, draft_plan: input.draftPlan })
+    .select(INTAKE_DRAFT_COLUMNS)
+    .single();
+
+  if (!error && data) return data as unknown as PatientIntakeDraftRecord;
+
+  // An admin and the assigned coach may click at the same time. The unique
+  // intake_id constraint keeps one draft; return that winner without overwriting it.
+  if (error?.code === '23505') {
+    const { data: winner, error: winnerError } = await supabase
+      .from('patient_intake_drafts')
+      .select(INTAKE_DRAFT_COLUMNS)
+      .eq('intake_id', intakeId)
+      .maybeSingle();
+    if (!winnerError && winner) return winner as unknown as PatientIntakeDraftRecord;
+  }
+
+  throw new Error(`تعذّر إنشاء مسودة الخطة: ${error?.message ?? 'لم تُرجع قاعدة البيانات سجلًا محفوظًا.'}`);
 }
 
 export async function submitPatientIntake(input: {
