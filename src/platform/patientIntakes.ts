@@ -31,6 +31,11 @@ export interface PatientIntakeDraftRecord {
   approved_by: string | null;
 }
 
+export interface PatientIntakeDraftCreateResult {
+  draft: PatientIntakeDraftRecord;
+  created: boolean;
+}
+
 const INTAKE_DRAFT_COLUMNS = [
   'intake_id',
   'draft_plan',
@@ -92,7 +97,7 @@ export async function listPatientIntakeDrafts(
 export async function createPatientIntakeDraft(input: {
   intakeId: string;
   draftPlan: PlanConfig;
-}): Promise<PatientIntakeDraftRecord> {
+}): Promise<PatientIntakeDraftCreateResult> {
   const intakeId = input.intakeId.trim();
   if (!intakeId) throw new Error('معرّف الاستبيان غير صالح.');
 
@@ -126,7 +131,7 @@ export async function createPatientIntakeDraft(input: {
   if (existingError) {
     throw new Error(`تعذّر التحقق من وجود مسودة سابقة: ${existingError.message}`);
   }
-  if (existing) return existing as unknown as PatientIntakeDraftRecord;
+  if (existing) return { draft: existing as unknown as PatientIntakeDraftRecord, created: false };
 
   const { data, error } = await supabase
     .from('patient_intake_drafts')
@@ -134,7 +139,7 @@ export async function createPatientIntakeDraft(input: {
     .select(INTAKE_DRAFT_COLUMNS)
     .single();
 
-  if (!error && data) return data as unknown as PatientIntakeDraftRecord;
+  if (!error && data) return { draft: data as unknown as PatientIntakeDraftRecord, created: true };
 
   // An admin and the assigned coach may click at the same time. The unique
   // intake_id constraint keeps one draft; return that winner without overwriting it.
@@ -144,7 +149,7 @@ export async function createPatientIntakeDraft(input: {
       .select(INTAKE_DRAFT_COLUMNS)
       .eq('intake_id', intakeId)
       .maybeSingle();
-    if (!winnerError && winner) return winner as unknown as PatientIntakeDraftRecord;
+    if (!winnerError && winner) return { draft: winner as unknown as PatientIntakeDraftRecord, created: false };
   }
 
   throw new Error(`تعذّر إنشاء مسودة الخطة: ${error?.message ?? 'لم تُرجع قاعدة البيانات سجلًا محفوظًا.'}`);
