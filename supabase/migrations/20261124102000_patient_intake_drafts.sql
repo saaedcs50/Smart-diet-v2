@@ -30,7 +30,9 @@ CREATE TABLE IF NOT EXISTS public.patient_intake_drafts (
 ALTER TABLE public.patient_intake_drafts ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON TABLE public.patient_intake_drafts FROM PUBLIC, anon, authenticated;
-GRANT SELECT, INSERT ON TABLE public.patient_intake_drafts TO authenticated;
+GRANT SELECT ON TABLE public.patient_intake_drafts TO authenticated;
+GRANT INSERT (intake_id, draft_plan)
+  ON TABLE public.patient_intake_drafts TO authenticated;
 -- Until the explicit clinician-approval action is implemented, clients may
 -- change only draft content and its audit fields. They cannot approve/delete.
 GRANT UPDATE (draft_plan, updated_at, updated_by)
