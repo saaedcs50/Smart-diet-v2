@@ -101,7 +101,7 @@ export function validatePatientIntakeAnswers(answers: IntakeAnswers): string | n
   }
 
   if (!(
-    numberChecks.some(({ key }) => typeof raw[key] === 'number') ||
+    ['heightCm', 'startWeight', 'targetWeight', 'targetWaist'].some((key) => typeof raw[key] === 'number') ||
     conditions.length > 0 ||
     allergies.length > 0 ||
     medicationsText.trim() ||
