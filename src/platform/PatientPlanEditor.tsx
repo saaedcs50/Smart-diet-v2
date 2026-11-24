@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import type {
   MedicationItem,
   MedicationSlot,
@@ -47,7 +47,7 @@ function parseOptionalNumber(value: string): number | null {
 }
 
 function parseList(value: string): string[] {
-  return [...new Set(value.split(/[\\n,،;؛]/).map((entry) => entry.trim()).filter(Boolean))].slice(0, 20);
+  return [...new Set(value.split(/[\n,،;؛]/).map((entry) => entry.trim()).filter(Boolean))].slice(0, 20);
 }
 
 function NumberField({
@@ -59,6 +59,7 @@ function NumberField({
   min,
   max,
   required = false,
+  step = 0.1,
 }: {
   label: string;
   value: number | null | undefined;
@@ -68,6 +69,7 @@ function NumberField({
   min?: number;
   max?: number;
   required?: boolean;
+  step?: number;
 }) {
   return (
     <label className="block">
@@ -78,7 +80,7 @@ function NumberField({
         inputMode="decimal"
         min={min}
         max={max}
-        step="0.1"
+        step={step}
         required={required}
         value={value ?? ''}
         placeholder={placeholder}
@@ -137,14 +139,6 @@ export function PatientPlanEditor({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setDraft(initialPlan ? clonePatientPlan(initialPlan) : createEmptyPatientPlan(patientName));
-    setValidationErrors([]);
-    setSaveError(null);
-    setNotice(null);
-    setEditing(false);
-  }, [patientUid, patientName, initialPlan]);
 
   const updateDraft = (patch: Partial<PlanConfig>) => {
     setDraft((current) => ({ ...current, ...patch }));
@@ -365,6 +359,7 @@ export function PatientPlanEditor({
               min={250}
               max={10000}
               required
+              step={1}
               placeholder="مثال: 2000"
             />
           </div>
