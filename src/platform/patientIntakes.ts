@@ -303,9 +303,11 @@ export async function savePatientIntakeDraft(input: {
 
 export async function approvePatientIntakeDraft(
   intakeId: string,
+  expectedPatientUid?: string,
 ): Promise<PatientIntakeDraftRecord> {
   const id = intakeId.trim();
   if (!id) throw new Error('معرّف الاستبيان غير صالح.');
+  const expectedUid = expectedPatientUid?.trim();
 
   const supabase = getSupabase();
   const { data, error } = await supabase.rpc('approve_patient_intake_draft', {
@@ -318,8 +320,13 @@ export async function approvePatientIntakeDraft(
   }
 
   const approved = data as unknown as PatientIntakeDraftRecord;
-  if (approved.status !== 'approved' || approved.intake_id !== id || !approved.draft_plan) {
-    throw new Error('لم يتم تأكيد اعتماد الخطة؛ أعد تحميل ملف المريض للتحقق من حالته.');
+  if (
+    approved.status !== 'approved' ||
+    approved.intake_id !== id ||
+    !approved.draft_plan ||
+    (expectedUid && approved.patient_id !== expectedUid)
+  ) {
+    throw new Error('لم يتم تأكيد اعتماد الخطة لهذا المريض؛ أعد تحميل ملف المريض للتحقق من حالته.');
   }
   return approved;
 }
