@@ -124,12 +124,18 @@ export function PatientPlanEditor({
   patientName,
   initialPlan,
   onSaved,
+  saveOverride,
+  editorTitle = 'محرر الخطة الغذائية السحابية',
+  saveButtonLabel = 'حفظ الخطة السحابية',
 }: {
   patientUid: string;
   editorUid: string;
   patientName: string;
   initialPlan: PlanConfig | null;
   onSaved: (plan: PlanConfig) => void;
+  saveOverride?: (plan: PlanConfig) => Promise<void>;
+  editorTitle?: string;
+  saveButtonLabel?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<PlanConfig>(() =>
@@ -221,8 +227,8 @@ export function PatientPlanEditor({
       id: itemId,
       name: '',
       dose: '',
-      timesPerDay: 1,
-      timings: [{ id: makeId('timing'), slot: 'morning', label: 'صباحًا' }],
+      timesPerDay: 0,
+      timings: [],
       active: true,
     };
     updateDraft({
@@ -263,17 +269,20 @@ export function PatientPlanEditor({
 
     setSaving(true);
     try {
-      await savePatientPlan(patientUid, nextDraft, editorUid);
       let refreshed: PlanConfig = nextDraft;
-      try {
-        refreshed = await getPatientPlan(patientUid) ?? nextDraft;
-      } catch {
-        // The write has already returned a row; retain the saved draft if a
-        // follow-up refresh is interrupted by a transient network failure.
+      if (saveOverride) {
+        await saveOverride(nextDraft);
+      } else {
+        await savePatientPlan(patientUid, nextDraft, editorUid);
+        try {
+          refreshed = await getPatientPlan(patientUid) ?? nextDraft;
+        } catch {
+          // The active-plan write already returned a row; retain the saved draft if refresh is interrupted.
+        }
       }
       onSaved(refreshed);
       setEditing(false);
-      setNotice('تم حفظ الخطة السحابية وتحديث ملخص المريض.');
+      setNotice(saveOverride ? 'تم حفظ مسودة الخطة فقط؛ الخطة النشطة لم تتغير.' : 'تم حفظ الخطة السحابية وتحديث ملخص المريض.');
     } catch (caught) {
       setSaveError(caught instanceof Error ? caught.message : 'تعذّر حفظ الخطة السحابية.');
     } finally {
@@ -285,7 +294,7 @@ export function PatientPlanEditor({
     <section className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 dark:border-indigo-900 dark:bg-indigo-950/20">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-black text-slate-900 dark:text-slate-100">محرر الخطة الغذائية السحابية</h3>
+          <h3 className="text-base font-black text-slate-900 dark:text-slate-100">{editorTitle}</h3>
           <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
             التعديلات تُحفظ في ملف هذا المريض داخل عيادتك. لا تُحسب الأهداف أو توصف الأدوية تلقائيًا.
           </p>
@@ -435,25 +444,52 @@ export function PatientPlanEditor({
                       <input className={inputClass} maxLength={120} value={medication.dose} onChange={(event) => updateMedication(index, { dose: event.target.value })} placeholder="كما وردت في الوصفة" />
                     </label>
                     <label className="block">
-                      <span className={labelClass}>مرات التناول يوميًا</span>
-                      <input className={inputClass} type="number" min={1} max={6} step={1} value={medication.timesPerDay} onChange={(event) => updateMedication(index, { timesPerDay: Number(event.target.value) })} />
+                      <span className={labelClass}>مرات التناول يوميًا (كما في الوصفة)</span>
+                      <input className={inputClass} type="number" min={0} max={6} step={1} value={medication.timesPerDay || ''} onChange={(event) => updateMedication(index, { timesPerDay: event.target.value === '' ? 0 : Number(event.target.value) })} />
                     </label>
-                    <label className="block">
-                      <span className={labelClass}>موعد التناول</span>
-                      <select
-                        className={inputClass}
-                        value={medication.timings[0]?.slot ?? 'morning'}
-                        onChange={(event) => updateMedication(index, {
-                          timings: [{
-                            id: medication.timings[0]?.id ?? makeId('timing'),
-                            slot: event.target.value as MedicationSlot,
-                            label: medicationSlotLabel(event.target.value as MedicationSlot),
-                          }],
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className={labelClass}>مواعيد الجرعات من الوصفة</span>
+                      <button
+                        type="button"
+                        className={secondaryButtonClass}
+                        disabled={medication.timings.length >= 6 || medication.timings.length >= medication.timesPerDay}
+                        onClick={() => updateMedication(index, {
+                          timings: [...medication.timings, { id: makeId('timing'), slot: 'morning', label: '' }],
                         })}
                       >
-                        {medicationSlots.map((slot) => <option key={slot.value} value={slot.value}>{slot.label}</option>)}
-                      </select>
-                    </label>
+                        + إضافة موعد ({medication.timings.length}/{medication.timesPerDay || '؟'})
+                      </button>
+                    </div>
+                    {medication.timings.map((timing, timingIndex) => (
+                      <div key={timing.id} className="flex items-center gap-2">
+                        <select
+                          className={inputClass}
+                          value={timing.label ? timing.slot : ''}
+                          onChange={(event) => {
+                            const slot = event.target.value as MedicationSlot;
+                            updateMedication(index, {
+                              timings: medication.timings.map((item, itemIndex) => itemIndex === timingIndex
+                                ? { ...item, slot, label: medicationSlotLabel(slot) }
+                                : item),
+                            });
+                          }}
+                        >
+                          <option value="" disabled>اختر موعد الجرعة</option>
+                          {medicationSlots.map((slot) => <option key={slot.value} value={slot.value}>{slot.label}</option>)}
+                        </select>
+                        <button
+                          type="button"
+                          className={dangerButtonClass}
+                          onClick={() => updateMedication(index, {
+                            timings: medication.timings.filter((item) => item.id !== timing.id),
+                          })}
+                        >
+                          حذف الموعد
+                        </button>
+                      </div>
+                    ))}
                   </div>
                   <label className="mt-3 flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
                     <input type="checkbox" checked={medication.active} onChange={(event) => updateMedication(index, { active: event.target.checked })} />
@@ -503,7 +539,7 @@ export function PatientPlanEditor({
 
           <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3 dark:border-slate-700">
             <button type="submit" disabled={saving} className={primaryButtonClass}>
-              {saving ? 'جارٍ حفظ الخطة…' : 'حفظ الخطة السحابية'}
+              {saving ? 'جارٍ الحفظ…' : saveButtonLabel}
             </button>
             <button type="button" disabled={saving} onClick={() => {
               setDraft(initialPlan ? clonePatientPlan(initialPlan) : createEmptyPatientPlan(patientName));
