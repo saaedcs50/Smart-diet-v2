@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS public.patient_intake_drafts (
   intake_id uuid PRIMARY KEY
     REFERENCES public.patient_intakes(id) ON DELETE CASCADE,
   draft_plan jsonb NOT NULL,
+  base_plan_updated_at text,
   status text NOT NULL DEFAULT 'draft'
     CHECK (status IN ('draft', 'approved')),
   created_by uuid NOT NULL DEFAULT auth.uid()
@@ -31,7 +32,7 @@ ALTER TABLE public.patient_intake_drafts ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON TABLE public.patient_intake_drafts FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON TABLE public.patient_intake_drafts TO authenticated;
-GRANT INSERT (intake_id, draft_plan)
+GRANT INSERT (intake_id, draft_plan, base_plan_updated_at)
   ON TABLE public.patient_intake_drafts TO authenticated;
 -- Until the explicit clinician-approval action is implemented, clients may
 -- change only draft content and its audit fields. They cannot approve/delete.
