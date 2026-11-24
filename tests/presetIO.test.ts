@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { serializePreset, parsePresetImport, validatePresetData } from '../src/utils/presetIO';
 import { SCENARIO_GOUT, SCENARIO_ATHLETES } from '../src/utils/caseScenarios';
-import { PRESET_FLEXIBLE_LOW_CARB } from '../src/utils/planPresets';
+import { BUILT_IN_PRESETS, PRESET_FLEXIBLE_LOW_CARB } from '../src/utils/planPresets';
 
 describe('preset IO — export/import round-trip (Batch 3.1)', () => {
   it.each([
@@ -17,6 +17,35 @@ describe('preset IO — export/import round-trip (Batch 3.1)', () => {
       expect(result.preset.planData).toEqual(preset.planData);
       expect(result.preset.scenario).toEqual(preset.scenario);
     }
+  });
+
+  it('round-trips every built-in clinical, fitness, fasting and maintenance template', () => {
+    expect(BUILT_IN_PRESETS).toHaveLength(17);
+    for (const preset of BUILT_IN_PRESETS) {
+      const result = parsePresetImport(serializePreset(preset));
+      expect(result.ok, preset.id).toBe(true);
+      if (result.ok) {
+        expect(result.preset.id).toBe(preset.id);
+        expect(result.preset.planData).toEqual(preset.planData);
+      }
+    }
+  });
+
+  it('rejects an unsupported export envelope version', () => {
+    const envelope = JSON.parse(serializePreset(SCENARIO_GOUT));
+    envelope.version = 99;
+    expect(parsePresetImport(JSON.stringify(envelope))).toEqual({
+      ok: false,
+      error: 'إصدار ملف القالب غير مدعوم. حدّث الملف إلى الإصدار 1.',
+    });
+  });
+
+  it('rejects an import larger than 512 KiB before parsing', () => {
+    const oversized = ' '.repeat(512 * 1024 + 1);
+    expect(parsePresetImport(oversized)).toEqual({
+      ok: false,
+      error: 'حجم ملف القالب يتجاوز الحد المسموح (512 كيلوبايت).',
+    });
   });
 
   it('accepts a bare preset JSON without the export envelope', () => {
