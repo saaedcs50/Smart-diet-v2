@@ -58,6 +58,11 @@ const expectedStagingMigrations = [
   '20261117140700_replace_legacy_push_tokens.sql',
   '20261117150000_harden_push_subscription_registration.sql',
   '20261124044804_patient_intake_drafts.sql',
+  '20261124045849_approve_patient_intake_draft.sql',
+  '20261124045938_patient_intake_draft_approval.sql',
+  '20261124050027_approve_patient_intake_draft_lockfix.sql',
+  '20261124050126_approve_patient_intake_draft_no_draft_lock.sql',
+  '20261124050145_approve_patient_intake_draft_conditional.sql',
 ];
 const missingStagingMigrations = expectedStagingMigrations
   .filter((name) => !migrationFiles.includes(name));
