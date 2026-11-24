@@ -13,7 +13,7 @@ const valid: IntakeAnswers = {
   startWeight: 85,
   targetWeight: 70,
   targetWaist: null,
-  conditions: [{ id: 'ibs', label: 'قولون عصبي' }],
+  conditions: [{ id: 'ibs', label: 'قولون عصبي (IBS)' }],
   allergies: ['لاكتوز'],
   medicationsText: 'دواء تجريبي - 500 مجم',
   sleepHours: 7,
