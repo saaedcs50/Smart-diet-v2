@@ -1441,6 +1441,7 @@ function PatientDetail({
               editorUid={viewerUid}
               patientName={doc.profile.clientName}
               initialPlan={plan}
+              presetStorageNamespace={`clinic:${doc.clinicId}`}
               onSaved={(savedPlan) => {
                 setPlan(savedPlan);
                 setDoc((current) => current ? {
