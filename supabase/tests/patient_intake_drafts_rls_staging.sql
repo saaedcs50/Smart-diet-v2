@@ -309,12 +309,120 @@ BEGIN
 END;
 $test$;
 
+-- Medication directions must be explicit before a draft can be approved.
+SELECT set_config('request.jwt.claim.sub','f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8',true);
+SELECT set_config('request.jwt.claims','{"sub":"f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8","role":"authenticated"}',true);
+DO $test$
+DECLARE intake_id uuid;
+BEGIN
+  INSERT INTO public.patient_intakes (clinic_id, patient_id, answers, consent_version)
+  VALUES (
+    'clinic-a',
+    auth.uid(),
+    '{"clientName":"Medication validation synthetic patient","conditions":[],"allergies":[],"medicationsText":"Example medicine","notes":"Medication approval test"}'::jsonb,
+    'patient-intake-v1-2026-11-22'
+  ) RETURNING id INTO intake_id;
+  PERFORM set_config('test.draft_medication_intake_id', intake_id::text, true);
+END;
+$test$;
+
+SELECT set_config('request.jwt.claim.sub','809f256f-0a4c-4b1e-af92-a26dd21d7623',true);
+SELECT set_config('request.jwt.claims','{"sub":"809f256f-0a4c-4b1e-af92-a26dd21d7623","role":"authenticated"}',true);
+DO $test$
+DECLARE
+  medication_id uuid := current_setting('test.draft_medication_intake_id')::uuid;
+  base_version text;
+  n integer;
+BEGIN
+  UPDATE public.patient_intakes
+     SET status = 'reviewed',
+         reviewed_at = now(),
+         reviewed_by = auth.uid()
+   WHERE id = medication_id;
+
+  SELECT plan->>'updatedAt'
+    INTO base_version
+    FROM public.patients
+   WHERE id = 'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8';
+
+  INSERT INTO public.patient_intake_drafts (
+    intake_id, draft_plan, base_plan_updated_at
+  )
+  VALUES (
+    medication_id,
+    '{
+      "clientName":"Medication validation draft",
+      "dailyWaterGoalMl":2000,
+      "meals":[],
+      "checklist":[],
+      "medicationPlan":{
+        "showToClient":false,
+        "items":[{
+          "id":"med-test-1",
+          "name":"Example medicine",
+          "dose":"500 mg",
+          "timesPerDay":0,
+          "timings":[],
+          "active":true
+        }]
+      }
+    }'::jsonb,
+    base_version
+  );
+
+  BEGIN
+    PERFORM public.approve_patient_intake_draft(medication_id);
+    RAISE EXCEPTION 'draft with unspecified medication frequency was approved';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+
+  UPDATE public.patient_intake_drafts
+     SET draft_plan = jsonb_set(
+       draft_plan,
+       '{medicationPlan,items,0}',
+       '{
+         "id":"med-test-1",
+         "name":"Example medicine",
+         "dose":"500 mg",
+         "timesPerDay":2,
+         "timings":[
+           {"id":"timing-1","slot":"morning","label":"صباحًا"}
+         ],
+         "active":true
+       }'::jsonb
+     ),
+     updated_at = now(),
+     updated_by = auth.uid()
+   WHERE intake_id = medication_id
+     AND status = 'draft';
+
+  BEGIN
+    PERFORM public.approve_patient_intake_draft(medication_id);
+    RAISE EXCEPTION 'draft with an incomplete medication timing list was approved';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+
+  SELECT count(*) INTO n
+    FROM public.patient_intake_drafts
+   WHERE intake_id = medication_id AND status = 'draft';
+  IF n <> 1 THEN RAISE EXCEPTION 'invalid medication draft must remain unapproved'; END IF;
+
+  IF (SELECT plan->>'clientName' FROM public.patients
+       WHERE id = 'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8')
+       <> 'Newer active plan must be preserved' THEN
+    RAISE EXCEPTION 'invalid medication approval modified the active patient plan';
+  END IF;
+END;
+$test$;
+
 -- Clinic admin can read clinic-a drafts. A patient and platform owner cannot.
 SELECT set_config('request.jwt.claim.sub','71d0a9c0-d539-487e-8d32-8af4dd7d5120',true);
 SELECT set_config('request.jwt.claims','{"sub":"71d0a9c0-d539-487e-8d32-8af4dd7d5120","role":"authenticated"}',true);
 DO $test$
 BEGIN
-  IF (SELECT count(*) FROM public.patient_intake_drafts) <> 2 THEN
+  IF (SELECT count(*) FROM public.patient_intake_drafts) <> 3 THEN
     RAISE EXCEPTION 'admin: clinic-wide draft visibility failed';
   END IF;
 END;
