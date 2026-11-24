@@ -41,11 +41,17 @@ describe('preset IO — export/import round-trip (Batch 3.1)', () => {
         expect(result.preset.planData.meals).toEqual(preset.planData.meals);
         expect(result.preset.planData.checklist).toEqual(preset.planData.checklist);
         expect(result.preset.planData).not.toHaveProperty('medicationPlan');
-        if (preset.planData.medicalConditions) {
+        const sourceConditions = preset.planData.medicalConditions?.conditions ?? [];
+        const supportedConditionIds = sourceConditions
+          .filter((condition) => SUPPORTED_CONDITIONS.some((item) => item.id === condition.id))
+          .map((condition) => condition.id);
+        if (supportedConditionIds.length > 0) {
           expect(result.preset.planData.medicalConditions?.allergies).toEqual([]);
           expect(result.preset.planData.medicalConditions?.showToClient).toBe(false);
           expect(result.preset.planData.medicalConditions?.conditions.map((condition) => condition.id))
-            .toEqual(preset.planData.medicalConditions.conditions.map((condition) => condition.id));
+            .toEqual(supportedConditionIds);
+        } else {
+          expect(result.preset.planData).not.toHaveProperty('medicalConditions');
         }
       }
     }
