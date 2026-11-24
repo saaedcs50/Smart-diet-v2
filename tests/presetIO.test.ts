@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { serializePreset, parsePresetImport, validatePresetData } from '../src/utils/presetIO';
 import { SCENARIO_GOUT, SCENARIO_ATHLETES } from '../src/utils/caseScenarios';
 import { BUILT_IN_PRESETS, PRESET_FLEXIBLE_LOW_CARB } from '../src/utils/planPresets';
+import { SUPPORTED_CONDITIONS } from '../src/utils/medicalConditions';
 
 describe('preset IO — export/import round-trip (Batch 3.1)', () => {
   it.each([
@@ -14,8 +15,19 @@ describe('preset IO — export/import round-trip (Batch 3.1)', () => {
     if (result.ok) {
       expect(result.preset.id).toBe(preset.id);
       expect(result.preset.name).toBe(preset.name);
-      expect(result.preset.planData).toEqual(preset.planData);
+      expect(result.preset.planData.meals).toEqual(preset.planData.meals);
+      expect(result.preset.planData.checklist).toEqual(preset.planData.checklist);
       expect(result.preset.scenario).toEqual(preset.scenario);
+      if (preset.planData.medicalConditions) {
+        const expectedConditions = preset.planData.medicalConditions.conditions.map((condition) => ({
+          id: condition.id,
+          label: SUPPORTED_CONDITIONS.find((item) => item.id === condition.id)?.label,
+        }));
+        expect(result.preset.planData.medicalConditions?.conditions).toEqual(expectedConditions);
+        expect(result.preset.planData.medicalConditions?.allergies).toEqual([]);
+        expect(result.preset.planData.medicalConditions?.showToClient).toBe(false);
+      }
+      expect(result.preset.planData).not.toHaveProperty('medicationPlan');
     }
   });
 
@@ -26,7 +38,15 @@ describe('preset IO — export/import round-trip (Batch 3.1)', () => {
       expect(result.ok, preset.id).toBe(true);
       if (result.ok) {
         expect(result.preset.id).toBe(preset.id);
-        expect(result.preset.planData).toEqual(preset.planData);
+        expect(result.preset.planData.meals).toEqual(preset.planData.meals);
+        expect(result.preset.planData.checklist).toEqual(preset.planData.checklist);
+        expect(result.preset.planData).not.toHaveProperty('medicationPlan');
+        if (preset.planData.medicalConditions) {
+          expect(result.preset.planData.medicalConditions?.allergies).toEqual([]);
+          expect(result.preset.planData.medicalConditions?.showToClient).toBe(false);
+          expect(result.preset.planData.medicalConditions?.conditions.map((condition) => condition.id))
+            .toEqual(preset.planData.medicalConditions.conditions.map((condition) => condition.id));
+        }
       }
     }
   });
