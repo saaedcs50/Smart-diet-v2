@@ -163,7 +163,7 @@ export async function pullCloudPlanToLocal(
   const expectedScope = `user:${uid}`;
   const assertStorageScope = () => {
     if (writers.getStorageScope() !== expectedScope) {
-      throw new Error('تم إيقاف السحب: تغيّر الحساب أو مساحة التخزين أثناء العملية. أعد المحاولة من حساب المريض الصحيح.');
+      throw new Error('تم إيقاف السحب: مساحة التخزين المحلية لم تعد تطابق حساب المريض الحالي بعد تغيّر الحساب أو مساحة التخزين. أعد المحاولة من حساب المريض الصحيح.');
     }
   };
 
