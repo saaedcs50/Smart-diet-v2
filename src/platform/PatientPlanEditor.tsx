@@ -126,6 +126,7 @@ export function PatientPlanEditor({
   onSaved,
   saveOverride,
   editorTitle = 'محرر الخطة الغذائية السحابية',
+  editorDescription = 'التعديلات تُحفظ في ملف هذا المريض داخل عيادتك. لا تُحسب الأهداف أو توصف الأدوية تلقائيًا.',
   saveButtonLabel = 'حفظ الخطة السحابية',
 }: {
   patientUid: string;
@@ -135,6 +136,7 @@ export function PatientPlanEditor({
   onSaved: (plan: PlanConfig) => void;
   saveOverride?: (plan: PlanConfig) => Promise<void>;
   editorTitle?: string;
+  editorDescription?: string;
   saveButtonLabel?: string;
 }) {
   const [editing, setEditing] = useState(false);
@@ -296,7 +298,7 @@ export function PatientPlanEditor({
         <div>
           <h3 className="text-base font-black text-slate-900 dark:text-slate-100">{editorTitle}</h3>
           <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
-            التعديلات تُحفظ في ملف هذا المريض داخل عيادتك. لا تُحسب الأهداف أو توصف الأدوية تلقائيًا.
+            {editorDescription}
           </p>
         </div>
         {!editing && (
