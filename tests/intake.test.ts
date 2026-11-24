@@ -18,12 +18,14 @@ function answers(patch: Partial<IntakeAnswers> = {}): IntakeAnswers {
 }
 
 describe('intake — medications parsing (Batch 2.5)', () => {
-  it('parses “name - dose” lines into structured items with a morning timing', () => {
+  it('parses “name - dose” lines without inventing a schedule', () => {
     const meds = parseIntakeMedications('ميتفورمين - 500 مجم\nفيتامين د - 5000 وحدة');
     expect(meds).toHaveLength(2);
     expect(meds[0].name).toBe('ميتفورمين');
     expect(meds[0].dose).toBe('500 مجم');
-    expect(meds[0].timings[0].slot).toBe('morning');
+    expect(meds[0].timesPerDay).toBe(0);
+    expect(meds[0].timings).toEqual([]);
+    expect(meds[0].coachNotes).toContain('لم تُذكر مرات التناول');
     expect(meds[0].active).toBe(true);
   });
 
