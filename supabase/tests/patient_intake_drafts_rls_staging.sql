@@ -96,13 +96,28 @@ DECLARE
   other_clinic_id uuid := current_setting('test.draft_other_clinic_intake_id')::uuid;
 BEGIN
   INSERT INTO public.patient_intake_drafts (intake_id, draft_plan)
-  VALUES (assigned_id, '{"clientName":"Assigned draft","dailyWaterGoalMl":2000}'::jsonb);
+  VALUES (
+    assigned_id,
+    '{"clientName":"Assigned draft","dailyWaterGoalMl":2000,"meals":[],"checklist":[],"adminPin":"legacy-pin"}'::jsonb
+  );
 
   SELECT count(*) INTO n FROM public.patient_intake_drafts;
   IF n <> 1 THEN RAISE EXCEPTION 'coach: assigned draft visibility failed'; END IF;
 
+  BEGIN
+    PERFORM public.approve_patient_intake_draft(assigned_id);
+    RAISE EXCEPTION 'coach approved an intake before reviewing it';
+  EXCEPTION WHEN SQLSTATE '55000' THEN
+    NULL;
+  END;
+
+  SELECT count(*) INTO n FROM public.patient_intake_drafts
+  WHERE intake_id = assigned_id AND status = 'draft';
+  IF n <> 1 THEN RAISE EXCEPTION 'approval-before-review changed draft state'; END IF;
+
+
   UPDATE public.patient_intake_drafts
-  SET draft_plan = '{"clientName":"Updated assigned draft","dailyWaterGoalMl":2000}'::jsonb,
+  SET draft_plan = '{"clientName":"Updated assigned draft","dailyWaterGoalMl":2000,"meals":[],"checklist":[],"adminPin":"legacy-pin"}'::jsonb,
       updated_at = now(),
       updated_by = auth.uid()
   WHERE intake_id = assigned_id;
@@ -129,6 +144,75 @@ BEGIN
     WHERE intake_id = assigned_id;
     RAISE EXCEPTION 'coach approved a draft through ordinary update privileges';
   EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+END;
+$test$;
+
+
+-- Approval is allowed only after the intake review and applies the plan and
+-- draft status atomically. A second approval is rejected.
+DO $test$
+DECLARE
+  n integer;
+  approved jsonb;
+  assigned_id uuid := current_setting('test.draft_assigned_intake_id')::uuid;
+  patient_id uuid := 'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8';
+  patient_plan jsonb;
+BEGIN
+  UPDATE public.patient_intakes
+     SET status = 'reviewed',
+         reviewed_at = now(),
+         reviewed_by = auth.uid()
+   WHERE id = assigned_id
+     AND status = 'submitted';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN RAISE EXCEPTION 'coach: intake review prerequisite failed'; END IF;
+
+  -- A direct status-only update must fail because the active patient plan
+  -- does not yet match the draft content.
+  BEGIN
+    UPDATE public.patient_intake_drafts
+       SET status = 'approved',
+           approved_at = now(),
+           approved_by = auth.uid(),
+           updated_at = now(),
+           updated_by = auth.uid()
+     WHERE intake_id = assigned_id;
+    RAISE EXCEPTION 'coach approved a draft without applying it to patients.plan';
+  EXCEPTION WHEN insufficient_privilege THEN
+    NULL;
+  END;
+
+  approved := public.approve_patient_intake_draft(assigned_id);
+  IF approved->>'status' <> 'approved' THEN
+    RAISE EXCEPTION 'approval RPC did not return approved status';
+  END IF;
+
+  SELECT plan INTO patient_plan
+    FROM public.patients
+   WHERE id = patient_id;
+  IF patient_plan->>'clientName' <> 'Updated assigned draft' THEN
+    RAISE EXCEPTION 'approved draft was not copied to the active patient plan';
+  END IF;
+  IF patient_plan ? 'adminPin' THEN
+    RAISE EXCEPTION 'legacy adminPin must not be restored by plan approval';
+  END IF;
+
+  SELECT count(*) INTO n
+    FROM public.patient_intake_drafts
+   WHERE intake_id = assigned_id
+     AND status = 'approved'
+     AND approved_by = auth.uid()
+     AND draft_plan = patient_plan;
+  IF n <> 1 THEN
+    RAISE EXCEPTION 'draft approval and active plan were not committed together';
+  END IF;
+
+  BEGIN
+    PERFORM public.approve_patient_intake_draft(assigned_id);
+    RAISE EXCEPTION 'an approved draft was approved a second time';
+  EXCEPTION WHEN SQLSTATE '55000' THEN
     NULL;
   END;
 END;
