@@ -44,7 +44,7 @@ function validateOptionalNumber(
 }
 
 function validTime(value: string): boolean {
-  if (!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(value)) return false;
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) return false;
   return true;
 }
 
@@ -146,5 +146,38 @@ export function validatePatientPlan(plan: PlanConfig): string[] {
 }
 
 export function clonePatientPlan(plan: PlanConfig): PlanConfig {
-  return JSON.parse(JSON.stringify(plan)) as PlanConfig;
+  const copy = JSON.parse(JSON.stringify(plan)) as PlanConfig;
+  copy.meals = (Array.isArray(copy.meals) ? copy.meals : []).map((meal, index) => ({
+    ...meal,
+    id: typeof meal.id === 'string' && meal.id ? meal.id : 'legacy-meal-' + index,
+    name: typeof meal.name === 'string' ? meal.name : '',
+    items: typeof meal.items === 'string' ? meal.items : '',
+    alternatives: Array.isArray(meal.alternatives) ? meal.alternatives.filter((item): item is string => typeof item === 'string') : [],
+    time: typeof meal.time === 'string' ? meal.time : '',
+  }));
+  copy.checklist = (Array.isArray(copy.checklist) ? copy.checklist : []).map((item, index) => ({
+    ...item,
+    id: typeof item.id === 'string' && item.id ? item.id : 'legacy-check-' + index,
+    label: typeof item.label === 'string' ? item.label : '',
+  }));
+  copy.supplements = (Array.isArray(copy.supplements) ? copy.supplements : []).map((item, index) => ({
+    ...item,
+    id: typeof item.id === 'string' && item.id ? item.id : 'legacy-supplement-' + index,
+    name: typeof item.name === 'string' ? item.name : '',
+  }));
+  if (copy.medicationPlan) {
+    copy.medicationPlan = {
+      ...copy.medicationPlan,
+      items: (Array.isArray(copy.medicationPlan.items) ? copy.medicationPlan.items : []).map((item, index) => ({
+        ...item,
+        id: typeof item.id === 'string' && item.id ? item.id : 'legacy-medication-' + index,
+        name: typeof item.name === 'string' ? item.name : '',
+        dose: typeof item.dose === 'string' ? item.dose : '',
+        timesPerDay: Number.isInteger(item.timesPerDay) ? item.timesPerDay : 1,
+        timings: Array.isArray(item.timings) ? item.timings : [],
+        active: item.active !== false,
+      })),
+    };
+  }
+  return copy;
 }
