@@ -1,6 +1,7 @@
 import { getSupabase } from './supabase';
 import type { IntakeAnswers } from '../utils/intake';
 import type { PlanConfig } from '../types';
+import { planFromDatabase } from './database';
 import { validatePatientIntakeAnswers } from './patientIntakeUtils';
 
 export const PATIENT_INTAKE_CONSENT_VERSION = 'patient-intake-v1-2026-11-22';
@@ -27,6 +28,7 @@ export interface PatientIntakeDraftRecord {
   updated_by: string;
   created_at: string;
   updated_at: string;
+  base_plan_updated_at: string | null;
   approved_at: string | null;
   approved_by: string | null;
 }
@@ -44,6 +46,7 @@ const INTAKE_DRAFT_COLUMNS = [
   'updated_by',
   'created_at',
   'updated_at',
+  'base_plan_updated_at',
   'approved_at',
   'approved_by',
 ].join(',');
@@ -97,6 +100,7 @@ export async function listPatientIntakeDrafts(
 export async function createPatientIntakeDraft(input: {
   intakeId: string;
   draftPlan: PlanConfig;
+  basePlanUpdatedAt: string | null;
 }): Promise<PatientIntakeDraftCreateResult> {
   const intakeId = input.intakeId.trim();
   if (!intakeId) throw new Error('معرّف الاستبيان غير صالح.');
@@ -135,7 +139,7 @@ export async function createPatientIntakeDraft(input: {
 
   const { data, error } = await supabase
     .from('patient_intake_drafts')
-    .insert({ intake_id: intakeId, draft_plan: input.draftPlan })
+    .insert({ intake_id: intakeId, draft_plan: input.draftPlan, base_plan_updated_at: input.basePlanUpdatedAt })
     .select(INTAKE_DRAFT_COLUMNS)
     .single();
 
@@ -153,6 +157,95 @@ export async function createPatientIntakeDraft(input: {
   }
 
   throw new Error(`تعذّر إنشاء مسودة الخطة: ${error?.message ?? 'لم تُرجع قاعدة البيانات سجلًا محفوظًا.'}`);
+}
+
+export async function updatePatientIntakeDraft(input: {
+  intakeId: string;
+  draftPlan: PlanConfig;
+}): Promise<PatientIntakeDraftRecord> {
+  const intakeId = input.intakeId.trim();
+  if (!intakeId) throw new Error('معرّف الاستبيان غير صالح.');
+
+  let serialized: string;
+  try {
+    serialized = JSON.stringify(input.draftPlan);
+  } catch {
+    throw new Error('تعذّر تجهيز مسودة الخطة.');
+  }
+  if (!input.draftPlan || typeof input.draftPlan !== 'object' || serialized.length === 0) {
+    throw new Error('بيانات مسودة الخطة غير صالحة.');
+  }
+  if (new TextEncoder().encode(serialized).byteLength > 262144) {
+    throw new Error('حجم مسودة الخطة أكبر من الحد المسموح.');
+  }
+
+  const supabase = getSupabase();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) throw new Error('يجب تسجيل الدخول بحساب العيادة أولًا.');
+
+  const { data, error } = await supabase
+    .from('patient_intake_drafts')
+    .update({
+      draft_plan: input.draftPlan,
+      updated_at: new Date().toISOString(),
+      updated_by: user.id,
+    })
+    .eq('intake_id', intakeId)
+    .eq('status', 'draft')
+    .select(INTAKE_DRAFT_COLUMNS)
+    .maybeSingle();
+
+  if (error) throw new Error(`تعذّر حفظ مسودة الخطة: ${error.message}`);
+  if (!data) throw new Error('لم تُحفظ المسودة؛ ربما اعتُمدت بالفعل أو لا تملك صلاحية تعديلها.');
+  return data as unknown as PatientIntakeDraftRecord;
+}
+
+export interface PatientIntakeDraftApproval {
+  plan: PlanConfig;
+  approvedAt: string;
+  approvedBy: string;
+}
+
+export async function approvePatientIntakeDraft(
+  intakeId: string,
+): Promise<PatientIntakeDraftApproval> {
+  const normalizedId = intakeId.trim();
+  if (!normalizedId) throw new Error('معرّف الاستبيان غير صالح.');
+
+  const supabase = getSupabase();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) throw new Error('يجب تسجيل الدخول بحساب العيادة أولًا.');
+
+  const { data, error } = await supabase.rpc(
+    'approve_patient_intake_draft',
+    { p_intake_id: normalizedId },
+  );
+  if (error) {
+    const message = error.message ?? '';
+    if (message.includes('ACTIVE_PLAN_CHANGED_REBUILD_DRAFT')) {
+      throw new Error('تغيرت الخطة السارية بعد إنشاء المسودة. أنشئ مسودة جديدة من الخطة الحالية قبل الاعتماد.');
+    }
+    if (message.includes('INTAKE_REVIEW_REQUIRED')) {
+      throw new Error('سجّل مراجعة الاستبيان أولًا قبل اعتماد الخطة.');
+    }
+    if (message.includes('DRAFT_ALREADY_APPROVED_OR_LOCKED')) {
+      throw new Error('هذه المسودة اعتُمدت بالفعل ولا يمكن اعتمادها مرة أخرى.');
+    }
+    if (message.includes('MEDICATION_FREQUENCY_REQUIRED') || message.includes('MEDICATION_TIMINGS_INCOMPLETE')) {
+      throw new Error('أكمل عدد مرات تناول كل دواء وجميع مواعيده قبل الاعتماد.');
+    }
+    if (message.includes('MEDICATION_NAME_AND_DOSE_REQUIRED')) {
+      throw new Error('أكمل اسم كل دواء والجرعة كما وردت في الوصفة قبل الاعتماد.');
+    }
+    throw new Error(`تعذّر اعتماد الخطة: ${message || 'رفضت قاعدة البيانات الطلب.'}`);
+  }
+
+  const payload = data as { plan?: unknown; approvedAt?: unknown; approvedBy?: unknown } | null;
+  const plan = planFromDatabase(payload?.plan);
+  if (!plan || typeof payload?.approvedAt !== 'string' || typeof payload.approvedBy !== 'string') {
+    throw new Error('لم تُرجع قاعدة البيانات بيانات اعتماد صالحة؛ لم يتم تحديث واجهة المريض.');
+  }
+  return { plan, approvedAt: payload.approvedAt, approvedBy: payload.approvedBy };
 }
 
 export async function submitPatientIntake(input: {
