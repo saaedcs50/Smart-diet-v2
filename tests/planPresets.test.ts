@@ -9,7 +9,7 @@ import {
   PLAN_TEMPLATES,
   saveCustomPreset,
 } from '../src/utils/planPresets';
-import { validatePresetData } from '../src/utils/presetIO';
+import { parsePresetImport, serializePreset, validatePresetData } from '../src/utils/presetIO';
 
 function installMemoryStorage() {
   const values = new Map<string, string>();
@@ -59,6 +59,27 @@ describe('clinic plan preset library', () => {
     expect(getCustomPresetsStorageKey('clinic:clinic-a')).not.toBe(
       getCustomPresetsStorageKey('clinic:clinic-b'),
     );
+  });
+
+  it('exports a reusable template from one clinic and imports it into another clinic', () => {
+    installMemoryStorage();
+    const clinicA = createPresetFromPlan(DEFAULT_PLAN, 'قالب قابل للمشاركة بين العيادات');
+    expect(saveCustomPreset(clinicA, 'clinic:clinic-a')).toBe(true);
+
+    const exportedJson = serializePreset(clinicA);
+    const imported = parsePresetImport(exportedJson);
+    expect(imported.ok).toBe(true);
+    if (!imported.ok) return;
+
+    const clinicB = {
+      ...imported.preset,
+      id: `custom_import_${imported.preset.id}`,
+      isCustom: true,
+    };
+    expect(saveCustomPreset(clinicB, 'clinic:clinic-b')).toBe(true);
+    expect(getAllPresets('clinic:clinic-b').some((item) => item.id === clinicB.id)).toBe(true);
+    expect(getAllPresets('clinic:clinic-a').some((item) => item.id === clinicA.id)).toBe(true);
+    expect(getAllPresets('clinic:clinic-a').some((item) => item.id === clinicB.id)).toBe(false);
   });
 
   it('can remove a custom preset only from the selected clinic library', () => {
