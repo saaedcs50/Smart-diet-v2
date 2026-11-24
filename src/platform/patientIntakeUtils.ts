@@ -135,6 +135,12 @@ export function buildPatientIntakeDraftPlan(
   if (answers.goal?.trim()) draft.goal = answers.goal.trim();
   if (answers.notes?.trim()) draft.notes = answers.notes.trim();
 
+  const fastingLabels = {
+    none: '',
+    islamic: 'صيام إسلامي',
+    christian: 'صيام مسيحي',
+    intermittent: 'صيام متقطع',
+  } as const;
   const intakeContext = [
     answers.sleepHours != null ? `النوم المذكور في الاستبيان: ${answers.sleepHours} ساعة يوميًا` : '',
     answers.activityLevel ? `مستوى النشاط المذكور: ${({
@@ -142,6 +148,9 @@ export function buildPatientIntakeDraftPlan(
       moderate: 'متوسط',
       high: 'مرتفع',
     } as const)[answers.activityLevel]}` : '',
+    answers.fastingType && fastingLabels[answers.fastingType]
+      ? `نمط الصيام المذكور: ${fastingLabels[answers.fastingType]}`
+      : '',
   ].filter(Boolean).join(' — ');
   if (intakeContext) {
     draft.notes = [draft.notes?.trim(), intakeContext].filter(Boolean).join(' | ');
