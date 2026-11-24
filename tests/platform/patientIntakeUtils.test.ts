@@ -93,7 +93,9 @@ describe('patient intake draft generation', () => {
   it('does not enable hidden clinical sections when no condition was submitted', () => {
     const draft = buildPatientIntakeDraftPlan(valid, DEFAULT_PLAN);
     expect(draft.medicalConditions?.showToClient).toBe(false);
-    expect(draft.medicationPlan).toBeUndefined();
+    expect(draft.medicationPlan?.showToClient).toBe(false);
+    expect(draft.medicationPlan?.items[0].timesPerDay).toBe(0);
+    expect(draft.medicationPlan?.items[0].timings).toEqual([]);
   });
 });
 
