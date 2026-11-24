@@ -63,6 +63,8 @@ const expectedStagingMigrations = [
   '20261124050027_approve_patient_intake_draft_lockfix.sql',
   '20261124050126_approve_patient_intake_draft_no_draft_lock.sql',
   '20261124050145_approve_patient_intake_draft_conditional.sql',
+  '20261124050107_patient_intake_draft_approval_grants.sql',
+  '20261124050528_approve_patient_intake_draft_version_guard.sql',
   '20261124050528_approve_patient_intake_draft_version_guard.sql',
 ];
 const missingStagingMigrations = expectedStagingMigrations
