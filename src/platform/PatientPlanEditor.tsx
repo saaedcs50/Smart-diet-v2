@@ -47,7 +47,7 @@ function parseOptionalNumber(value: string): number | null {
 }
 
 function parseList(value: string): string[] {
-  return [...new Set(value.split(/[\n,،;؛]/).map((entry) => entry.trim()).filter(Boolean))].slice(0, 20);
+  return value.split(/[\n,،;؛]/).map((entry) => entry.trim()).filter(Boolean);
 }
 
 function NumberField({
