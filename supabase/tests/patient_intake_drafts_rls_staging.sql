@@ -218,12 +218,103 @@ BEGIN
 END;
 $test$;
 
+-- Build a second reviewed draft against the current plan, then change the plan.
+-- Approval must reject the stale version and leave the newer active plan untouched.
+SELECT set_config('request.jwt.claim.sub','f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8',true);
+SELECT set_config('request.jwt.claims','{"sub":"f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8","role":"authenticated"}',true);
+DO $test$
+DECLARE intake_id uuid;
+BEGIN
+  INSERT INTO public.patient_intakes (clinic_id, patient_id, answers, consent_version)
+  VALUES (
+    'clinic-a',
+    auth.uid(),
+    '{"clientName":"Stale-plan synthetic patient","conditions":[],"allergies":[],"medicationsText":"","notes":"Stale approval test"}'::jsonb,
+    'patient-intake-v1-2026-11-22'
+  ) RETURNING id INTO intake_id;
+  PERFORM set_config('test.draft_stale_intake_id', intake_id::text, true);
+END;
+$test$;
+
+SELECT set_config('request.jwt.claim.sub','809f256f-0a4c-4b1e-af92-a26dd21d7623',true);
+SELECT set_config('request.jwt.claims','{"sub":"809f256f-0a4c-4b1e-af92-a26dd21d7623","role":"authenticated"}',true);
+DO $test$
+DECLARE
+  stale_id uuid := current_setting('test.draft_stale_intake_id')::uuid;
+  base_version text;
+  n integer;
+BEGIN
+  UPDATE public.patient_intakes
+     SET status = 'reviewed',
+         reviewed_at = now(),
+         reviewed_by = auth.uid()
+   WHERE id = stale_id;
+
+  SELECT plan->>'updatedAt'
+    INTO base_version
+    FROM public.patients
+   WHERE id = 'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8';
+
+  INSERT INTO public.patient_intake_drafts (
+    intake_id, draft_plan, base_plan_updated_at
+  )
+  VALUES (
+    stale_id,
+    '{"clientName":"Stale draft must not publish","dailyWaterGoalMl":2000,"meals":[],"checklist":[]}'::jsonb,
+    base_version
+  );
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN RAISE EXCEPTION 'stale guard: test draft creation failed'; END IF;
+END;
+$test$;
+
+-- Change the active plan after draft creation, as a clinic administrator.
+SELECT set_config('request.jwt.claim.sub','71d0a9c0-d539-487e-8d32-8af4dd7d5120',true);
+SELECT set_config('request.jwt.claims','{"sub":"71d0a9c0-d539-487e-8d32-8af4dd7d5120","role":"authenticated"}',true);
+UPDATE public.patients
+   SET plan = plan || jsonb_build_object(
+     'clientName', 'Newer active plan must be preserved',
+     'updatedAt', '2026-11-24T05:55:00.000Z'
+   )
+ WHERE id = 'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8';
+
+-- Stale approval must fail and leave both rows unchanged.
+SELECT set_config('request.jwt.claim.sub','809f256f-0a4c-4b1e-af92-a26dd21d7623',true);
+SELECT set_config('request.jwt.claims','{"sub":"809f256f-0a4c-4b1e-af92-a26dd21d7623","role":"authenticated"}',true);
+DO $test$
+DECLARE
+  stale_id uuid := current_setting('test.draft_stale_intake_id')::uuid;
+  n integer;
+  current_name text;
+BEGIN
+  BEGIN
+    PERFORM public.approve_patient_intake_draft(stale_id);
+    RAISE EXCEPTION 'stale draft was approved over a newer active plan';
+  EXCEPTION WHEN SQLSTATE '40001' THEN
+    NULL;
+  END;
+
+  SELECT count(*) INTO n
+    FROM public.patient_intake_drafts
+   WHERE intake_id = stale_id AND status = 'draft';
+  IF n <> 1 THEN RAISE EXCEPTION 'stale draft must remain unapproved'; END IF;
+
+  SELECT plan->>'clientName'
+    INTO current_name
+    FROM public.patients
+   WHERE id = 'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8';
+  IF current_name <> 'Newer active plan must be preserved' THEN
+    RAISE EXCEPTION 'stale approval overwrote the active plan';
+  END IF;
+END;
+$test$;
+
 -- Clinic admin can read clinic-a drafts. A patient and platform owner cannot.
 SELECT set_config('request.jwt.claim.sub','71d0a9c0-d539-487e-8d32-8af4dd7d5120',true);
 SELECT set_config('request.jwt.claims','{"sub":"71d0a9c0-d539-487e-8d32-8af4dd7d5120","role":"authenticated"}',true);
 DO $test$
 BEGIN
-  IF (SELECT count(*) FROM public.patient_intake_drafts) <> 1 THEN
+  IF (SELECT count(*) FROM public.patient_intake_drafts) <> 2 THEN
     RAISE EXCEPTION 'admin: clinic-wide draft visibility failed';
   END IF;
 END;
@@ -232,9 +323,17 @@ $test$;
 SELECT set_config('request.jwt.claim.sub','f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8',true);
 SELECT set_config('request.jwt.claims','{"sub":"f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8","role":"authenticated"}',true);
 DO $test$
+DECLARE current_plan jsonb;
 BEGIN
   IF (SELECT count(*) FROM public.patient_intake_drafts) <> 0 THEN
-    RAISE EXCEPTION 'patient: draft was visible before approval';
+    RAISE EXCEPTION 'patient: staff-only drafts were visible';
+  END IF;
+
+  SELECT plan INTO current_plan
+    FROM public.patients
+   WHERE id = 'f3a2de27-1951-4b9d-9f3a-c8d830f3b0e8';
+  IF current_plan->>'clientName' <> 'Newer active plan must be preserved' THEN
+    RAISE EXCEPTION 'patient: expected newer active plan was not visible';
   END IF;
 END;
 $test$;
