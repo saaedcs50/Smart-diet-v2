@@ -9,13 +9,16 @@ import {
   splitPatientIntakeList,
   validatePatientIntakeAnswers,
 } from './patientIntakeUtils';
-import { getPatientPlan } from './database';
+import { getPatientPlanSnapshot } from './database';
+import { PatientPlanEditor } from './PatientPlanEditor';
 import {
+  approvePatientIntakeDraft,
   createPatientIntakeDraft,
   listPatientIntakes,
   listPatientIntakeDrafts,
   markPatientIntakeReviewed,
   submitPatientIntake,
+  updatePatientIntakeDraft,
   type PatientIntakeDraftRecord,
   type PatientIntakeRecord,
 } from './patientIntakes';
@@ -238,11 +241,15 @@ export function PatientIntakeSection({
   clinicId,
   clientName,
   isStaffView,
+  editorUid,
+  onPlanApproved,
 }: {
   patientUid: string;
   clinicId: string;
   clientName: string;
   isStaffView: boolean;
+  editorUid: string;
+  onPlanApproved: (plan: import('../types').PlanConfig) => void;
 }) {
   const [records, setRecords] = useState<PatientIntakeRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -325,14 +332,15 @@ export function PatientIntakeSection({
       const validationError = validatePatientIntakeAnswers(record.answers);
       if (validationError) throw new Error(validationError);
 
-      const activePlan = await getPatientPlan(patientUid);
+      const activeSnapshot = await getPatientPlanSnapshot(patientUid);
       const draftPlan = buildPatientIntakeDraftPlan(
         record.answers,
-        activePlan ?? DEFAULT_PLAN,
+        activeSnapshot.plan ?? DEFAULT_PLAN,
       );
       const result = await createPatientIntakeDraft({
         intakeId: record.id,
         draftPlan,
+        basePlanUpdatedAt: activeSnapshot.updatedAt,
       });
 
       setDrafts((current) => ({ ...current, [record.id]: result.draft }));
@@ -348,6 +356,50 @@ export function PatientIntakeSection({
         [record.id]: caught instanceof Error
           ? caught.message
           : 'تعذّر إنشاء مسودة الخطة.',
+      }));
+    } finally {
+      setDraftBusy(null);
+    }
+  };
+
+  const approveDraft = async (record: PatientIntakeRecord) => {
+    const savedDraft = drafts[record.id];
+    if (!isStaffView || !savedDraft || savedDraft.status !== 'draft' || draftBusy) return;
+    if (record.status !== 'reviewed') {
+      setDraftErrors((current) => ({ ...current, [record.id]: 'سجّل مراجعة الاستبيان أولًا قبل اعتماد الخطة.' }));
+      return;
+    }
+    const confirmed = window.confirm(
+      'أنت على وشك اعتماد هذه المسودة ونشرها في الخطة السارية للمريض. سيبدأ المريض برؤية البيانات التي جعلتَها متاحة له داخل المسودة. هل تؤكد اعتماد الطبيب ونشر الخطة؟',
+    );
+    if (!confirmed) return;
+
+    setDraftBusy(record.id);
+    setDraftErrors((current) => ({ ...current, [record.id]: '' }));
+    setDraftFeedback((current) => ({ ...current, [record.id]: '' }));
+    try {
+      const approval = await approvePatientIntakeDraft(record.id);
+      setDrafts((current) => ({
+        ...current,
+        [record.id]: {
+          ...savedDraft,
+          draft_plan: approval.plan,
+          status: 'approved',
+          approved_at: approval.approvedAt,
+          approved_by: approval.approvedBy,
+          updated_at: approval.approvedAt,
+          updated_by: approval.approvedBy,
+        },
+      }));
+      onPlanApproved(approval.plan);
+      setDraftFeedback((current) => ({
+        ...current,
+        [record.id]: 'تم اعتماد الخطة ونشرها في ملف المريض. المسودة أصبحت مقفلة.',
+      }));
+    } catch (caught) {
+      setDraftErrors((current) => ({
+        ...current,
+        [record.id]: caught instanceof Error ? caught.message : 'تعذّر اعتماد مسودة الخطة.',
       }));
     } finally {
       setDraftBusy(null);
@@ -427,10 +479,46 @@ export function PatientIntakeSection({
                   )}
                 </div>
                 {drafts[record.id] ? (
-                  <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-300">
-                    آخر تحديث للمسودة: {formatSubmittedAt(drafts[record.id].updated_at)}.
-                    الخطة النشطة لم تتغير، وهذه المسودة لا تظهر للمريض.
-                  </p>
+                  <>
+                    <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                      آخر تحديث للمسودة: {formatSubmittedAt(drafts[record.id].updated_at)}.
+                      {drafts[record.id].status === 'approved'
+                        ? ' تم نشر النسخة المعتمدة في الخطة السارية.'
+                        : ' الخطة النشطة لم تتغير، وهذه المسودة لا تظهر للمريض.'}
+                    </p>
+                    {drafts[record.id].status === 'draft' && (
+                      <>
+                        <PatientPlanEditor
+                          key={record.id}
+                          patientUid={patientUid}
+                          editorUid={editorUid}
+                          patientName={clientName}
+                          initialPlan={drafts[record.id].draft_plan}
+                          editorTitle="مراجعة وتحرير مسودة الخطة"
+                          saveButtonLabel="حفظ المسودة فقط"
+                          saveOverride={async (nextPlan) => {
+                            const saved = await updatePatientIntakeDraft({ intakeId: record.id, draftPlan: nextPlan });
+                            setDrafts((current) => ({ ...current, [record.id]: saved }));
+                          }}
+                          onSaved={() => undefined}
+                        />
+                        {record.status === 'reviewed' ? (
+                          <button
+                            type="button"
+                            onClick={() => void approveDraft(record)}
+                            disabled={draftBusy !== null}
+                            className="mt-3 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {draftBusy === record.id ? 'جارٍ اعتماد الخطة…' : 'موافقة الطبيب ونشر الخطة للمريض'}
+                          </button>
+                        ) : (
+                          <p className="mt-3 rounded-lg bg-amber-50 p-2 text-xs font-bold text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                            سجّل «تمت المراجعة» للاستبيان قبل إتاحة اعتماد الخطة.
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </>
                 ) : (
                   <>
                     <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
