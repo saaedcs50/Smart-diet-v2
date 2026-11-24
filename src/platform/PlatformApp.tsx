@@ -1512,13 +1512,13 @@ function PatientDetail({
         clientName={doc.profile.clientName}
         isStaffView={isStaffView}
         editorUid={viewerUid}
-        onPlanApproved={(approvedPlan) => {
+        onPlanApproved={(approvedPlan, approvedAt, approvedBy) => {
           setPlan(approvedPlan);
           setDoc((current) => current ? {
             ...current,
             plan: approvedPlan,
-            planUpdatedAt: typeof approvedPlan.updatedAt === 'string' ? approvedPlan.updatedAt : new Date().toISOString(),
-            planUpdatedBy: typeof approvedPlan.updatedBy === 'string' ? approvedPlan.updatedBy : viewerUid,
+            planUpdatedAt: approvedAt,
+            planUpdatedBy: approvedBy,
           } : current);
         }}
       />
