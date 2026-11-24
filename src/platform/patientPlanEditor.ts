@@ -130,11 +130,12 @@ export function validatePatientPlan(plan: PlanConfig): string[] {
   medications.forEach((item, index) => {
     const prefix = `الدواء ${index + 1}`;
     if (!item.name.trim() || item.name.trim().length > 120) errors.push(`${prefix}: اسم الدواء مطلوب وبحد أقصى 120 حرفًا.`);
+    if (!item.dose.trim()) errors.push(`${prefix}: أدخل الجرعة كما وردت في الوصفة.`);
     if (item.dose.length > 120) errors.push(`${prefix}: الجرعة تتجاوز 120 حرفًا.`);
     if (!Number.isInteger(item.timesPerDay) || item.timesPerDay < 1 || item.timesPerDay > 6) {
       errors.push(`${prefix}: عدد مرات التناول يجب أن يكون عددًا صحيحًا بين 1 و6.`);
     }
-    if (item.timings.length > 6 || item.timings.some((timing) => !timing.label.trim() || timing.label.length > 80)) {
+    if (item.timings.length !== item.timesPerDay || item.timings.some((timing) => !timing.label.trim() || timing.label.length > 80)) {
       errors.push(`${prefix}: راجع مواعيد التناول.`);
     }
     if ((item.foodInteractionNote?.length ?? 0) > 500 || (item.coachNotes?.length ?? 0) > 500) {
