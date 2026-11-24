@@ -251,6 +251,9 @@ export async function approvePatientIntakeDraft(
     if (message.includes('MEDICATION_NAME_AND_DOSE_REQUIRED') || message.includes('أكمل اسم كل دواء')) {
       throw new Error('أكمل اسم كل دواء والجرعة كما وردت في الوصفة قبل الاعتماد.');
     }
+    if (message.includes('MEDICATION_TIMING_SLOT_INVALID')) {
+      throw new Error('اختر موعدًا صالحًا لكل جرعة دواء من قائمة المواعيد.');
+    }
     throw new Error(`تعذّر اعتماد الخطة: ${message || 'رفضت قاعدة البيانات الطلب.'}`);
   }
 
@@ -261,14 +264,22 @@ export async function approvePatientIntakeDraft(
     approved_at?: unknown;
     approvedBy?: unknown;
     approved_by?: unknown;
+    patient_id?: unknown;
   } | null;
   const plan = planFromDatabase(payload?.draft_plan ?? payload?.plan);
   const approvedAt = payload?.approved_at ?? payload?.approvedAt;
   const approvedBy = payload?.approved_by ?? payload?.approvedBy;
-  if (!plan || typeof approvedAt !== 'string' || typeof approvedBy !== 'string') {
-    throw new Error('لم تُرجع قاعدة البيانات بيانات اعتماد صالحة؛ لم يتم تحديث واجهة المريض.');
+  const approvedPatientId = payload?.patient_id ?? payload?.patientId;
+  if (
+    !plan ||
+    typeof approvedAt !== 'string' ||
+    typeof approvedBy !== 'string' ||
+    typeof approvedPatientId !== 'string' ||
+    (expectedPatientUid && approvedPatientId !== expectedPatientUid)
+  ) {
+    throw new Error('لم تُرجع قاعدة البيانات بيانات اعتماد صالحة لهذا المريض؛ لم يتم تحديث واجهة المريض.');
   }
-  return { plan, approvedAt, approvedBy };
+  return { plan, approvedAt, approvedBy, patientId: approvedPatientId };
 }
 
 export async function submitPatientIntake(input: {
