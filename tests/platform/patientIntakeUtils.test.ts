@@ -121,4 +121,15 @@ describe('patient intake runtime JSON validation', () => {
       medicationsText: null as unknown as string,
     })).toContain('الأدوية');
   });
+
+  it('rejects condition IDs and labels that are not in the supported condition catalog', () => {
+    expect(validatePatientIntakeAnswers({
+      ...valid,
+      conditions: [{ id: 'made-up-diagnosis', label: 'تشخيص غير موجود' }],
+    })).toContain('قائمة الحالات المعتمدة');
+    expect(validatePatientIntakeAnswers({
+      ...valid,
+      conditions: [{ id: 't2dm', label: 'اسم مختلف' }],
+    })).toContain('قائمة الحالات المعتمدة');
+  });
 });
