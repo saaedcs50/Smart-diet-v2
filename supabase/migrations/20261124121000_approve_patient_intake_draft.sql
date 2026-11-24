@@ -71,7 +71,7 @@ BEGIN
   END IF;
 
   v_role := private.caller_role();
-  IF v_role NOT IN ('coach', 'admin') THEN
+  IF v_role IS NULL OR v_role NOT IN ('coach', 'admin') THEN
     RAISE EXCEPTION 'اعتماد الخطة متاح للطبيب المعيّن أو مدير العيادة فقط.'
       USING ERRCODE = '42501';
   END IF;
@@ -88,8 +88,8 @@ BEGIN
   END IF;
 
   IF v_intake.clinic_id IS DISTINCT FROM private.caller_clinic_id()
-     OR NOT private.clinic_sub_active(v_intake.clinic_id)
-     OR NOT private.can_access_patient(v_intake.patient_id) THEN
+     OR private.clinic_sub_active(v_intake.clinic_id) IS NOT TRUE
+     OR private.can_access_patient(v_intake.patient_id) IS NOT TRUE THEN
     RAISE EXCEPTION 'لا تملك صلاحية اعتماد خطة هذا المريض داخل العيادة.'
       USING ERRCODE = '42501';
   END IF;
@@ -132,12 +132,20 @@ BEGIN
 
   IF jsonb_typeof(v_plan) <> 'object'
      OR octet_length(v_plan::text) > 262144
-     OR length(btrim(coalesce(v_plan->>'clientName', ''))) NOT BETWEEN 1 AND 100
-     OR coalesce(jsonb_typeof(v_plan->'meals'), '') <> 'array'
-     OR coalesce(jsonb_typeof(v_plan->'checklist'), '') <> 'array'
-     OR jsonb_array_length(v_plan->'meals') > 40
-     OR jsonb_array_length(v_plan->'checklist') > 60 THEN
+     OR length(btrim(coalesce(v_plan->>'clientName', ''))) NOT BETWEEN 1 AND 100 THEN
     RAISE EXCEPTION 'بيانات المسودة غير مكتملة أو تتجاوز الحدود المسموحة. راجعها قبل الاعتماد.'
+      USING ERRCODE = '23514';
+  END IF;
+
+  IF coalesce(jsonb_typeof(v_plan->'meals'), '') <> 'array'
+     OR coalesce(jsonb_typeof(v_plan->'checklist'), '') <> 'array' THEN
+    RAISE EXCEPTION 'قائمة الوجبات أو المتابعة في المسودة غير صالحة.'
+      USING ERRCODE = '23514';
+  END IF;
+
+  IF jsonb_array_length(v_plan->'meals') > 40
+     OR jsonb_array_length(v_plan->'checklist') > 60 THEN
+    RAISE EXCEPTION 'عدد الوجبات أو بنود المتابعة يتجاوز الحد المسموح.'
       USING ERRCODE = '23514';
   END IF;
 
