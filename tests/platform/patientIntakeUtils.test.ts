@@ -82,6 +82,10 @@ describe('patient intake draft generation', () => {
     expect(draft.clientName).toBe(valid.clientName);
     expect(draft.heightCm).toBe(valid.heightCm);
     expect(draft.medicalConditions?.showToClient).toBe(false);
+    expect(draft.goal).toBe('تحسين العادات');
+    expect(draft.notes).toContain('7 ساعة يوميًا');
+    expect(draft.notes).toContain('متوسط');
+    expect(draft.adminPin).toBe('');
     expect(draft.medicationPlan?.showToClient).toBe(false);
     expect(draft.labTracking?.showToClient).toBe(false);
     expect(draft.cycleTracking?.showPhaseToClient).toBe(false);
