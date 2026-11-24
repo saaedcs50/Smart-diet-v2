@@ -7,6 +7,8 @@ import type { PlanPreset } from './planPresets';
 // القالب الخام مباشرة ليتوافق مع النسخ الاحتياطية اليدوية.
 // ============================================================================
 
+export const MAX_PRESET_IMPORT_BYTES = 512 * 1024;
+
 export type PresetValidationResult =
   | { ok: true; preset: PlanPreset }
   | { ok: false; error: string };
@@ -147,6 +149,10 @@ export function serializePreset(preset: PlanPreset): string {
 
 /** يقرأ نص JSON (مغلفًا أو قالبًا خامًا) ويتحقق منه. لا يرمي أبدًا. */
 export function parsePresetImport(text: string): PresetValidationResult {
+  if (typeof text !== 'string') return fail('تعذّرت قراءة الملف: المحتوى النصي غير صالح.');
+  if (new TextEncoder().encode(text).byteLength > MAX_PRESET_IMPORT_BYTES) {
+    return fail('حجم ملف القالب يتجاوز الحد المسموح (512 كيلوبايت).');
+  }
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -156,6 +162,9 @@ export function parsePresetImport(text: string): PresetValidationResult {
   if (isRecord(parsed) && 'preset' in parsed) {
     if (parsed.kind !== undefined && parsed.kind !== 'smart-diet-preset') {
       return fail('هذا الملف ليس قالب خطة Smart Diet.');
+    }
+    if (parsed.kind === 'smart-diet-preset' && parsed.version !== 1) {
+      return fail('إصدار ملف القالب غير مدعوم. حدّث الملف إلى الإصدار 1.');
     }
     return validatePresetData(parsed.preset);
   }
