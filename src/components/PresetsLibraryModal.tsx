@@ -101,7 +101,7 @@ export const PresetsLibraryModal: React.FC<PresetsLibraryModalProps> = ({
  const collides = getAllPresets(storageNamespace).some((p) => p.id === imported.id);
  const toSave: PlanPreset = {
 ...imported,
- id: collides ? `custom_import_${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now()}` : imported.id,
+ id: collides ? `custom_import_${typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now()}_${Math.random().toString(36).slice(2)}`}` : imported.id,
  isCustom: true,
  createdAt: new Date().toISOString(),
  };
