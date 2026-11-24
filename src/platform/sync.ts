@@ -160,14 +160,25 @@ export async function pullCloudPlanToLocal(
   const uid = patientUid.trim();
   if (!uid) throw new Error('تعذّر تحديد حساب المريض الحالي.');
 
-  if (writers.getStorageScope() !== `user:${uid}`) {
-    throw new Error('تم إيقاف السحب: مساحة التخزين المحلية لا تطابق حساب المريض الحالي.');
-  }
+  const expectedScope = `user:${uid}`;
+  const assertStorageScope = () => {
+    if (writers.getStorageScope() !== expectedScope) {
+      throw new Error('تم إيقاف السحب: تغيّر الحساب أو مساحة التخزين أثناء العملية. أعد المحاولة من حساب المريض الصحيح.');
+    }
+  };
 
+  assertStorageScope();
   const cloudPlan = await writers.getPatientPlan(uid);
+  // The active account can change while the cloud request is in flight.
+  // Re-check immediately after the await, before showing or writing any plan.
+  assertStorageScope();
   if (!cloudPlan) return { status: 'no-cloud-plan' };
 
   if (!confirmOverwrite(cloudPlan)) return { status: 'cancelled' };
+
+  // A confirmation dialog can remain open while the app/session changes.
+  // Never write the previous patient's plan into the newly active namespace.
+  assertStorageScope();
 
   if (!writers.saveLocalPlan(cloudPlan)) {
     throw new Error('تعذّر حفظ الخطة على هذا الجهاز؛ لم يتم تأكيد الاستبدال.');
