@@ -116,7 +116,7 @@ export function validatePresetData(raw: unknown): PresetValidationResult {
     return fail('القالب مرفوض: هدف الماء اليومي يجب أن يكون بين 250 و10000 مل.');
   }
   for (const [key, max] of Object.entries(topLevelBounds)) {
-    if (key === 'dailyWaterGoalMl' || pd[key] === undefined) continue;
+    if (key === 'dailyWaterGoalMl' || pd[key] === undefined || pd[key] === null) continue;
     const value = pd[key];
     if (!isFiniteNumber(value) || value < 0 || value > max) {
       return fail(`القالب مرفوض: بيانات الخطة (${key}) غير صالحة.`);
