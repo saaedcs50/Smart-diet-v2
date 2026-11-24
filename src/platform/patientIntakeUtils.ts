@@ -10,51 +10,113 @@ export function splitPatientIntakeList(value: string, maxItems = 30): string[] {
   )].slice(0, maxItems);
 }
 
+/**
+ * Validate the runtime JSON shape as well as the expected UI limits.
+ * Cloud JSON is untrusted input and must not be assumed to match TypeScript.
+ */
 export function validatePatientIntakeAnswers(answers: IntakeAnswers): string | null {
-  const checks: Array<{ label: string; value: number | null | undefined; min: number; max: number }> = [
-    { label: 'الطول', value: answers.heightCm, min: 60, max: 250 },
-    { label: 'الوزن الحالي', value: answers.startWeight, min: 20, max: 400 },
-    { label: 'الوزن المستهدف', value: answers.targetWeight, min: 20, max: 400 },
-    { label: 'محيط الوسط المستهدف', value: answers.targetWaist, min: 25, max: 250 },
-    { label: 'ساعات النوم', value: answers.sleepHours, min: 0, max: 24 },
+  if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
+    return 'بيانات الاستبيان غير صالحة.';
+  }
+
+  const raw = answers as unknown as Record<string, unknown>;
+  const clientName = raw.clientName;
+  if (typeof clientName !== 'string' || !clientName.trim() || clientName.trim().length > 100) {
+    return 'اسم المريض غير صالح.';
+  }
+
+  const numberChecks: Array<{
+    key: string;
+    label: string;
+    min: number;
+    max: number;
+  }> = [
+    { key: 'heightCm', label: 'الطول', min: 60, max: 250 },
+    { key: 'startWeight', label: 'الوزن الحالي', min: 20, max: 400 },
+    { key: 'targetWeight', label: 'الوزن المستهدف', min: 20, max: 400 },
+    { key: 'targetWaist', label: 'محيط الوسط المستهدف', min: 25, max: 250 },
+    { key: 'sleepHours', label: 'ساعات النوم', min: 0, max: 24 },
   ];
 
-  for (const check of checks) {
-    if (check.value == null) continue;
-    if (!Number.isFinite(check.value) || check.value < check.min || check.value > check.max) {
-      return `${check.label}: القيمة يجب أن تكون بين ${check.min} و${check.max}.`;
+  for (const check of numberChecks) {
+    const value = raw[check.key];
+    if (value == null) continue;
+    if (
+      typeof value !== 'number' ||
+      !Number.isFinite(value) ||
+      value < check.min ||
+      value > check.max
+    ) {
+      return `${check.label}: القيمة يجب أن تكون رقمًا بين ${check.min} و${check.max}.`;
     }
   }
 
-  if (!answers.clientName.trim() || answers.clientName.trim().length > 100) {
-    return 'اسم المريض غير صالح.';
+  const conditions = raw.conditions;
+  if (!Array.isArray(conditions) || conditions.length > 20) {
+    return 'قائمة الحالات الصحية غير صالحة أو تتجاوز 20 حالة.';
   }
-  if (answers.conditions.length > 20 || answers.allergies.length > 30) {
-    return 'عدد الحالات أو الحساسية المدخلة أكبر من المسموح.';
+  for (const [index, condition] of conditions.entries()) {
+    if (
+      !condition ||
+      typeof condition !== 'object' ||
+      typeof (condition as Record<string, unknown>).id !== 'string' ||
+      !(condition as Record<string, unknown>).id?.toString().trim() ||
+      typeof (condition as Record<string, unknown>).label !== 'string' ||
+      !(condition as Record<string, unknown>).label?.toString().trim() ||
+      ((condition as Record<string, unknown>).id as string).length > 80 ||
+      ((condition as Record<string, unknown>).label as string).length > 120
+    ) {
+      return `بيانات الحالة الصحية رقم ${index + 1} غير صالحة.`;
+    }
   }
-  if (answers.medicationsText.length > 2000) return 'نص الأدوية أطول من المسموح (2000 حرف).';
-  if ((answers.goal ?? '').length > 500) return 'الهدف أطول من المسموح (500 حرف).';
-  if ((answers.notes ?? '').length > 2000) return 'الملاحظات أطول من المسموح (2000 حرف).';
+
+  const allergies = raw.allergies;
+  if (!Array.isArray(allergies) || allergies.length > 30) {
+    return 'قائمة الحساسية غير صالحة أو تتجاوز 30 عنصرًا.';
+  }
+  if (allergies.some((item) => typeof item !== 'string' || !item.trim() || item.length > 100)) {
+    return 'راجع أسماء الحساسية؛ كل عنصر يجب أن يكون نصًا حتى 100 حرف.';
+  }
+
+  const medicationsText = raw.medicationsText;
+  if (typeof medicationsText !== 'string') return 'نص الأدوية الحالية غير صالح.';
+  if (medicationsText.length > 2000) return 'نص الأدوية أطول من المسموح (2000 حرف).';
+
+  const goal = raw.goal ?? '';
+  if (typeof goal !== 'string') return 'الهدف المدخل غير صالح.';
+  if (goal.length > 500) return 'الهدف أطول من المسموح (500 حرف).';
+
+  const notes = raw.notes ?? '';
+  if (typeof notes !== 'string') return 'الملاحظات المدخلة غير صالحة.';
+  if (notes.length > 2000) return 'الملاحظات أطول من المسموح (2000 حرف).';
+
+  const activityLevel = raw.activityLevel ?? '';
+  if (!['', 'low', 'moderate', 'high'].includes(String(activityLevel))) {
+    return 'مستوى النشاط المدخل غير صالح.';
+  }
+
+  const fastingType = raw.fastingType ?? 'none';
+  if (!['', 'none', 'islamic', 'christian', 'intermittent'].includes(String(fastingType))) {
+    return 'نمط الصيام المدخل غير صالح.';
+  }
+
   if (!(
-    answers.heightCm != null ||
-    answers.startWeight != null ||
-    answers.targetWeight != null ||
-    answers.targetWaist != null ||
-    answers.conditions.length > 0 ||
-    answers.allergies.length > 0 ||
-    answers.medicationsText.trim() ||
-    answers.goal?.trim() ||
-    answers.notes?.trim()
+    numberChecks.some(({ key }) => typeof raw[key] === 'number') ||
+    conditions.length > 0 ||
+    allergies.length > 0 ||
+    medicationsText.trim() ||
+    goal.trim() ||
+    notes.trim()
   )) {
     return 'أدخل معلومة واحدة على الأقل قبل إرسال الاستبيان.';
   }
+
   return null;
 }
 
-
 /**
  * Build a structured, unapproved draft from patient-entered answers.
- * Visibility flags remain disabled until a clinician explicitly approves it.
+ * Patient-supplied clinical details remain hidden until clinician approval.
  */
 export function buildPatientIntakeDraftPlan(
   answers: IntakeAnswers,
