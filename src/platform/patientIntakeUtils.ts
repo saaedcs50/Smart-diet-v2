@@ -1,4 +1,5 @@
-import type { IntakeAnswers } from '../utils/intake';
+import { buildIntakeDraftPlan, type IntakeAnswers } from '../utils/intake';
+import type { PlanConfig } from '../types';
 
 export function splitPatientIntakeList(value: string, maxItems = 30): string[] {
   return [...new Set(
@@ -48,4 +49,31 @@ export function validatePatientIntakeAnswers(answers: IntakeAnswers): string | n
     return 'أدخل معلومة واحدة على الأقل قبل إرسال الاستبيان.';
   }
   return null;
+}
+
+
+/**
+ * Build a structured, unapproved draft from patient-entered answers.
+ * Visibility flags remain disabled until a clinician explicitly approves it.
+ */
+export function buildPatientIntakeDraftPlan(
+  answers: IntakeAnswers,
+  basePlan: PlanConfig,
+): PlanConfig {
+  const draft = buildIntakeDraftPlan(answers, basePlan);
+
+  if (draft.medicalConditions) {
+    draft.medicalConditions = { ...draft.medicalConditions, showToClient: false };
+  }
+  if (draft.medicationPlan) {
+    draft.medicationPlan = { ...draft.medicationPlan, showToClient: false };
+  }
+  if (draft.labTracking) {
+    draft.labTracking = { ...draft.labTracking, showToClient: false };
+  }
+  if (draft.cycleTracking) {
+    draft.cycleTracking = { ...draft.cycleTracking, showPhaseToClient: false };
+  }
+
+  return draft;
 }
