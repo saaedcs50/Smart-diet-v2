@@ -265,6 +265,7 @@ export async function approvePatientIntakeDraft(
     approvedBy?: unknown;
     approved_by?: unknown;
     patient_id?: unknown;
+    patientId?: unknown;
   } | null;
   const plan = planFromDatabase(payload?.draft_plan ?? payload?.plan);
   const approvedAt = payload?.approved_at ?? payload?.approvedAt;
