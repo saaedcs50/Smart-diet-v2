@@ -219,6 +219,17 @@ export async function approvePatientIntakeDraft(
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) throw new Error('يجب تسجيل الدخول بحساب العيادة أولًا.');
 
+  if (expectedPatientUid) {
+    const { data: intake, error: intakeError } = await supabase
+      .from('patient_intakes')
+      .select('patient_id')
+      .eq('id', normalizedId)
+      .maybeSingle();
+    if (intakeError || !intake || intake.patient_id !== expectedPatientUid) {
+      throw new Error('تغيّر ملف المريض المرتبط بالاستبيان أو لم يعد متاحًا؛ أعد تحميل الملف قبل الاعتماد.');
+    }
+  }
+
   const { data, error } = await supabase.rpc(
     'approve_patient_intake_draft',
     { p_intake_id: normalizedId },
@@ -228,16 +239,16 @@ export async function approvePatientIntakeDraft(
     if (message.includes('ACTIVE_PLAN_CHANGED_REBUILD_DRAFT')) {
       throw new Error('تغيرت الخطة السارية بعد إنشاء المسودة. أنشئ مسودة جديدة من الخطة الحالية قبل الاعتماد.');
     }
-    if (message.includes('INTAKE_REVIEW_REQUIRED')) {
+    if (message.includes('INTAKE_REVIEW_REQUIRED') || message.includes('راجع استبيان المريض')) {
       throw new Error('سجّل مراجعة الاستبيان أولًا قبل اعتماد الخطة.');
     }
-    if (message.includes('DRAFT_ALREADY_APPROVED_OR_LOCKED')) {
+    if (message.includes('DRAFT_ALREADY_APPROVED_OR_LOCKED') || message.includes('سبق اعتمادها')) {
       throw new Error('هذه المسودة اعتُمدت بالفعل ولا يمكن اعتمادها مرة أخرى.');
     }
     if (message.includes('MEDICATION_FREQUENCY_REQUIRED') || message.includes('MEDICATION_TIMINGS_INCOMPLETE')) {
       throw new Error('أكمل عدد مرات تناول كل دواء وجميع مواعيده قبل الاعتماد.');
     }
-    if (message.includes('MEDICATION_NAME_AND_DOSE_REQUIRED')) {
+    if (message.includes('MEDICATION_NAME_AND_DOSE_REQUIRED') || message.includes('أكمل اسم كل دواء')) {
       throw new Error('أكمل اسم كل دواء والجرعة كما وردت في الوصفة قبل الاعتماد.');
     }
     throw new Error(`تعذّر اعتماد الخطة: ${message || 'رفضت قاعدة البيانات الطلب.'}`);
