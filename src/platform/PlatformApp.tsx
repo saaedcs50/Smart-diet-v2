@@ -37,6 +37,7 @@ import {
   type RecentDayLogDetail,
   type StaffEntry,
 } from './database';
+import { PatientPlanEditor } from './PatientPlanEditor';
 import {
   createInvitation,
   registerStaffWithGoogleInvitation,
@@ -1311,6 +1312,14 @@ function PatientDetail({
       description="تأكد من رابط الملف أو من أن حسابك يملك صلاحية الوصول إليه."
     />
   );
+  if (isStaffView && (!viewerClinicId || doc.clinicId !== viewerClinicId)) {
+    return (
+      <EmptyState
+        title="الملف خارج نطاق عيادتك"
+        description="لا يمكن فتح أو تعديل خطة مريض لا يتبع عيادتك."
+      />
+    );
+  }
 
   const latestEntry = entries[0] ?? null;
   const latestWeightEntry = entries.find(({ log }) => log.weight != null) ?? null;
@@ -1355,8 +1364,27 @@ function PatientDetail({
           {doc.profile.clientName}
         </h2>
         <p className="mt-1 text-xs text-slate-500">
-          {isStaffView ? 'عرض طاقم العيادة (قراءة فقط)' : 'ملفي السحابي'}
+          {isStaffView ? 'ملف المريض — فريق العيادة' : 'ملفي السحابي'}
         </p>
+        {isStaffView && (
+          <div className="mt-4">
+            <PatientPlanEditor
+              patientUid={patientUid}
+              editorUid={viewerUid}
+              patientName={doc.profile.clientName}
+              initialPlan={plan}
+              onSaved={(savedPlan) => {
+                setPlan(savedPlan);
+                setDoc((current) => current ? {
+                  ...current,
+                  plan: savedPlan,
+                  planUpdatedAt: new Date().toISOString(),
+                  planUpdatedBy: viewerUid,
+                } : current);
+              }}
+            />
+          </div>
+        )}
         {plan ? (
           <div className="mt-3 space-y-3 text-sm text-slate-700 dark:text-slate-200">
             <div className="grid gap-2 sm:grid-cols-2">
