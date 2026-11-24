@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_PLAN } from '../../src/utils/storage';
 import type { IntakeAnswers } from '../../src/utils/intake';
 import {
+  buildPatientIntakeDraftPlan,
   splitPatientIntakeList,
   validatePatientIntakeAnswers,
 } from '../../src/platform/patientIntakeUtils';
@@ -57,5 +59,60 @@ describe('patient intake validation', () => {
   it('rejects oversized medication and note payloads', () => {
     expect(validatePatientIntakeAnswers({ ...valid, medicationsText: 'x'.repeat(2001) })).toContain('الأدوية');
     expect(validatePatientIntakeAnswers({ ...valid, notes: 'x'.repeat(2001) })).toContain('الملاحظات');
+  });
+});
+
+
+describe('patient intake draft generation', () => {
+  it('builds a separate hidden draft without mutating the active plan', () => {
+    const basePlan = JSON.parse(JSON.stringify(DEFAULT_PLAN)) as typeof DEFAULT_PLAN;
+    const before = JSON.stringify(basePlan);
+    const answersWithConditions: IntakeAnswers = {
+      ...valid,
+      conditions: [
+        { id: 't2dm', label: 'سكري نوع 2' },
+        { id: 'pcos', label: 'تكيس المبايض' },
+      ],
+      medicationsText: 'دواء تجريبي - 500 مجم',
+      fastingType: 'intermittent',
+    };
+
+    const draft = buildPatientIntakeDraftPlan(answersWithConditions, basePlan);
+
+    expect(draft.clientName).toBe(valid.clientName);
+    expect(draft.heightCm).toBe(valid.heightCm);
+    expect(draft.medicalConditions?.showToClient).toBe(false);
+    expect(draft.medicationPlan?.showToClient).toBe(false);
+    expect(draft.labTracking?.showToClient).toBe(false);
+    expect(draft.cycleTracking?.showPhaseToClient).toBe(false);
+    expect(draft.medicationPlan?.items[0].timesPerDay).toBe(0);
+    expect(draft.medicationPlan?.items[0].timings).toEqual([]);
+    expect(JSON.stringify(basePlan)).toBe(before);
+  });
+
+  it('does not enable hidden clinical sections when no condition was submitted', () => {
+    const draft = buildPatientIntakeDraftPlan(valid, DEFAULT_PLAN);
+    expect(draft.medicalConditions?.showToClient).toBe(false);
+    expect(draft.medicationPlan).toBeUndefined();
+  });
+});
+
+describe('patient intake runtime JSON validation', () => {
+  it('rejects malformed condition and allergy arrays before conversion', () => {
+    expect(validatePatientIntakeAnswers({
+      ...valid,
+      conditions: [null] as unknown as IntakeAnswers['conditions'],
+    })).toContain('الحالة الصحية');
+    expect(validatePatientIntakeAnswers({
+      ...valid,
+      allergies: [42] as unknown as string[],
+    })).toContain('الحساسية');
+  });
+
+  it('rejects a missing medication text field instead of throwing', () => {
+    expect(validatePatientIntakeAnswers({
+      ...valid,
+      medicationsText: null as unknown as string,
+    })).toContain('الأدوية');
   });
 });
