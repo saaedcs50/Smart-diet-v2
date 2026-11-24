@@ -1,5 +1,6 @@
 import { buildIntakeDraftPlan, type IntakeAnswers } from '../utils/intake';
 import type { PlanConfig } from '../types';
+import { SUPPORTED_CONDITIONS } from '../utils/medicalConditions';
 
 export function splitPatientIntakeList(value: string, maxItems = 30): string[] {
   return [...new Set(
@@ -56,17 +57,23 @@ export function validatePatientIntakeAnswers(answers: IntakeAnswers): string | n
     return 'قائمة الحالات الصحية غير صالحة أو تتجاوز 20 حالة.';
   }
   for (const [index, condition] of conditions.entries()) {
+    if (!condition || typeof condition !== 'object' || Array.isArray(condition)) {
+      return `بيانات الحالة الصحية رقم ${index + 1} غير صالحة.`;
+    }
+    const item = condition as Record<string, unknown>;
     if (
-      !condition ||
-      typeof condition !== 'object' ||
-      typeof (condition as Record<string, unknown>).id !== 'string' ||
-      !(condition as Record<string, unknown>).id?.toString().trim() ||
-      typeof (condition as Record<string, unknown>).label !== 'string' ||
-      !(condition as Record<string, unknown>).label?.toString().trim() ||
-      ((condition as Record<string, unknown>).id as string).length > 80 ||
-      ((condition as Record<string, unknown>).label as string).length > 120
+      typeof item.id !== 'string' ||
+      !item.id.trim() ||
+      item.id.length > 80 ||
+      typeof item.label !== 'string' ||
+      !item.label.trim() ||
+      item.label.length > 120
     ) {
       return `بيانات الحالة الصحية رقم ${index + 1} غير صالحة.`;
+    }
+    const supported = SUPPORTED_CONDITIONS.find((entry) => entry.id === item.id);
+    if (!supported || supported.label !== item.label) {
+      return `الحالة الصحية رقم ${index + 1} غير موجودة في قائمة الحالات المعتمدة.`;
     }
   }
 
