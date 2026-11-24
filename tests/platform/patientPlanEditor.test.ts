@@ -53,6 +53,35 @@ describe('patient plan editor validation', () => {
     expect(errors.some((error) => error.includes('معرّف مكرر'))).toBe(true);
   });
 
+  it('requires every prescribed medicine frequency to have a matching valid timing', () => {
+    const plan = validPlan();
+    plan.medicationPlan = {
+      showToClient: false,
+      items: [{
+        id: 'med-timing-1',
+        name: 'دواء تجريبي',
+        dose: '500 مجم',
+        timesPerDay: 2,
+        timings: [{
+          id: 'timing-1',
+          slot: 'morning',
+          label: 'صباحًا',
+        }],
+        active: true,
+      }],
+    };
+
+    const errors = validatePatientPlan(plan);
+    expect(errors.some((error) => error.includes('مواعيد التناول'))).toBe(true);
+
+    plan.medicationPlan.items[0].timings.push({
+      id: 'timing-2',
+      slot: 'evening',
+      label: 'مساءً',
+    });
+    expect(validatePatientPlan(plan)).toEqual([]);
+  });
+
   it('validates medicine names, dose counts and maximum lengths', () => {
     const plan = validPlan();
     plan.medicationPlan = {
